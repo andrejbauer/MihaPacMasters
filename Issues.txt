@@ -1,0 +1,5 @@
+A list of issues that I will write down so that I don't forget and get confused by them:
+
+1. In Types: X -->_u Y returns a UType, but this cannot be possible as the rule "Sub-UserFun" demands that (X -->_u Y) ! U. Y ought to be a UType per the definition of -->_u, but it is a VType.
+
+I chose to solve this problem by having _-->_u_ take two VTypes for its arguments. This means that there is no longer any point in having two different functions for --> so I have merged -->_u and -->_k

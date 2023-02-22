@@ -29,9 +29,8 @@ interleaved mutual
   data VType where
     gnd   : GType → VType
     _×_   : VType → VType → VType -- Written as "\x"
-    _⟶ᵤ_  : VType → UType → VType -- "\r--"
-    _⟶ₖ_  : VType → KType → VType
-    _⇒_,_ : Sig → Sig → KState → VType
+    _⟶_  : VType → VType → VType -- "\r--"
+    _⇒_,_ : Sig → Sig → KState → VType -- "\r="
  
   --- User type
   data UType where
@@ -45,18 +44,58 @@ interleaved mutual
 _⊆ₛ_ : Sig → Sig → Set
 Σ ⊆ₛ Σ' = (op : Op) → Σ op ≡ true → Σ' op ≡ true
 
-data _⊑ᵥ_ : VType → VType → Set where
- 
-  ⊑ᵥ-ground : {A : GType}
-            -------------
-            → gnd A ⊑ᵥ gnd A
+interleaved mutual
+  data _⊑ᵥ_ : VType → VType → Set
+  data _⊑ᵤ_ : UType → UType → Set
+  data _⊑ₖ_ : KType → KType → Set
+
+  data _⊑ᵥ_ where -- "\squb="
+
+    --  I wrote ⊑ᵥ as "\squb\_v and then choosing the 4th v
+    ⊑ᵥ-ground : {A : GType}
+              -------------
+              → gnd A ⊑ᵥ gnd A
   
-  ⊑ᵥ-product : {X Y Z W : VType}
-             → X ⊑ᵥ Z
-             → Y ⊑ᵥ W
-             --------------------
-             → (X × Y) ⊑ᵥ (Z × W)
-  -- ...
+    ⊑ᵥ-product : {X Y Z W : VType}
+               → X ⊑ᵥ Z
+               → Y ⊑ᵥ W
+               --------------------
+                 → (X × Y) ⊑ᵥ (Z × W)
+
+    ⊑ᵥ-runner : {U U′ V V′ : Sig} {C : KState} -- I assume ≡ means equality
+               → U′ ⊆ₛ U
+               → V ⊆ₛ V′
+               --------------
+               → U ⇒ V , C ⊑ᵥ U′ ⇒ V′ , C
+              
+
+  data _⊑ᵤ_ where
+
+    ⊑ᵤ-fun : {X X′ Y Y′ : VType} {U U′ : Sig}
+                → X′ ⊑ᵥ X
+                → Y ! U ⊑ᵤ Y′ ! U′
+                -----------------------
+                → X ⟶ Y ! U ⊑ᵤ X′ ⟶ Y′ ! U′
+
+    ⊑ᵤ-ground : {X X′ : VType} {U U′ : Sig}
+                → X ⊑ᵥ X′
+                → U ⊆ₛ U′
+                → X ! U ⊑ᵤ X′ ! U′
+
+  data _⊑ₖ_ where
+
+    ⊑ₖ-fun : {X X′ Y Y′ : VType} {U U′ : Sig} {C C′ : KState}
+                → X′ ⊑ᵥ X
+                → Y ↯ U , C ⊑ₖ Y′ ↯ U′ , C′
+                -----------------------------------
+                → X ⟶ Y ↯ U , C ⊑ₖ X′ ⟶ Y′ ↯ U′ , C′
+
+    ⊑ₖ-ground : {X X′ : VType} {U U′ : Sig} {C : KState}
+                → X ⊑ᵥ X′
+                → U ⊆ₛ U′
+                ---------------------------
+                → X ↯ U , C ⊑ₖ X′ ↯ U′ , C
+  -- That might be it
  
 -- Contexts (using De Bruijn indices)
 data Ctx : Set where
@@ -68,8 +107,11 @@ data _∈_ : VType → Ctx → Set where                         -- x : X ∈ Γ
   here  : {X : VType} {Γ : Ctx} → X ∈ (Γ ∷ X)
   there : {X Y : VType} {Γ : Ctx} → X ∈ Γ → X ∈ (Γ ∷ Y)
  
- 
-infix 20 _⟶ᵤ_ _⟶ₖ_
-infix 30 _!_
+
+infix 10 _⊑ᵥ_ _⊑ᵤ_ _⊑ₖ_
+infix 20 _⟶_ _⇒_,_
+infix 15 _!_ _↯_,_
+infix 40 _×_
+
 
 -- ...
