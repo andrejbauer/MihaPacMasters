@@ -44,6 +44,9 @@ interleaved mutual
 _⊆ₛ_ : Sig → Sig → Set
 Σ ⊆ₛ Σ' = (op : Op) → Σ op ≡ true → Σ' op ≡ true
 
+_≡ₖ_ : KState → KState → Set
+C ≡ₖ C′ = C ≡ C′
+
 interleaved mutual
   data _⊑ᵥ_ : VType → VType → Set
   data _⊑ᵤ_ : UType → UType → Set
@@ -62,11 +65,12 @@ interleaved mutual
                --------------------
                  → (X × Y) ⊑ᵥ (Z × W)
 
-    ⊑ᵥ-runner : {U U′ V V′ : Sig} {C : KState} -- I assume ≡ means equality
+    ⊑ᵥ-runner : {U U′ V V′ : Sig} {C C′ : KState}
                → U′ ⊆ₛ U
                → V ⊆ₛ V′
+               → C ≡ C′
                --------------
-               → U ⇒ V , C ⊑ᵥ U′ ⇒ V′ , C
+               → U ⇒ V , C ⊑ᵥ U′ ⇒ V′ , C′
               
 
   data _⊑ᵤ_ where
@@ -90,11 +94,12 @@ interleaved mutual
                 -----------------------------------
                 → X ⟶ Y ↯ U , C ⊑ₖ X′ ⟶ Y′ ↯ U′ , C′
 
-    ⊑ₖ-ground : {X X′ : VType} {U U′ : Sig} {C : KState}
+    ⊑ₖ-kernel : {X X′ : VType} {U U′ : Sig} {C C′ : KState}
                 → X ⊑ᵥ X′
                 → U ⊆ₛ U′
+                → C ≡ C′
                 ---------------------------
-                → X ↯ U , C ⊑ₖ X′ ↯ U′ , C
+                → X ↯ U , C ⊑ₖ X′ ↯ U′ , C′
   -- That might be it
  
 -- Contexts (using De Bruijn indices)
