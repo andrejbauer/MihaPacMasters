@@ -7,7 +7,7 @@ open import Types P
 open Params P
 
 -- replaced ⦂ with ː because my computer's font does not show the former.
--- ː is \: and picking the 3rd option
+-- ː is \:3
 -- Well-typed value and computation terms
 interleaved mutual
 
@@ -35,5 +35,20 @@ interleaved mutual
     -- ...
 
   data _⊢Mː_ where
+    
+    sub-user : {X X′ : VType} {U U′ : Sig}
+         → Γ ⊢Mː X ! U
+         → X ! U ⊑ᵤ X′ ! U′
+         -----------------------
+         → Γ ⊢Mː X′ ! U′
 
   data _⊢Kː_ where
+
+    sub-kernel : {X X′ : VType} {U U′ : Sig} { C C′ : KState}
+         → Γ ⊢Kː X ↯ U , C
+         → X ↯ U , C ⊑ₖ X′ ↯ U′ , C′
+         ------------------------------------
+         → Γ ⊢Kː X′ ↯ U′ , C′
+
+
+infix 1 _⊢Mː_ _⊢Kː_ _⊢Vː_ 
