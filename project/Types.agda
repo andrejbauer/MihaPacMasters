@@ -11,6 +11,7 @@ open Params P
 data GType : Set where
   base : BaseType → GType
   unit : GType
+  empty : GType
   _×_  : GType → GType → GType -- Written as "\x"
  
 -- Operation signatures
@@ -29,7 +30,8 @@ interleaved mutual
   data VType where
     gnd   : GType → VType
     _×_   : VType → VType → VType -- Written as "\x"
-    _⟶_  : VType → VType → VType -- "\r--"
+    _⟶ᵤ_  : VType → UType → VType -- "\r--"
+    _⟶ₖ_ : VType → KType → VType
     _⇒_,_ : Sig → Sig → KState → VType -- "\r="
  
   --- User type
@@ -65,21 +67,28 @@ interleaved mutual
                --------------------
                  → (X × Y) ⊑ᵥ (Z × W)
 
+    
+    ⊑ᵥ-Ufun : {X X′ Y Y′ : VType} {U U′ : Sig}
+                → X′ ⊑ᵥ X
+                → Y ! U ⊑ᵤ Y′ ! U′
+                -----------------------
+                → X ⟶ᵤ Y ! U ⊑ᵥ X′ ⟶ᵤ Y′ ! U′
+
+    ⊑ᵥ-Kfun : {X X′ Y Y′ : VType} {U U′ : Sig} {C C′ : KState}
+                → X′ ⊑ᵥ X
+                → Y ↯ U , C ⊑ₖ Y′ ↯ U′ , C′
+                -----------------------------------
+                → X ⟶ₖ Y ↯ U , C ⊑ᵥ X′ ⟶ₖ Y′ ↯ U′ , C′ 
+
     ⊑ᵥ-runner : {U U′ V V′ : Sig} {C C′ : KState}
                → U′ ⊆ₛ U
                → V ⊆ₛ V′
                → C ≡ C′
                --------------
                → U ⇒ V , C ⊑ᵥ U′ ⇒ V′ , C′
-              
 
   data _⊑ᵤ_ where
 
-    ⊑ᵤ-fun : {X X′ Y Y′ : VType} {U U′ : Sig}
-                → X′ ⊑ᵥ X
-                → Y ! U ⊑ᵤ Y′ ! U′
-                -----------------------
-                → X ⟶ Y ! U ⊑ᵤ X′ ⟶ Y′ ! U′
 
     ⊑ᵤ-ground : {X X′ : VType} {U U′ : Sig}
                 → X ⊑ᵥ X′
@@ -88,11 +97,7 @@ interleaved mutual
 
   data _⊑ₖ_ where
 
-    ⊑ₖ-fun : {X X′ Y Y′ : VType} {U U′ : Sig} {C C′ : KState}
-                → X′ ⊑ᵥ X
-                → Y ↯ U , C ⊑ₖ Y′ ↯ U′ , C′
-                -----------------------------------
-                → X ⟶ Y ↯ U , C ⊑ₖ X′ ⟶ Y′ ↯ U′ , C′
+
 
     ⊑ₖ-kernel : {X X′ : VType} {U U′ : Sig} {C C′ : KState}
                 → X ⊑ᵥ X′
@@ -100,6 +105,9 @@ interleaved mutual
                 → C ≡ C′
                 ---------------------------
                 → X ↯ U , C ⊑ₖ X′ ↯ U′ , C′
+
+    
+
   -- That might be it
  
 -- Contexts (using De Bruijn indices)
@@ -111,10 +119,11 @@ data Ctx : Set where
 data _∈_ : VType → Ctx → Set where                         -- x : X ∈ Γ
   here  : {X : VType} {Γ : Ctx} → X ∈ (Γ ∷ X)
   there : {X Y : VType} {Γ : Ctx} → X ∈ Γ → X ∈ (Γ ∷ Y)
- 
 
+
+infixl 20 _∷_
+infix 12 _⟶ᵤ_ _⟶ₖ_ _⇒_,_
 infix 10 _⊑ᵥ_ _⊑ᵤ_ _⊑ₖ_
-infix 20 _⟶_ _⇒_,_
 infix 15 _!_ _↯_,_
 infix 40 _×_
 
