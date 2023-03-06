@@ -3,23 +3,14 @@ open import Relation.Binary.PropositionalEquality
 
 open import Parameters
 
-module Types (P : Params) where
+module Types (G : GTypes) (O : Ops G) where
 
-open Params P
-
--- Ground types
-data GType : Set where
-  base : BaseType → GType
-  unit : GType
-  empty : GType
-  _×_  : GType → GType → GType -- Written as "\x"
- 
--- Operation signatures
-Sig = Op → Bool
- 
+open GTypes G
+open Ops O
+  
 -- Kernel state type
 KState = GType
- 
+
  
 interleaved mutual
   data VType : Set
@@ -31,7 +22,7 @@ interleaved mutual
     gnd   : GType → VType
     _×_   : VType → VType → VType -- Written as "\x"
     _⟶ᵤ_  : VType → UType → VType -- "\r--"
-    _⟶ₖ_ : VType → KType → VType
+    _⟶ₖ_  : VType → KType → VType
     _⇒_,_ : Sig → Sig → KState → VType -- "\r="
  
   --- User type
@@ -47,7 +38,7 @@ _⊆ₛ_ : Sig → Sig → Set
 Σ ⊆ₛ Σ' = (op : Op) → Σ op ≡ true → Σ' op ≡ true
 
 _≡ₖ_ : KState → KState → Set
-C ≡ₖ C′ = C ≡ C′
+C ≡ₖ C' = C ≡ C'
 
 interleaved mutual
   data _⊑ᵥ_ : VType → VType → Set
@@ -68,60 +59,49 @@ interleaved mutual
                  → (X × Y) ⊑ᵥ (Z × W)
 
     
-    ⊑ᵥ-Ufun : {X X′ Y Y′ : VType} {U U′ : Sig}
-                → X′ ⊑ᵥ X
-                → Y ! U ⊑ᵤ Y′ ! U′
+    ⊑ᵥ-Ufun : {X X' : VType} {U U' : UType}
+                → X' ⊑ᵥ X
+                → U ⊑ᵤ U'
                 -----------------------
-                → X ⟶ᵤ Y ! U ⊑ᵥ X′ ⟶ᵤ Y′ ! U′
+                → X ⟶ᵤ U ⊑ᵥ X' ⟶ᵤ U'
 
-    ⊑ᵥ-Kfun : {X X′ Y Y′ : VType} {U U′ : Sig} {C C′ : KState}
-                → X′ ⊑ᵥ X
-                → Y ↯ U , C ⊑ₖ Y′ ↯ U′ , C′
+    ⊑ᵥ-Kfun : {X X' : VType} {K K' : KType}
+                → X' ⊑ᵥ X
+                → K ⊑ₖ K'
                 -----------------------------------
-                → X ⟶ₖ Y ↯ U , C ⊑ᵥ X′ ⟶ₖ Y′ ↯ U′ , C′ 
+                → X ⟶ₖ K ⊑ᵥ X' ⟶ₖ K' 
 
-    ⊑ᵥ-runner : {U U′ V V′ : Sig} {C C′ : KState}
-               → U′ ⊆ₛ U
-               → V ⊆ₛ V′
-               → C ≡ C′
+    ⊑ᵥ-runner : {U U' V V' : Sig} {C C' : KState}
+               → U' ⊆ₛ U
+               → V ⊆ₛ V'
+               → C ≡ C'
                --------------
-               → U ⇒ V , C ⊑ᵥ U′ ⇒ V′ , C′
+               → U ⇒ V , C ⊑ᵥ U' ⇒ V' , C'
 
   data _⊑ᵤ_ where
 
 
-    ⊑ᵤ-ground : {X X′ : VType} {U U′ : Sig}
-                → X ⊑ᵥ X′
-                → U ⊆ₛ U′
-                → X ! U ⊑ᵤ X′ ! U′
+    ⊑ᵤ-ground : {X X' : VType} {U U' : Sig}
+                → X ⊑ᵥ X'
+                → U ⊆ₛ U'
+                → X ! U ⊑ᵤ X' ! U'
 
   data _⊑ₖ_ where
 
 
 
-    ⊑ₖ-kernel : {X X′ : VType} {U U′ : Sig} {C C′ : KState}
-                → X ⊑ᵥ X′
-                → U ⊆ₛ U′
-                → C ≡ C′
+    ⊑ₖ-kernel : {X X' : VType} {U U' : Sig} {C C' : KState}
+                → X ⊑ᵥ X'
+                → U ⊆ₛ U'
+                → C ≡ C'
                 ---------------------------
-                → X ↯ U , C ⊑ₖ X′ ↯ U′ , C′
+                → X ↯ U , C ⊑ₖ X' ↯ U' , C'
 
     
 
   -- That might be it
- 
--- Contexts (using De Bruijn indices)
-data Ctx : Set where
-  []  : Ctx
-  _∷_ : Ctx → VType → Ctx
-
--- Variables in context
-data _∈_ : VType → Ctx → Set where                         -- x : X ∈ Γ
-  here  : {X : VType} {Γ : Ctx} → X ∈ (Γ ∷ X)
-  there : {X Y : VType} {Γ : Ctx} → X ∈ Γ → X ∈ (Γ ∷ Y)
 
 
-infixl 20 _∷_
 infix 12 _⟶ᵤ_ _⟶ₖ_ _⇒_,_
 infix 10 _⊑ᵥ_ _⊑ᵤ_ _⊑ₖ_
 infix 15 _!_ _↯_,_

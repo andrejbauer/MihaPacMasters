@@ -1,10 +1,12 @@
 open import Parameters
 
-module Terms (P : Params) where
+module Terms (G : GTypes) (O : Ops G) where
 
-open import Types P
+open GTypes G
+open Ops O
 
-open Params P
+open import Types G O
+open import Contexts G O
 
 -- replaced ⦂ with ː because my computer's font does not show the former.
 -- ː is \:3
@@ -23,13 +25,13 @@ interleaved mutual
         -------------
         → Γ ⊢V: X
 
-    sub-value : {X X′ : VType}
+    value-coerce : {X X' : VType}
         → Γ ⊢V: X
-        → X ⊑ᵥ X′
+        → X ⊑ᵥ X'
         ------------------
-        → Γ ⊢V: X′
+        → Γ ⊢V: X'
 
-    value-unit :
+    ⟨⟩ :
         --------------------
         Γ ⊢V: gnd unit
 
@@ -39,30 +41,28 @@ interleaved mutual
         -------------------
         → Γ ⊢V: X × Y
 
-    
-    user-fun : {X Y : VType} {U : Sig}
-         → Γ ∷ X ⊢M: Y ! U
+    user-fun : {X : VType} {U : UType}
+         → Γ ∷ X ⊢M: U
          ---------------------
-         → Γ ⊢V: X ⟶ᵤ Y ! U
+         → Γ ⊢V: X ⟶ᵤ U
     
     kern-fun : {X Y : VType} {U : Sig} {C : KState}
          → (Γ ∷ X) ⊢K: Y ↯ U , C
          ------------------------------
          → Γ ⊢V: X ⟶ₖ Y ↯ U , C
-    -- TyValue-Const
 
-    -- unit :
-
-    -- ...
+    runner : {Σ Σ' : Sig} {C : KState} {op : Op}
+         → ((op ∈ₒ Σ) → Γ ∷ gnd (param op) ⊢K: gnd (result op) ↯ Σ' , C)
+         ---------------------------------------------------------------
+         → Γ ⊢V: Σ ⇒ Σ' , C
 
   data _⊢M:_ where
     
-    sub-user : {X X′ : VType} {U U′ : Sig}
+    sub-user : {X X' : VType} {U U' : Sig}
          → Γ ⊢M: X ! U
-         → X ! U ⊑ᵤ X′ ! U′
+         → X ! U ⊑ᵤ X' ! U'
          -----------------------
-         → Γ ⊢M: X′ ! U′
-
+         → Γ ⊢M: X' ! U'
 
     return : {X : VType} {U : Sig}
     -- TyUser-Return
@@ -76,11 +76,13 @@ interleaved mutual
       -------------------------
       → Γ ⊢M: Y ! U
 
-    try : {X Y : VType} { U : Sig }
+    -- _(*)_
+
+    `let_`in : {X Y : VType} { U : Sig }
     -- Without exceptions this one seems pointless
+    -- let x = M in N
       → Γ ⊢M: X ! U
       → Γ ∷ X ⊢M: Y ! U
-      → Γ ⊢M: Y ! U
       ----------
       → Γ ⊢M: Y ! U
 
@@ -90,49 +92,36 @@ interleaved mutual
       ----------------------------
       → Γ ⊢M: Z ! U
 
-    matchempty : {Z : VType} {U : Sig}
-      → Γ ⊢V: gnd empty
-      ---------------------
-      → Γ ⊢M: Z ! U
-
    -- op : {U : Sig}
    --   → {!!}
 
-    run : {U U′ : Sig} {C : KState} {X Y : VType}
-      → Γ ⊢V: U ⇒ U′ , C
-      → Γ ⊢V: gnd C -- Not entirely sure about this
+    `using_at_run_finally : {U U' : Sig} {C : KState} {X Y : VType}
+      → Γ ⊢V: U ⇒ U' , C
+      → Γ ⊢V: gnd C
       → Γ ⊢M: X ! U
-      → Γ ∷ X ∷ gnd C ⊢M: Y ! U′
-      → Γ ∷ gnd C ⊢M: Y ! U′
-      → Γ ⊢M: Y ! U′
+      → Γ ∷ X ∷ gnd C ⊢M: Y ! U'
       -----------------
-      → Γ ⊢M: Y ! U′
+      → Γ ⊢M: Y ! U'
+
+    -- `using R at W run M finally N
+    -- vs
+    -- run R W M N
 
 
-    user-kernel :{X Y : VType} {U : Sig} {C : KState}
+    kernel_at_finally :{X Y : VType} {U : Sig} {C : KState}
       → Γ ⊢K: X ↯ U , C
       → Γ ⊢V: gnd C
       → Γ ∷ X ∷ gnd C ⊢M: Y ! U 
-      → Γ ∷ gnd C ⊢M: Y ! U
-      → Γ ⊢M: Y ! U
       --------------
       → Γ ⊢M: Y ! U 
 
-    comp1 : {X Y : VType} {U : Sig}
-     → Γ ∷ X ⊢M: Y ! U
-     → Γ ⊢V: X
-     ------------------------
-     → Γ ⊢M: Y ! U
-
-    comp2 : {!!}
-
   data _⊢K:_ where
 
-    sub-kernel : {X X′ : VType} {U U′ : Sig} { C C′ : KState}
+    sub-kernel : {X X' : VType} {U U' : Sig} { C C' : KState}
          → Γ ⊢K: X ↯ U , C
-         → X ↯ U , C ⊑ₖ X′ ↯ U′ , C′
+         → X ↯ U , C ⊑ₖ X' ↯ U' , C'
          ------------------------------------
-         → Γ ⊢K: X′ ↯ U′ , C′
+         → Γ ⊢K: X' ↯ U' , C'
 
 
 
@@ -147,10 +136,9 @@ interleaved mutual
       ---------------------------------
       → Γ ⊢K: Y ↯ U , C
 
-    try : {X Y : VType} {U : Sig} {C : KState}
+    `let_`in : {X Y : VType} {U : Sig} {C : KState}
       → Γ ⊢K: X ↯ U , C
-      → Γ ⊢K: Y ↯ U , C
-      → Γ ⊢K: Y ↯ U , C
+      → Γ ∷ X ⊢K: Y ↯ U , C
       ---------------------------
       → Γ ⊢K: Y ↯ U , C
 
@@ -160,10 +148,7 @@ interleaved mutual
       ---------------------
       → Γ ⊢K: Z ↯ U , C
 
-    matchempty : {Z : VType} {U : Sig} {C : KState}
-      → Γ ⊢V: gnd empty
-      --------------------------
-      → Γ ⊢K: Z ↯ U , C
+    -- TODO: ops
 
     getenv : {C : KState} {X : VType} {U : Sig}
       → Γ ∷ gnd C ⊢K: X ↯ U , C
@@ -176,10 +161,9 @@ interleaved mutual
       -------------------------
       → Γ ⊢K: X ↯ U , C
 
-    kernel-user : {U : Sig} {C : KState} {X Y : VType}
+    user_finally : {U : Sig} {C : KState} {X Y : VType}
       → Γ ⊢M: X ! U
       → Γ ∷ X ⊢K: Y ↯ U , C
-      → Γ ⊢K: Y ↯ U , C
       --------------------------
       → Γ ⊢K: Y ↯ U , C
       
