@@ -59,11 +59,11 @@ interleaved mutual
                  → (X × Y) ⊑ᵥ (Z × W)
 
     
-    ⊑ᵥ-Ufun : {X X' : VType} {U U' : UType}
+    ⊑ᵥ-Ufun : {X X' : VType} {Σ Σ' : UType}
                 → X' ⊑ᵥ X
-                → U ⊑ᵤ U'
+                → Σ ⊑ᵤ Σ'
                 -----------------------
-                → X ⟶ᵤ U ⊑ᵥ X' ⟶ᵤ U'
+                → X ⟶ᵤ Σ ⊑ᵥ X' ⟶ᵤ Σ'
 
     ⊑ᵥ-Kfun : {X X' : VType} {K K' : KType}
                 → X' ⊑ᵥ X
@@ -71,31 +71,31 @@ interleaved mutual
                 -----------------------------------
                 → X ⟶ₖ K ⊑ᵥ X' ⟶ₖ K' 
 
-    ⊑ᵥ-runner : {U U' V V' : Sig} {C C' : KState}
-               → U' ⊆ₛ U
-               → V ⊆ₛ V'
+    ⊑ᵥ-runner : {Σ₁ Σ₁' Σ₂ Σ₂' : Sig} {C C' : KState}
+               → Σ₁' ⊆ₛ Σ₁
+               → Σ₂ ⊆ₛ Σ₂'
                → C ≡ C'
                --------------
-               → U ⇒ V , C ⊑ᵥ U' ⇒ V' , C'
+               → Σ₁ ⇒ Σ₂ , C ⊑ᵥ Σ₁' ⇒ Σ₂' , C'
 
   data _⊑ᵤ_ where
 
 
-    ⊑ᵤ-ground : {X X' : VType} {U U' : Sig}
+    ⊑ᵤ-ground : {X X' : VType} {Σ Σ' : Sig}
                 → X ⊑ᵥ X'
-                → U ⊆ₛ U'
-                → X ! U ⊑ᵤ X' ! U'
+                → Σ ⊆ₛ Σ'
+                → X ! Σ ⊑ᵤ X' ! Σ'
 
   data _⊑ₖ_ where
 
 
 
-    ⊑ₖ-kernel : {X X' : VType} {U U' : Sig} {C C' : KState}
+    ⊑ₖ-kernel : {X X' : VType} {Σ Σ' : Sig} {C C' : KState}
                 → X ⊑ᵥ X'
-                → U ⊆ₛ U'
+                → Σ ⊆ₛ Σ'
                 → C ≡ C'
                 ---------------------------
-                → X ↯ U , C ⊑ₖ X' ↯ U' , C'
+                → X ↯ Σ , C ⊑ₖ X' ↯ Σ' , C'
 
     
 

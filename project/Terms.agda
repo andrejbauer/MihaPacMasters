@@ -14,9 +14,9 @@ open import Contexts G O
 -- Well-typed value and computation terms
 interleaved mutual
 
-  data _⊢V:_ (Γ : Ctx) : VType → Set  -- \vdash \:2
-  data _⊢M:_ (Γ : Ctx) : UType → Set  -- \:2
-  data _⊢K:_ (Γ : Ctx) : KType → Set  -- \:2
+  data _⊢V:_ (Γ : Ctx) : VType → Set  
+  data _⊢M:_ (Γ : Ctx) : UType → Set
+  data _⊢K:_ (Γ : Ctx) : KType → Set
   
   data _⊢V:_ where
 
@@ -46,10 +46,10 @@ interleaved mutual
          ---------------------
          → Γ ⊢V: X ⟶ᵤ U
     
-    kern-fun : {X Y : VType} {U : Sig} {C : KState}
-         → (Γ ∷ X) ⊢K: Y ↯ U , C
+    kern-fun : {X : VType} {K : KType}
+         → (Γ ∷ X) ⊢K: K
          ------------------------------
-         → Γ ⊢V: X ⟶ₖ Y ↯ U , C
+         → Γ ⊢V: X ⟶ₖ K
 
     runner : {Σ Σ' : Sig} {C : KState} {op : Op}
          → ((op ∈ₒ Σ) → Γ ∷ gnd (param op) ⊢K: gnd (result op) ↯ Σ' , C)
@@ -58,114 +58,129 @@ interleaved mutual
 
   data _⊢M:_ where
     
-    sub-user : {X X' : VType} {U U' : Sig}
-         → Γ ⊢M: X ! U
-         → X ! U ⊑ᵤ X' ! U'
+    sub-user : {U U' : UType}
+         → Γ ⊢M: U
+         → U ⊑ᵤ U'
          -----------------------
-         → Γ ⊢M: X' ! U'
+         → Γ ⊢M: U'
 
-    return : {X : VType} {U : Sig}
+    return : {X : VType} {Σ : Sig}
     -- TyUser-Return
        → Γ ⊢V: X
        ----------
-       → Γ ⊢M: X ! U
+       → Γ ⊢M: X ! Σ
 
-    apply : {X Y : VType} {U : Sig}
-      → Γ ⊢V: X ⟶ᵤ Y ! U
+    apply : {X : VType} {U : UType}
+      → Γ ⊢V: X ⟶ᵤ U
       → Γ ⊢V: X
       -------------------------
-      → Γ ⊢M: Y ! U
+      → Γ ⊢M: U
 
     -- _(*)_
 
-    `let_`in : {X Y : VType} { U : Sig }
-    -- Without exceptions this one seems pointless
+--    tyuser-op : {X Y : VType} {Σ : Sig} {op : Op}
+--       → ((op ∈ₒ Σ) → Γ ⊢V: X)
+--       → ((op ∈ₒ Σ) → Γ ∷ Y ⊢M: X ! Σ)
+--       -------------------------
+--       → Γ ⊢M: X ! Σ
+
+    tyuser-op : {X Y : VType} {Σ : Sig} {op : Op}
+       → Γ ⊢V: X
+       → Γ ∷ Y ⊢M: X ! Σ
+       -------------------------
+       → Γ ⊢M: X ! Σ
+
+    `let_`in : {X Y : VType} { Σ : Sig }
     -- let x = M in N
-      → Γ ⊢M: X ! U
-      → Γ ∷ X ⊢M: Y ! U
+      → Γ ⊢M: X ! Σ
+      → Γ ∷ X ⊢M: Y ! Σ
       ----------
-      → Γ ⊢M: Y ! U
+      → Γ ⊢M: Y ! Σ
 
-    matchpair : {X Y Z : VType} {U : Sig}
+    matchpair : {X Y : VType} {U : UType}
       → Γ ⊢V: X × Y
-      → Γ ∷ X ∷ Y ⊢M: Z ! U
+      → Γ ∷ X ∷ Y ⊢M: U
       ----------------------------
-      → Γ ⊢M: Z ! U
+      → Γ ⊢M: U
 
-   -- op : {U : Sig}
+   -- op : {Σ : Sig}
    --   → {!!}
 
-    `using_at_run_finally : {U U' : Sig} {C : KState} {X Y : VType}
-      → Γ ⊢V: U ⇒ U' , C
+    `using_at_run_finally : {Σ Σ' : Sig} {C : KState} {X Y : VType}
+      → Γ ⊢V: Σ ⇒ Σ' , C
       → Γ ⊢V: gnd C
-      → Γ ⊢M: X ! U
-      → Γ ∷ X ∷ gnd C ⊢M: Y ! U'
+      → Γ ⊢M: X ! Σ
+      → Γ ∷ X ∷ gnd C ⊢M: Y ! Σ'
       -----------------
-      → Γ ⊢M: Y ! U'
+      → Γ ⊢M: Y ! Σ'
 
     -- `using R at W run M finally N
     -- vs
     -- run R W M N
 
 
-    kernel_at_finally :{X Y : VType} {U : Sig} {C : KState}
-      → Γ ⊢K: X ↯ U , C
+    kernel_at_finally :{X Y : VType} {Σ : Sig} {C : KState}
+      → Γ ⊢K: X ↯ Σ , C
       → Γ ⊢V: gnd C
-      → Γ ∷ X ∷ gnd C ⊢M: Y ! U 
+      → Γ ∷ X ∷ gnd C ⊢M: Y ! Σ 
       --------------
-      → Γ ⊢M: Y ! U 
+      → Γ ⊢M: Y ! Σ 
 
   data _⊢K:_ where
 
-    sub-kernel : {X X' : VType} {U U' : Sig} { C C' : KState}
-         → Γ ⊢K: X ↯ U , C
-         → X ↯ U , C ⊑ₖ X' ↯ U' , C'
+    sub-kernel : {K K' : KType}
+         → Γ ⊢K: K
+         → K ⊑ₖ K'
          ------------------------------------
-         → Γ ⊢K: X' ↯ U' , C'
+         → Γ ⊢K: K'
 
 
 
-    return : {X : VType} {U : Sig} {C : KState}
+    return : {X : VType} {Σ : Sig} {C : KState}
       → Γ ⊢V: X
       --------------------------
-      → Γ ⊢K: X ↯ U , C
+      → Γ ⊢K: X ↯ Σ , C
 
-    apply : {X Y : VType} {U : Sig} {C : KState}
-      → Γ ⊢V: X ⟶ₖ Y ↯ U , C
+    apply : {X : VType} {K : KType}
+      → Γ ⊢V: X ⟶ₖ K
       → Γ ⊢V: X
       ---------------------------------
-      → Γ ⊢K: Y ↯ U , C
+      → Γ ⊢K: K
 
-    `let_`in : {X Y : VType} {U : Sig} {C : KState}
-      → Γ ⊢K: X ↯ U , C
-      → Γ ∷ X ⊢K: Y ↯ U , C
+    `let_`in : {X Y : VType} {Σ : Sig} {C : KState}
+      → Γ ⊢K: X ↯ Σ , C
+      → Γ ∷ X ⊢K: Y ↯ Σ , C
       ---------------------------
-      → Γ ⊢K: Y ↯ U , C
+      → Γ ⊢K: Y ↯ Σ , C
 
-    matchpair : {X Y Z : VType} { U : Sig } {C : KState}
+    matchpair : {X Y : VType} {K : KType}
       → Γ ⊢V: X × Y
-      → Γ ∷ X ∷ Y ⊢K: Z ↯ U , C
+      → Γ ∷ X ∷ Y ⊢K: K
       ---------------------
-      → Γ ⊢K: Z ↯ U , C
+      → Γ ⊢K: K
 
-    -- TODO: ops
-
-    getenv : {C : KState} {X : VType} {U : Sig}
-      → Γ ∷ gnd C ⊢K: X ↯ U , C
+    kernel-op : {X Y : VType} {Σ : Sig} {C : KState}
+      → Γ ⊢V: X
+      → Γ ∷ Y ⊢K: X ↯ Σ , C
+      ------------------------------
+      → Γ ⊢K: X ↯ Σ , C
+    
+    getenv : {C : KState} {X : VType} {Σ : Sig}
+      → Γ ∷ gnd C ⊢K: X ↯ Σ , C
       ---------------------------
-      → Γ ⊢K: X ↯ U , C
+      → Γ ⊢K: X ↯ Σ , C
 
-    setenv : {C : KState} {X : VType} {U : Sig}
+    setenv : {C : KState} {X : VType} {Σ : Sig}
       → Γ ⊢V: gnd C
-      → Γ ⊢K: X ↯ U , C
+      → Γ ⊢K: X ↯ Σ , C
       -------------------------
-      → Γ ⊢K: X ↯ U , C
+      → Γ ⊢K: X ↯ Σ , C
 
-    user_finally : {U : Sig} {C : KState} {X Y : VType}
-      → Γ ⊢M: X ! U
-      → Γ ∷ X ⊢K: Y ↯ U , C
+    user_finally : {Σ : Sig} {C : KState} {X Y : VType}
+      → Γ ⊢M: X ! Σ
+      → Γ ∷ X ⊢K: Y ↯ Σ , C
       --------------------------
-      → Γ ⊢K: Y ↯ U , C
+      → Γ ⊢K: Y ↯ Σ , C
       
 
 infix 1 _⊢M:_ _⊢K:_ _⊢V:_ 
