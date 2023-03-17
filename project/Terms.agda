@@ -35,23 +35,23 @@ interleaved mutual
         --------------------
         Γ ⊢V: gnd unit
 
-    value-pair : {X Y : VType}
+    ⟨_,_⟩ : {X Y : VType}
         → Γ ⊢V: X
         → Γ ⊢V: Y
         -------------------
         → Γ ⊢V: X × Y
 
-    user-fun : {X : VType} {U : UType}
+    fun_ : {X : VType} {U : UType}
          → Γ ∷ X ⊢M: U
          ---------------------
          → Γ ⊢V: X ⟶ᵤ U
     
-    kern-fun : {X : VType} {K : KType}
+    funK_ : {X : VType} {K : KType}
          → (Γ ∷ X) ⊢K: K
          ------------------------------
          → Γ ⊢V: X ⟶ₖ K
 
-    runner : {Σ Σ' : Sig} {C : KState} {op : Op}
+    ∀op_ : {Σ Σ' : Sig} {C : KState} {op : Op}
          → ((op ∈ₒ Σ) → Γ ∷ gnd (param op) ⊢K: gnd (result op) ↯ Σ' , C)
          ---------------------------------------------------------------
          → Γ ⊢V: Σ ⇒ Σ' , C
@@ -70,34 +70,26 @@ interleaved mutual
        ----------
        → Γ ⊢M: X ! Σ
 
-    apply : {X : VType} {U : UType}
+    _∘_ : {X : VType} {U : UType} -- Formerly apply
       → Γ ⊢V: X ⟶ᵤ U
       → Γ ⊢V: X
       -------------------------
       → Γ ⊢M: U
-
-    -- _(*)_
-
---    tyuser-op : {X Y : VType} {Σ : Sig} {op : Op}
---       → ((op ∈ₒ Σ) → Γ ⊢V: X)
---       → ((op ∈ₒ Σ) → Γ ∷ Y ⊢M: X ! Σ)
---       -------------------------
---       → Γ ⊢M: X ! Σ
-
-    tyuser-op : {X Y : VType} {Σ : Sig} {op : Op}
+      
+    opₘ : {X Y : VType} {Σ : Sig} {op : Op}
        → Γ ⊢V: X
        → Γ ∷ Y ⊢M: X ! Σ
        -------------------------
        → Γ ⊢M: X ! Σ
 
-    `let_`in : {X Y : VType} { Σ : Sig }
+    Try_With : {X Y : VType} { Σ : Sig }
     -- let x = M in N
       → Γ ⊢M: X ! Σ
       → Γ ∷ X ⊢M: Y ! Σ
       ----------
       → Γ ⊢M: Y ! Σ
 
-    matchpair : {X Y : VType} {U : UType}
+    Match_With_ : {X Y : VType} {U : UType}
       → Γ ⊢V: X × Y
       → Γ ∷ X ∷ Y ⊢M: U
       ----------------------------
@@ -106,7 +98,7 @@ interleaved mutual
    -- op : {Σ : Sig}
    --   → {!!}
 
-    `using_at_run_finally : {Σ Σ' : Sig} {C : KState} {X Y : VType}
+    Using_At_Run_Finally : {Σ Σ' : Sig} {C : KState} {X Y : VType}
       → Γ ⊢V: Σ ⇒ Σ' , C
       → Γ ⊢V: gnd C
       → Γ ⊢M: X ! Σ
@@ -119,7 +111,7 @@ interleaved mutual
     -- run R W M N
 
 
-    kernel_at_finally :{X Y : VType} {Σ : Sig} {C : KState}
+    Kernel_At_Finally :{X Y : VType} {Σ : Sig} {C : KState}
       → Γ ⊢K: X ↯ Σ , C
       → Γ ⊢V: gnd C
       → Γ ∷ X ∷ gnd C ⊢M: Y ! Σ 
@@ -141,25 +133,25 @@ interleaved mutual
       --------------------------
       → Γ ⊢K: X ↯ Σ , C
 
-    apply : {X : VType} {K : KType}
+    _∘_ : {X : VType} {K : KType}
       → Γ ⊢V: X ⟶ₖ K
       → Γ ⊢V: X
       ---------------------------------
       → Γ ⊢K: K
 
-    `let_`in : {X Y : VType} {Σ : Sig} {C : KState}
+    Try_With : {X Y : VType} {Σ : Sig} {C : KState}
       → Γ ⊢K: X ↯ Σ , C
       → Γ ∷ X ⊢K: Y ↯ Σ , C
       ---------------------------
       → Γ ⊢K: Y ↯ Σ , C
 
-    matchpair : {X Y : VType} {K : KType}
+    Match_With_ : {X Y : VType} {K : KType}
       → Γ ⊢V: X × Y
       → Γ ∷ X ∷ Y ⊢K: K
       ---------------------
       → Γ ⊢K: K
 
-    kernel-op : {X Y : VType} {Σ : Sig} {C : KState}
+    opₖ : {X Y : VType} {Σ : Sig} {C : KState}
       → Γ ⊢V: X
       → Γ ∷ Y ⊢K: X ↯ Σ , C
       ------------------------------
@@ -176,7 +168,7 @@ interleaved mutual
       -------------------------
       → Γ ⊢K: X ↯ Σ , C
 
-    user_finally : {Σ : Sig} {C : KState} {X Y : VType}
+    User_With : {Σ : Sig} {C : KState} {X Y : VType}
       → Γ ⊢M: X ! Σ
       → Γ ∷ X ⊢K: Y ↯ Σ , C
       --------------------------

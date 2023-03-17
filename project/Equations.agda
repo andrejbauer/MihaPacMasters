@@ -35,7 +35,28 @@ interleaved mutual
       → Γ ⊢V V ≡ Z
 
     -- congruence rules
-    
+
+    fun-cong :
+        {X : VType} {U : UType}
+        {M N : Γ ∷ X ⊢M: U}
+      → (Γ ∷ X) ⊢M M ≡ N
+      -------------------------
+      → Γ ⊢V (fun M) ≡ (fun N)
+
+    funK-cong :
+      {X : VType} {K : KType}
+      {M N : (Γ ∷ X) ⊢K: K}
+      → (Γ ∷ X) ⊢K M ≡ N
+      -----------------
+      → Γ ⊢V funK M ≡ (funK N)
+
+    ∀op-cong :
+      {X : VType} {Σ Σ' : Sig} {C : KState} {op : Op}
+      {M N : ((op ∈ₒ Σ) → Γ ∷ gnd (param op) ⊢K: gnd (result op) ↯ Σ' , C)}
+      → Γ ⊢K {!!} ≡ {!!}
+      -------------------------
+      → {!!}
+
     -- rules from the paper
 
 
@@ -43,6 +64,17 @@ interleaved mutual
            ----------------------
            → Γ ⊢V V ≡ ⟨⟩
 
+    fun : {X : VType}
+      → {!!}
+      ------------
+      → Γ ⊢V {!!} ≡ {!!}
+
+    funK : {X : VType}
+      → {!!}
+      ---------------
+      → Γ ⊢V {!!} ≡ {!!}
+
+    
     
 
   data _⊢M_≡_ where
@@ -63,34 +95,122 @@ interleaved mutual
       --------------------------
       → Γ ⊢M M ≡ O
     -- congruence rules
-    -- rules from the paper
 
-
-    comp1 : {X : VType} {Σ : Sig} {V : Γ ⊢M: X ! Σ}
-      → Γ ⊢M V ≡ {!!}
-
-    ′try_′with : {X Y : VType} {U : UType} {V : Γ ⊢M: U}
+    return-cong :
+      {X : VType}
+      → {!!}
+      ------------------
       → Γ ⊢M {!!} ≡ {!!}
 
-    ′match_′with : {X Y : VType} {U : UType} {V : Γ ⊢M: U}
+    ∘-cong :
+      {X : VType}
+      → {!!}
+      ----------------------
+      → Γ ⊢M {!!} ≡ {!!}
+
+    opₘ-cong :
+      {X : VType}
+      → {!!}
+      --------------------
+      → Γ ⊢M {!!} ≡ {!!}
+
+    TryWith-cong :
+      {X : VType}
+      → {!!}
+      --------------------
+      → Γ ⊢M {!!} ≡ {!!}
+
+    MatchWith-cong :
+      {X : VType}
+      → {!!}
+      ----------------------
+      → Γ ⊢M {!!} ≡ {!!}
+
+
+    UsingAtRunFinally-cong :
+      {X : VType}
+      → {!!}
+      ------------------------
+      → Γ ⊢M {!!} ≡ {!!}
+
+    KernelAtFinally-cong :
+      {X : VType}
+      → {!!}
+      ------------------------
+      → Γ ⊢M {!!} ≡ {!!}
+
+    -- rules from the paper
+    funM : {X : VType} {U : UType}
+      → (funM : (Γ ∷ X) ⊢M: U)
+      → Γ ⊢M {!!} ≡ {!!}
+
+    TryReturn_With_ : {X Y : VType} {Σ : Sig}  {U : UType} {V : Γ ⊢M: U}
+      → (A : Γ ⊢V: X)
+      → (B : Γ ∷ X ⊢M: Y ! Σ)
+      ----------------------------
+      → Γ ⊢M Try (return A) With {!!} ≡ {!!}
+
+    Tryop_With_ : {X Y : VType} {Σ : Sig} {V : VType}
+      → (A : Γ ⊢V: X)
+      → (B : Γ ∷ Y ⊢M: X ! Σ)
+      --------------------------------
+      → Γ ⊢M Try (opₘ {!!} {!!}) With {!!} ≡ opₘ {!!} {!!}
+
+    Matchprod_With : {X Y : VType} {U : UType} {V : Γ ⊢M: U}
       → (XxY : Γ ⊢V: X × Y)
       → (W : Γ ∷ X ∷ Y ⊢M: U)
       -----------------
-      → Γ ⊢M matchpair XxY W ≡ {!!} -- Unsure
+      → Γ ⊢M (Match XxY With W) ≡ {!!} -- Unsure
       
-    ′match_′withnull : {X Y : VType} {U V : UType} {V : Γ ⊢M: U}
+    Matchnull_With : {X Y : VType} {U V : UType} {V : Γ ⊢M: U}
       → (XxY : Γ ⊢V: X × Y)
-      → {!!}
+      → (B : Γ ⊢M: U)
       -----------------
-      → Γ ⊢M matchpair XxY {!!} ≡ {!!} -- Unsure
+      → Γ ⊢M  (Match XxY With {!!}) ≡ B -- Unsure
 
-    ′using_′run_′finally : {!!}
-      → {!!}
+    Usingreturn_Run_Finally :{U V W : VType} 
+      → {!Γ ⊢V: !}
       → {!!}
       → {!!}
       ------------
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ⊢M Using {!!} At {!!} Run (return {!!}) Finally (return {!!}) ≡ {!!}
 
+    Usingop_Run_Finally :{U V W : VType} 
+      → {!Γ ⊢V: !}
+      → {!!}
+      → {!!}
+      ------------
+      → Γ ⊢M Using {!!} At {!!} Run (return {!!}) Finally (return {!!}) ≡ {!!}
+
+    Kernelreturn_At_Finally : {X : VType}
+      → {!!}
+      -------------------
+      → Γ ⊢M Kernel (return {!!}) At {!!} Finally (return {!!}) ≡ {!!}
+
+    Kernelgetenv_At_Finally : {X : VType}
+      → {!!}
+      -------------------
+      → Γ ⊢M Kernel getenv {!!} At {!!} Finally (return {!!})
+      ≡ Kernel {!!} At {!!} Finally (return {!!})
+
+    Kernelsetenv_At_Finally : {X : VType}
+      → {!!}
+      -------------------
+      → Γ ⊢M Kernel setenv {!!} {!!} At {!!} Finally (return {!!})
+      ≡ Kernel {!!} At {!!} Finally (return {!!})
+
+    Kernelop_At_Finally : {X : VType}
+      → {!!}
+      -------------------
+      → Γ ⊢M Kernel opₖ {!!} {!!}  At {!!} Finally (return {!!})
+      ≡ opₘ {!!} {!!}
+
+
+    TryM_With : {X : VType}
+      → {!!}
+      -------------------
+      → Γ ⊢M {!!} ≡ {!!}
+      
   data _⊢K_≡_ where
 
     -- equivalence rules
@@ -109,24 +229,128 @@ interleaved mutual
       --------------------------
       → Γ ⊢K K ≡ M
     -- congruence rules
+
+    return-cong :
+      {X : VType}
+      → {!!}
+      ----------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+    TryWith-cong :
+      {X : VType}
+      → {!!}
+      ----------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+    MatchWith-cong :
+      {X : VType}
+      → {!!}
+      ----------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+    opₖ-cong :
+      {X : VType}
+      → {!!}
+      ----------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+    getenv-cong :
+      {X : VType}
+      → {!!}
+      -----------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+    setenv-cong :
+      {X : VType}
+      → {!!}
+      --------------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+    UserWith-cong :
+      {X : VType}
+      → {!!}
+      -------------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+
     -- rules from the paper
 
-    getsetenv : {C : KState} {X : VType} {Σ : Sig} {K : Γ ⊢K: X ↯ Σ , C}
+    funK : {X : VType}
+      → {!!}
+      -------------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+    TryReturn_With_ : {X : VType}
+      → {!!}
+      -----------------
+      → Γ ⊢K Try {!!} With {!!} ≡ {!!}
+
+    Tryop_With_ : {X : VType}
+      → {!!}
+      -----------------
+      → Γ ⊢K Try opₖ {!!} {!!} With {!!} ≡ opₖ {!!} {!!}
+
+    Trygetenv_With_ : {X : VType}
+      → {!!}
+      -----------------
+      → Γ ⊢K Try getenv {!!} With {!!} ≡ getenv {!!}
+    
+    Trysetenv_With_ : {X : VType}
+      → {!!}
+      -----------------
+      → Γ ⊢K Try setenv {!!} {!!} With {!!} ≡ setenv {!!} {!!}
+      
+    Matchprod_With : {X : VType}
+      → {!!}
+      -------------------
+      → Γ ⊢K Match {!!} With {!!} ≡ {!!}
+      
+    Matchnull_With : {X : VType}
+      → {!!}
+      -------------------
+      → Γ ⊢K Match {!!} With {!!} ≡ {!!}
+
+    Userreturn_With : {X : VType}
+      → {!!}
+      ----------------------
+      → Γ ⊢K User {!!} With {!!} ≡ {!!}
+
+    Userop_With : {X : VType}
+      → {!!}
+      ----------------------
+      → Γ ⊢K User {!!} With {!!} ≡ {!!}
+
+    TryK_With : {X : VType}
+      → {!!}
+      -------------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+    GetSetenv : {C : KState} {X : VType} {Σ : Sig} {K : Γ ⊢K: X ↯ Σ , C}
       → (A : Γ ∷ gnd C ⊢K: X ↯ Σ , C)
       → (V : Γ ⊢V: gnd C)
       -------------
       → Γ ⊢K setenv V (getenv A) ≡ K -- Unsure
 
-    setgetenv : {C : KState} {X : VType} {Σ : Sig} {K : Γ ⊢K: X ↯ Σ , C}
+    SetGetenv : {C : KState} {X : VType} {Σ : Sig} {K : Γ ⊢K: X ↯ Σ , C}
       → {!!}
       → {!!}
       --------------
       → Γ ⊢K setenv {!!} (getenv {!!}) ≡ setenv {!!} {!!}
       
-    setsetenv : {C C' : KState} {X : VType} {Σ : Sig} {K : Γ ⊢K: X ↯ Σ , C}
+    SetSetenv : {C C' : KState} {X : VType} {Σ : Sig} {K : Γ ⊢K: X ↯ Σ , C}
       → (W : Γ ⊢V: gnd C)
       → (V : Γ ⊢V: gnd C)
       --------------
       → Γ ⊢K setenv V (setenv W K) ≡ setenv W K
 
-metch_weth_ : {Γ : Ctx} {X Y : VType} {U V : UType} {V : Γ ⊢M: U} → {!!} → {!!} → Γ ⊢M {!!} ≡ {!!}
+    GetOpEnv : {X : VType}
+      → {!!}
+      -----------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+    SetOpEnv : {X : VType}
+      → {!!}
+      ----------------
+      → Γ ⊢K {!!} ≡ {!!}
+
+
