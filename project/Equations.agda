@@ -1,13 +1,14 @@
 open import Parameters
 
-module Equations (G : GTypes) (O : Ops G) where
+module Equations where --(G : GTypes) (O : Ops G) where
+
+open import Types -- G O
+open import Terms -- G O
+open import Contexts -- G O
+open import Replace -- G O
 
 open GTypes G
 open Ops O
-
-open import Types G O
-open import Terms G O
-open import Contexts G O
 
 interleaved mutual
  
@@ -50,12 +51,12 @@ interleaved mutual
       -----------------
       → Γ ⊢V funK M ≡ (funK N)
 
-    ∀op-cong :
-      {X : VType} {Σ Σ' : Sig} {C : KState} {op : Op}
-      {M N : ((op ∈ₒ Σ) → Γ ∷ gnd (param op) ⊢K: gnd (result op) ↯ Σ' , C)}
-      → Γ ⊢K {!!} ≡ {!!}
-      -------------------------
-      → {!!}
+    runner-cong :
+      {X : VType} {Σ Σ' : Sig} {C : KState}
+      {R R' : ((op : Op) → (op ∈ₒ Σ) → co-op Γ Σ' C op)}
+      → ((op : Op) → (p : op ∈ₒ Σ) → (Γ ∷ gnd (param op)) ⊢K R op p ≡ R' op p)
+      ------------------------------------------------------------------------
+      → Γ ⊢V runner R ≡ runner R'
 
     -- rules from the paper
 
@@ -145,16 +146,19 @@ interleaved mutual
       → Γ ⊢M {!!} ≡ {!!}
 
     TryReturn_With_ : {X Y : VType} {Σ : Sig}  {U : UType} {V : Γ ⊢M: U}
-      → (A : Γ ⊢V: X)
-      → (B : Γ ∷ X ⊢M: Y ! Σ)
+      → (V : Γ ⊢V: X)
+      → (N : Γ ∷ X ⊢M: Y ! Σ)
       ----------------------------
-      → Γ ⊢M Try (return A) With {!!} ≡ {!!}
+      → Γ ⊢M Try (return V) With N ≡ {!N[V/x]!}
 
-    Tryop_With_ : {X Y : VType} {Σ : Sig} {V : VType}
-      → (A : Γ ⊢V: X)
-      → (B : Γ ∷ Y ⊢M: X ! Σ)
+    let-beta-op : {X Y : VType} {Σ : Sig} {V : VType}            -- TODO: naming conventions, e.g., let-beta-op
+      → (op : Op)
+      → (V : Γ ⊢V: gnd (param op))
+      → (M : Γ ∷ gnd (result op) ⊢M: X ! Σ)
+      → (N : Γ ∷ X ⊢M: Y ! Σ)
       --------------------------------
-      → Γ ⊢M Try (opₘ {!!} {!!}) With {!!} ≡ opₘ {!!} {!!}
+      → Γ ⊢M Try (opᵤ op V M) With N
+           ≡ opᵤ op V (Try M With (N [ wkᵣ ∘ᵣ exchᵣ ]ᵤᵣ))
 
     Matchprod_With : {X Y : VType} {U : UType} {V : Γ ⊢M: U}
       → (XxY : Γ ⊢V: X × Y)
@@ -200,13 +204,14 @@ interleaved mutual
       ≡ Kernel {!!} At {!!} Finally (return {!!})
 
     Kernelop_At_Finally : {X : VType}
+      → (op : Op)
       → {!!}
       -------------------
       → Γ ⊢M Kernel opₖ {!!} {!!}  At {!!} Finally (return {!!})
-      ≡ opₘ {!!} {!!}
+      ≡ opᵤ op {!!} {!!}
 
 
-    TryM_With : {X : VType}
+    TryM_With : {X : VType}    -- let-eta
       → {!!}
       -------------------
       → Γ ⊢M {!!} ≡ {!!}
