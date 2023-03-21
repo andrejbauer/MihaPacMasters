@@ -5,7 +5,7 @@ module Equations where --(G : GTypes) (O : Ops G) where
 open import Types -- G O
 open import Terms -- G O
 open import Contexts -- G O
-open import Replace -- G O
+open import Substitution -- G O
 
 open GTypes G
 open Ops O
@@ -36,6 +36,15 @@ interleaved mutual
       → Γ ⊢V V ≡ Z
 
     -- congruence rules
+
+    prod-cong :
+      {X Y : VType}
+      {V₁ V₂ : Γ ⊢V: X}
+      {W₁ W₂ : Γ ⊢V: Y}
+      → Γ ⊢V V₁ ≡ V₂
+      → Γ ⊢V W₁ ≡ W₂
+      -----------------------------
+      → Γ ⊢V ⟨ V₁ , W₁ ⟩ ≡ ⟨ V₂ , W₂ ⟩
 
     fun-cong :
         {X : VType} {U : UType}
@@ -98,120 +107,146 @@ interleaved mutual
     -- congruence rules
 
     return-cong :
-      {X : VType}
-      → {!!}
+      {X : VType} {V W : Γ ⊢V: X} 
+      → Γ ⊢V V ≡ W
       ------------------
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ⊢M return V ≡ return W
 
     ∘-cong :
-      {X : VType}
-      → {!!}
+      {X : VType} {U : UType}
+      {V₁ V₂ : Γ ⊢V: X ⟶ᵤ U}
+      {W₁ W₂ : Γ ⊢V: X}
+      → Γ ⊢V V₁ ≡ V₂
+      → Γ ⊢V W₁ ≡ W₂
       ----------------------
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ⊢M V₁ ∘ W₁ ≡ (V₂ ∘ W₂)
 
-    opₘ-cong :
-      {X : VType}
-      → {!!}
+    opᵤ-cong :
+      {X : VType} {Σ : Sig}
+      {op : Op} {V₁ V₂ : Γ ⊢V: gnd (param op)}
+      {M₁ M₂ : Γ ∷ gnd (result op) ⊢M: X ! Σ}
+      → Γ ⊢V V₁ ≡ V₂
+      → Γ ⊢M {!!} ≡ {!!}
       --------------------
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ⊢M opᵤ op V₁ M₁ ≡ opᵤ op V₂ M₂
 
-    TryWith-cong :
-      {X : VType}
-      → {!!}
+    let-in-cong :
+      {X Y : VType} {Σ : Sig}
+      {M₁ M₂ : Γ ⊢M: X ! Σ}
+      {N₁ N₂ : Γ ∷ X ⊢M: Y ! Σ}
+      → Γ ⊢M M₁ ≡ M₂
+      → Γ ⊢M {!!} ≡ {!!}
       --------------------
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ⊢M `let M₁ `in N₁ ≡ `let M₂ `in N₂
 
-    MatchWith-cong :
-      {X : VType}
-      → {!!}
+    match-with-cong :
+      {X Y : VType} {U : UType}
+      {V₁ V₂ : Γ ⊢V: X × Y}
+      {M₁ M₂ : Γ ∷ X ∷ Y ⊢M: U}
+      → Γ ⊢V V₁ ≡ V₂
+      → Γ ⊢M {!!} ≡ {!!}
       ----------------------
+      → Γ ⊢M (match V₁ `with M₁) ≡ (match V₂ `with M₂)
+
+
+    using-at-run-finally-cong :
+      {X Y : VType} {Σ Σ' : Sig} {C : KState}
+      {V₁ V₂ : Γ ⊢V: Σ ⇒ Σ' , C}
+      {W₁ W₂ : Γ ⊢V: gnd C}
+      {M₁ M₂ : Γ ⊢M: X ! Σ}
+      {N₁ N₂ : Γ ∷ X ∷ gnd C ⊢M: Y ! Σ'}
+      → Γ ⊢V V₁ ≡ V₂
+      → Γ ⊢V W₁ ≡ W₂
+      → Γ ⊢M M₁ ≡ M₂
       → Γ ⊢M {!!} ≡ {!!}
-
-
-    UsingAtRunFinally-cong :
-      {X : VType}
-      → {!!}
       ------------------------
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ⊢M `using V₁ at W₁ `run M₁ finally N₁ ≡ `using {!!} at {!!} `run {!!} finally {!!}
 
-    KernelAtFinally-cong :
-      {X : VType}
-      → {!!}
-      ------------------------
+    kernel-at-finally-cong :
+      {X Y : VType} {Σ : Sig} {C : KState}
+      {K₁ K₂ : Γ ⊢K: X ↯ Σ , C}
+      {V₁ V₂ : Γ ⊢V: gnd C}
+      {M₁ M₂ : Γ ∷ X ∷ gnd C ⊢M: Y ! Σ} 
+      → Γ ⊢K K₁ ≡ K₂
+      → Γ ⊢V V₁ ≡ V₂
       → Γ ⊢M {!!} ≡ {!!}
+      ------------------------
+      → Γ ⊢M kernel K₁ at V₁ finally M₁ ≡ kernel K₂ at V₂ finally M₂
 
     -- rules from the paper
     funM : {X : VType} {U : UType}
       → (funM : (Γ ∷ X) ⊢M: U)
       → Γ ⊢M {!!} ≡ {!!}
 
-    TryReturn_With_ : {X Y : VType} {Σ : Sig}  {U : UType} {V : Γ ⊢M: U}
+    let-beta-return_ : {X Y : VType} {Σ : Sig}  {U : UType} {V : Γ ⊢M: U}
       → (V : Γ ⊢V: X)
       → (N : Γ ∷ X ⊢M: Y ! Σ)
       ----------------------------
-      → Γ ⊢M Try (return V) With N ≡ {!N[V/x]!}
-
+      → Γ ⊢M {!!} ≡ {!!}
+      
     let-beta-op : {X Y : VType} {Σ : Sig} {V : VType}            -- TODO: naming conventions, e.g., let-beta-op
       → (op : Op)
       → (V : Γ ⊢V: gnd (param op))
       → (M : Γ ∷ gnd (result op) ⊢M: X ! Σ)
       → (N : Γ ∷ X ⊢M: Y ! Σ)
       --------------------------------
-      → Γ ⊢M Try (opᵤ op V M) With N
-           ≡ opᵤ op V (Try M With (N [ wkᵣ ∘ᵣ exchᵣ ]ᵤᵣ))
+      → {!!}
+      --→ Γ ⊢M Try (opᵤ op V M) With N
+      --     ≡ opᵤ op V (Try M With (N [ wkᵣ ∘ᵣ exchᵣ ]ᵤᵣ))
 
-    Matchprod_With : {X Y : VType} {U : UType} {V : Γ ⊢M: U}
+    match-with-beta-prod : {X Y : VType} {U : UType} {V : Γ ⊢M: U}
       → (XxY : Γ ⊢V: X × Y)
       → (W : Γ ∷ X ∷ Y ⊢M: U)
       -----------------
-      → Γ ⊢M (Match XxY With W) ≡ {!!} -- Unsure
+      → {!!}
+    --→ Γ ⊢M (Match XxY With W) ≡ {!!} -- Unsure
       
-    Matchnull_With : {X Y : VType} {U V : UType} {V : Γ ⊢M: U}
+    match-with-beta-null : {X Y : VType} {U V : UType} {V : Γ ⊢M: U}
       → (XxY : Γ ⊢V: X × Y)
       → (B : Γ ⊢M: U)
       -----------------
-      → Γ ⊢M  (Match XxY With {!!}) ≡ B -- Unsure
+      → {!!}
+      --→ Γ ⊢M  (Match XxY With {!!}) ≡ B -- Unsure
 
-    Usingreturn_Run_Finally :{U V W : VType} 
+    using-run-finally-beta-return :{U V W : VType} 
       → {!Γ ⊢V: !}
       → {!!}
       → {!!}
       ------------
-      → Γ ⊢M Using {!!} At {!!} Run (return {!!}) Finally (return {!!}) ≡ {!!}
+      → {!!}
+      --→ Γ ⊢M Using {!!} At {!!} Run (return {!!}) Finally (return {!!}) ≡ {!!}
 
-    Usingop_Run_Finally :{U V W : VType} 
+    using-run-finally-beta-op :{U V W : VType} 
       → {!Γ ⊢V: !}
       → {!!}
       → {!!}
       ------------
-      → Γ ⊢M Using {!!} At {!!} Run (return {!!}) Finally (return {!!}) ≡ {!!}
+      → {!!}
+--→ Γ ⊢M Using {!!} At {!!} Run (return {!!}) Finally (return {!!}) ≡ {!!}
 
-    Kernelreturn_At_Finally : {X : VType}
+    kernel-at-finally-beta-return : {X : VType}
       → {!!}
       -------------------
-      → Γ ⊢M Kernel (return {!!}) At {!!} Finally (return {!!}) ≡ {!!}
-
-    Kernelgetenv_At_Finally : {X : VType}
+      → {!!}
+      
+    kernel-at-finally-beta-getenv : {X : VType}
       → {!!}
       -------------------
-      → Γ ⊢M Kernel getenv {!!} At {!!} Finally (return {!!})
-      ≡ Kernel {!!} At {!!} Finally (return {!!})
-
-    Kernelsetenv_At_Finally : {X : VType}
+      → {!!}
+      
+    kernel-at-finally-setenv : {X : VType}
       → {!!}
       -------------------
-      → Γ ⊢M Kernel setenv {!!} {!!} At {!!} Finally (return {!!})
-      ≡ Kernel {!!} At {!!} Finally (return {!!})
-
-    Kernelop_At_Finally : {X : VType}
+      → {!!}
+      
+    kernel-at-finally-beta-op : {X : VType}
       → (op : Op)
       → {!!}
       -------------------
-      → Γ ⊢M Kernel opₖ {!!} {!!}  At {!!} Finally (return {!!})
-      ≡ opᵤ op {!!} {!!}
+      → Γ ⊢M {!!} ≡ {!!}
 
 
-    TryM_With : {X : VType}    -- let-eta
+    let-in-beta-M : {X : VType}    -- let-eta
       → {!!}
       -------------------
       → Γ ⊢M {!!} ≡ {!!}
@@ -236,46 +271,72 @@ interleaved mutual
     -- congruence rules
 
     return-cong :
-      {X : VType}
-      → {!!}
+      {X : VType} {Σ : Sig} {C : KState}
+      {V₁ V₂ : Γ ⊢V: X}
+      → Γ ⊢V V₁ ≡ V₂
       ----------------
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ⊢K return V₁ ≡ return V₂
 
-    TryWith-cong :
-      {X : VType}
-      → {!!}
-      ----------------
-      → Γ ⊢K {!!} ≡ {!!}
+    ∘-cong :
+      {X : VType} {K : KType}
+      {V₁ V₂ : Γ ⊢V: X ⟶ₖ K}
+      {W₁ W₂ : Γ ⊢V: X}
+      → Γ ⊢V V₁ ≡ V₂
+      → Γ ⊢V W₁ ≡ W₂
+      -----------------------
+      → Γ ⊢K V₁ ∘ W₁ ≡ (V₂ ∘ W₂)
 
-    MatchWith-cong :
-      {X : VType}
-      → {!!}
-      ----------------
+    let-in-cong :
+      {X Y : VType} {Σ : Sig} {C : KState}
+      {K₁ K₂ : Γ ⊢K:  X ↯ Σ , C}
+      {L₁ L₂ : Γ ∷ X ⊢K: Y ↯ Σ , C}
+      → Γ ⊢K K₁ ≡ K₂
       → Γ ⊢K {!!} ≡ {!!}
+      ----------------
+      → Γ ⊢K `let K₁ `in L₁ ≡ `let K₂ `in L₂
+
+    match-with-cong :
+      {X Y : VType} {K : KType}
+      {V₁ V₂ : Γ ⊢V: X × Y}
+      {K₁ K₂ : Γ ∷ X ∷ Y ⊢K: K} 
+      → Γ ⊢V V₁ ≡ V₂
+      → Γ ⊢K {!!} ≡ {!!}
+      ----------------
+      → Γ ⊢K match V₁ `with K₁ ≡ (match V₂ `with K₂)
 
     opₖ-cong :
-      {X : VType}
-      → {!!}
-      ----------------
+      {X Y : VType} {Σ : Sig} {C : KState}
+      {V₁ V₂ : Γ ⊢V: X}
+      {K₁ K₂ : Γ ∷ Y ⊢K: X ↯ Σ , C}
+      → Γ ⊢V V₁ ≡ V₂
       → Γ ⊢K {!!} ≡ {!!}
+      ----------------
+      → Γ ⊢K opₖ V₁ K₁ ≡ opₖ V₂ K₂
 
     getenv-cong :
-      {X : VType}
-      → {!!}
-      -----------------
+      {X : VType} {C : KState} {Σ : Sig}
+      {K₁ K₂ : Γ ∷ gnd C ⊢K: X ↯ Σ , C}
       → Γ ⊢K {!!} ≡ {!!}
+      -----------------
+      → Γ ⊢K getenv K₁ ≡ getenv K₂
 
     setenv-cong :
-      {X : VType}
-      → {!!}
+      {X : VType} {C : KState} {Σ : Sig}
+      {V₁ V₂ : Γ ⊢V: gnd C}
+      {K₁ K₂ : Γ ⊢K: X ↯ Σ , C}
+      → Γ ⊢V V₁ ≡ V₂
+      → Γ ⊢K K₁ ≡ K₂
       --------------------
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ⊢K setenv V₁ K₁ ≡ setenv V₂ K₂
 
-    UserWith-cong :
-      {X : VType}
-      → {!!}
+    user-with-cong :
+      {X Y : VType} {Σ : Sig} {C : KState}
+      {M₁ M₂ : Γ ⊢M: X ! Σ}
+      {K₁ K₂ : Γ ∷ X ⊢K: Y ↯ Σ , C}
+      → Γ ⊢M M₁ ≡ M₂
+      → Γ ⊢K {!!} ≡ {!!} 
       -------------------
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ⊢K user M₁ `with K₁ ≡ user M₂ `with K₂
 
 
     -- rules from the paper
@@ -285,47 +346,47 @@ interleaved mutual
       -------------------
       → Γ ⊢K {!!} ≡ {!!}
 
-    TryReturn_With_ : {X : VType}
+    let-in-beta-return : {X : VType}
       → {!!}
       -----------------
-      → Γ ⊢K Try {!!} With {!!} ≡ {!!}
+      → Γ ⊢K {!!} ≡ {!!}
 
-    Tryop_With_ : {X : VType}
+    let-in-beta-op : {X : VType}
       → {!!}
       -----------------
-      → Γ ⊢K Try opₖ {!!} {!!} With {!!} ≡ opₖ {!!} {!!}
+      → Γ ⊢K {!!} ≡ {!!}
 
-    Trygetenv_With_ : {X : VType}
+    let-in-beta-getenv : {X : VType}
       → {!!}
       -----------------
-      → Γ ⊢K Try getenv {!!} With {!!} ≡ getenv {!!}
+      → Γ ⊢K {!!} ≡ {!!}
     
-    Trysetenv_With_ : {X : VType}
+    let-in-beta-setenv : {X : VType}
       → {!!}
       -----------------
-      → Γ ⊢K Try setenv {!!} {!!} With {!!} ≡ setenv {!!} {!!}
+      → Γ ⊢K {!!} ≡ {!!}
       
-    Matchprod_With : {X : VType}
+    math-with-beta-prod : {X : VType}
       → {!!}
       -------------------
-      → Γ ⊢K Match {!!} With {!!} ≡ {!!}
+      → Γ ⊢K {!!} ≡ {!!}
       
-    Matchnull_With : {X : VType}
+    match-with-beta-null : {X : VType}
       → {!!}
       -------------------
-      → Γ ⊢K Match {!!} With {!!} ≡ {!!}
+      → Γ ⊢K {!!} ≡ {!!}
 
-    Userreturn_With : {X : VType}
+    user-with-beta-return : {X : VType}
       → {!!}
       ----------------------
-      → Γ ⊢K User {!!} With {!!} ≡ {!!}
+      → Γ ⊢K {!!} ≡ {!!}
 
-    Userop_With : {X : VType}
+    user-with-beta-op : {X : VType}
       → {!!}
       ----------------------
-      → Γ ⊢K User {!!} With {!!} ≡ {!!}
+      → Γ ⊢K {!!} ≡ {!!}
 
-    TryK_With : {X : VType}
+    try-with-beta-K : {X : VType}
       → {!!}
       -------------------
       → Γ ⊢K {!!} ≡ {!!}

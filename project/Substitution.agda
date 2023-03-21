@@ -2,7 +2,7 @@
 
 open import Parameters
 
-module Replace where --(G : GTypes) (O : Ops G) where
+module Substitution where --(G : GTypes) (O : Ops G) where
 
 open import Types -- G O
 open import Terms -- G O
@@ -24,7 +24,7 @@ idᵣ x = x
 -- composition of renamings
  
 _∘ᵣ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → Ren Γ Γ' → Ren Γ Γ''
-ρ' ∘ᵣ ρ = {!!}
+ρ' ∘ᵣ ρ = λ z → ρ (ρ' z)
  
 -- weakening renaming
  
@@ -45,9 +45,25 @@ interleaved mutual
   _[_]ᵥᵣ : ∀{Γ Γ' X} → Γ' ⊢V: X → Ren Γ Γ' → Γ ⊢V: X
   _[_]ᵤᵣ : ∀{Γ Γ' X} → Γ' ⊢M: X → Ren Γ Γ' → Γ ⊢M: X
   _[_]ₖᵣ : ∀{Γ Γ' X} → Γ' ⊢K: X → Ren Γ Γ' → Γ ⊢K: X
- 
-  V [ ρ ]ᵥᵣ = {!!}
+  -- Value
+  var x [ ρ ]ᵥᵣ = var (ρ x)
+  sub-value V x [ ρ ]ᵥᵣ = sub-value ( V [ ρ ]ᵥᵣ) x
+  ⟨⟩ [ ρ ]ᵥᵣ = ⟨⟩
+  ⟨ V , W ⟩ [ ρ ]ᵥᵣ = ⟨  V [ ρ ]ᵥᵣ , W [ ρ ]ᵥᵣ ⟩
+  (fun x) [ ρ ]ᵥᵣ = fun {!wkᵣ!}
+  (funK x) [ ρ ]ᵥᵣ = {!!}
+  runner x [ ρ ]ᵥᵣ = {!!}
+  -- User
   M [ ρ ]ᵤᵣ = {!!}
+  {-ub-user M x [ ρ ]ᵤᵣ = sub-user (M [ ρ ]ᵤᵣ) x
+  return V [ ρ ]ᵤᵣ = return (V [ ρ ]ᵥᵣ)
+  (V ∘ W) [ ρ ]ᵤᵣ = (V [ ρ ]ᵥᵣ) ∘ (W [ ρ ]ᵥᵣ)
+  opᵤ op V M [ ρ ]ᵤᵣ = opᵤ op (V [ ρ ]ᵥᵣ) (M [ {! !} ]ᵤᵣ)
+  `let M `in N [ ρ ]ᵤᵣ = {!!}
+  match x `with M [ ρ ]ᵤᵣ = {!!}
+  `using x at x₁ `run M finally M₁ [ ρ ]ᵤᵣ = {!!}
+  kernel x at x₁ finally M [ ρ ]ᵤᵣ = {!!} -}
+  -- Kernel
   K [ ρ ]ₖᵣ = {!!}
  
 -- ...

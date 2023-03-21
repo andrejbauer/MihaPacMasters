@@ -87,27 +87,19 @@ interleaved mutual
        -------------------------------
        → Γ ⊢M: X ! Σ
  
-    -- TODO: lowercase constructor names, perhaps try_'with_
- 
-    -- TODO: rename to `let_`in_
- 
-    Try_With : {X Y : VType} { Σ : Sig }
-    -- let x = M in N
+    `let_`in : {X Y : VType} { Σ : Sig }
       → Γ ⊢M: X ! Σ
       → Γ ∷ X ⊢M: Y ! Σ
       ----------
       → Γ ⊢M: Y ! Σ
  
-    Match_With_ : {X Y : VType} {U : UType}
+    match_`with_ : {X Y : VType} {U : UType}
       → Γ ⊢V: X × Y
       → Γ ∷ X ∷ Y ⊢M: U
       ----------------------------
       → Γ ⊢M: U
  
-   -- op : {Σ : Sig}
-   --   → {!!}
- 
-    Using_At_Run_Finally : {Σ Σ' : Sig} {C : KState} {X Y : VType}
+    `using_at_`run_finally : {Σ Σ' : Sig} {C : KState} {X Y : VType}
       → Γ ⊢V: Σ ⇒ Σ' , C
       → Γ ⊢V: gnd C
       → Γ ⊢M: X ! Σ
@@ -115,12 +107,7 @@ interleaved mutual
       -----------------
       → Γ ⊢M: Y ! Σ'
  
-    -- `using R at W run M finally N
-    -- vs
-    -- run R W M N
- 
- 
-    Kernel_At_Finally :{X Y : VType} {Σ : Sig} {C : KState}
+    kernel_at_finally :{X Y : VType} {Σ : Sig} {C : KState}
       → Γ ⊢K: X ↯ Σ , C
       → Γ ⊢V: gnd C
       → Γ ∷ X ∷ gnd C ⊢M: Y ! Σ 
@@ -148,13 +135,13 @@ interleaved mutual
       ---------------------------------
       → Γ ⊢K: K
  
-    Try_With : {X Y : VType} {Σ : Sig} {C : KState}
+    `let_`in : {X Y : VType} {Σ : Sig} {C : KState}
       → Γ ⊢K: X ↯ Σ , C
       → Γ ∷ X ⊢K: Y ↯ Σ , C
       ---------------------------
       → Γ ⊢K: Y ↯ Σ , C
  
-    Match_With_ : {X Y : VType} {K : KType}
+    match_`with_ : {X Y : VType} {K : KType}
       → Γ ⊢V: X × Y
       → Γ ∷ X ∷ Y ⊢K: K
       ---------------------
@@ -179,7 +166,7 @@ interleaved mutual
       -------------------------
       → Γ ⊢K: X ↯ Σ , C
  
-    User_With : {Σ : Sig} {C : KState} {X Y : VType}
+    user_`with : {Σ : Sig} {C : KState} {X Y : VType}
       → Γ ⊢M: X ! Σ
       → Γ ∷ X ⊢K: Y ↯ Σ , C
       --------------------------
