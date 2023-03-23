@@ -51,7 +51,7 @@ interleaved mutual
         {M N : Γ ∷ X ⊢M: U}
       → (Γ ∷ X) ⊢M M ≡ N
       -------------------------
-      → Γ ⊢V (fun M) ≡ (fun N)
+      → Γ ⊢V (funM M) ≡ (funM N)
 
     funK-cong :
       {X : VType} {K : KType}
@@ -74,12 +74,12 @@ interleaved mutual
            ----------------------
            → Γ ⊢V V ≡ ⟨⟩
 
-    fun : {X : VType}
+    funM-beta : {X : VType}
       → {!!}
       ------------
       → Γ ⊢V {!!} ≡ {!!}
 
-    funK : {X : VType}
+    funK-beta : {X : VType}
       → {!!}
       ---------------
       → Γ ⊢V {!!} ≡ {!!}
@@ -176,9 +176,10 @@ interleaved mutual
 
     -- rules from the paper
     funM : {X : VType} {U : UType}
-      → (funM : (Γ ∷ X) ⊢M: U)
+      → (M : (Γ ∷ X) ⊢M: U)
+      → (V : Γ ⊢V: X)
       -------------------------------
-      → Γ ⊢M {!fun!} ≡ {!!}
+      → Γ ⊢M (funM M) ∘ V ≡ (M [ {!!} ]ᵤ)
 
     let-in-beta-return_ : {X Y : VType} {Σ : Sig}  {U : UType} {V : Γ ⊢M: U}
       → (V : Γ ⊢V: X)
@@ -207,7 +208,7 @@ interleaved mutual
       → (V : Γ ⊢V: X)
       → (B : Γ ⊢M: U)
       -----------------
-      → Γ ⊢M match {!V!} `with {!!} ≡ {!!}
+      → Γ ⊢M match {!!} `with {!!} ≡ {!!}
       --→ Γ ⊢M  (Match XxY With {!!}) ≡ B -- Unsure
 
     using-run-finally-beta-return :
@@ -307,7 +308,7 @@ interleaved mutual
       {K₁ K₂ : Γ ⊢K:  X ↯ Σ , C}
       {L₁ L₂ : Γ ∷ X ⊢K: Y ↯ Σ , C}
       → Γ ⊢K K₁ ≡ K₂
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ∷ X ⊢K L₁ ≡ L₂
       ----------------
       → Γ ⊢K `let K₁ `in L₁ ≡ `let K₂ `in L₂
 
@@ -316,7 +317,7 @@ interleaved mutual
       {V₁ V₂ : Γ ⊢V: X × Y}
       {K₁ K₂ : Γ ∷ X ∷ Y ⊢K: K} 
       → Γ ⊢V V₁ ≡ V₂
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ∷ X ∷ Y ⊢K K₁ ≡ K₂
       ----------------
       → Γ ⊢K match V₁ `with K₁ ≡ (match V₂ `with K₂)
 
@@ -326,14 +327,14 @@ interleaved mutual
       {V₁ V₂ : Γ ⊢V: X}
       {K₁ K₂ : Γ ∷ Y ⊢K: X ↯ Σ , C}
       → Γ ⊢V V₁ ≡ V₂
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ∷ Y ⊢K K₁ ≡ K₂
       ----------------
       → Γ ⊢K opₖ op V₁ K₁ ≡ opₖ op  V₂ K₂
 
     getenv-cong :
       {X : VType} {C : KState} {Σ : Sig}
       {K₁ K₂ : Γ ∷ gnd C ⊢K: X ↯ Σ , C}
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ∷ gnd C ⊢K K₁ ≡ K₂
       -----------------
       → Γ ⊢K getenv K₁ ≡ getenv K₂
 
@@ -358,35 +359,53 @@ interleaved mutual
 
     -- rules from the paper
 
-    funK : {X : VType}
-      → {!!}
+    funK-beta : {X : VType} {L : KType}
+      → (K : Γ ∷ X ⊢K: L)
+      → (V : Γ ⊢V: X)
       -------------------
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ⊢K (funK K) ∘ V ≡ (K [ {!!} ]ₖ)
 
-    let-in-beta-return : {X : VType}
-      → {!!}
+    let-in-beta-return : {X Y : VType}
+      {Σ : Sig} {C : KState}
+      → (V : Γ ⊢V: X)
+      → (G : Γ ∷ X ⊢K: Y ↯ Σ , C)
+      → (L : Γ ⊢K: Y ↯ Σ , C)
       -----------------
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ⊢K `let (return V) `in G ≡ (L [ {!!} ]ₖ)
 
-    let-in-beta-op : {X : VType}
-      → {!!}
+    let-in-beta-op :
+      {X Y Z : VType}
+      {Σ : Sig} {C : KState}
+      → (op : Op)
+      → (V : Γ ⊢V: X)
+      → (K : Γ ∷ Y ⊢K: {!!} ↯ Σ , C)
+      → (G : Γ ∷ X ⊢K: {!!} ↯ Σ , C)
       -----------------
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ⊢K `let (opₖ op V {!!}) `in {!!}
+          ≡ opₖ op V (`let {!!} `in {!G!})
 
-    let-in-beta-getenv : {X : VType}
-      → {!!}
+    let-in-beta-getenv : {X Y : VType}
+      {C : KState} {Σ : Sig}
+      → (K : Γ ∷ gnd C ⊢K: X ↯ Σ , C)
+      → (G : Γ ∷ X ⊢K: Y ↯ Σ , C)
       -----------------
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ⊢K `let (getenv K) `in G
+          ≡ getenv (`let K `in {!!})
     
     let-in-beta-setenv : {X : VType}
       → {!!}
       -----------------
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ⊢K `let (setenv {!!} {!!}) `in {!!}
+          ≡ setenv {!!} (`let {!!} `in {!!})
       
-    math-with-beta-prod : {X : VType}
-      → {!!}
+    match-with-beta-prod : {X Y : VType}
+      {G : KType}
+      → (V : Γ ⊢V: X)
+      → (W : Γ ⊢V: Y)
+      → (K' : Γ ∷ X ∷ Y ⊢K: G)
+      → (K : Γ ⊢K: G)
       -------------------
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ⊢K match ⟨ V , W ⟩ `with K' ≡ (K [ ? ]ₖ)
       
     match-with-beta-null : {X : VType}
       → {!!}

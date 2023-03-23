@@ -45,7 +45,7 @@ interleaved mutual
         -------------------
         → Γ ⊢V: X × Y
  
-    fun_ : {X : VType} {U : UType}
+    funM_ : {X : VType} {U : UType}
          → Γ ∷ X ⊢M: U
          ---------------------
          → Γ ⊢V: X ⟶ᵤ U
