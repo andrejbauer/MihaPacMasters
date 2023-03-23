@@ -126,7 +126,7 @@ interleaved mutual
       {op : Op} {V₁ V₂ : Γ ⊢V: gnd (param op)}
       {M₁ M₂ : Γ ∷ gnd (result op) ⊢M: X ! Σ}
       → Γ ⊢V V₁ ≡ V₂
-      → Γ ⊢M {!!} ≡ {!!}
+      → (Γ ∷ gnd (result op)) ⊢M M₁ ≡ M₂
       --------------------
       → Γ ⊢M opᵤ op V₁ M₁ ≡ opᵤ op V₂ M₂
 
@@ -135,7 +135,7 @@ interleaved mutual
       {M₁ M₂ : Γ ⊢M: X ! Σ}
       {N₁ N₂ : Γ ∷ X ⊢M: Y ! Σ}
       → Γ ⊢M M₁ ≡ M₂
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ∷ X ⊢M N₁ ≡ N₂
       --------------------
       → Γ ⊢M `let M₁ `in N₁ ≡ `let M₂ `in N₂
 
@@ -144,7 +144,7 @@ interleaved mutual
       {V₁ V₂ : Γ ⊢V: X × Y}
       {M₁ M₂ : Γ ∷ X ∷ Y ⊢M: U}
       → Γ ⊢V V₁ ≡ V₂
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ∷ X ∷ Y ⊢M M₁ ≡ M₂
       ----------------------
       → Γ ⊢M (match V₁ `with M₁) ≡ (match V₂ `with M₂)
 
@@ -158,9 +158,10 @@ interleaved mutual
       → Γ ⊢V V₁ ≡ V₂
       → Γ ⊢V W₁ ≡ W₂
       → Γ ⊢M M₁ ≡ M₂
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ∷ X ∷ gnd C ⊢M N₁ ≡ N₂
       ------------------------
-      → Γ ⊢M `using V₁ at W₁ `run M₁ finally N₁ ≡ `using {!!} at {!!} `run {!!} finally {!!}
+      → Γ ⊢M `using V₁ at W₁ `run M₁ finally N₁
+      ≡ `using V₂ at W₂ `run M₂ finally N₂
 
     kernel-at-finally-cong :
       {X Y : VType} {Σ : Sig} {C : KState}
@@ -169,81 +170,96 @@ interleaved mutual
       {M₁ M₂ : Γ ∷ X ∷ gnd C ⊢M: Y ! Σ} 
       → Γ ⊢K K₁ ≡ K₂
       → Γ ⊢V V₁ ≡ V₂
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ∷ X ∷ gnd C ⊢M M₁ ≡ M₂
       ------------------------
       → Γ ⊢M kernel K₁ at V₁ finally M₁ ≡ kernel K₂ at V₂ finally M₂
 
     -- rules from the paper
     funM : {X : VType} {U : UType}
       → (funM : (Γ ∷ X) ⊢M: U)
-      → Γ ⊢M {!!} ≡ {!!}
+      -------------------------------
+      → Γ ⊢M {!fun!} ≡ {!!}
 
-    let-beta-return_ : {X Y : VType} {Σ : Sig}  {U : UType} {V : Γ ⊢M: U}
+    let-in-beta-return_ : {X Y : VType} {Σ : Sig}  {U : UType} {V : Γ ⊢M: U}
       → (V : Γ ⊢V: X)
       → (N : Γ ∷ X ⊢M: Y ! Σ)
       ----------------------------
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ⊢M `let (return V) `in N ≡ {!!}
       
-    let-beta-op : {X Y : VType} {Σ : Sig} {V : VType}            -- TODO: naming conventions, e.g., let-beta-op
+    let-in-beta-op : {X Y : VType} {Σ : Sig} {V : VType}            -- TODO: naming conventions, e.g., let-beta-op
       → (op : Op)
       → (V : Γ ⊢V: gnd (param op))
       → (M : Γ ∷ gnd (result op) ⊢M: X ! Σ)
       → (N : Γ ∷ X ⊢M: Y ! Σ)
       --------------------------------
-      → {!!}
+      → Γ ⊢M `let (opᵤ op V M) `in N ≡ opᵤ op V (`let M `in {!!})
       --→ Γ ⊢M Try (opᵤ op V M) With N
       --     ≡ opᵤ op V (Try M With (N [ wkᵣ ∘ᵣ exchᵣ ]ᵤᵣ))
 
     match-with-beta-prod : {X Y : VType} {U : UType} {V : Γ ⊢M: U}
       → (XxY : Γ ⊢V: X × Y)
-      → (W : Γ ∷ X ∷ Y ⊢M: U)
+      → (M : Γ ∷ X ∷ Y ⊢M: U)
       -----------------
-      → {!!}
+      → Γ ⊢M match XxY `with M ≡  (M [ {!!} ]ᵤ) -- Is it renaming or substitution here?
     --→ Γ ⊢M (Match XxY With W) ≡ {!!} -- Unsure
       
-    match-with-beta-null : {X Y : VType} {U V : UType} {V : Γ ⊢M: U}
-      → (XxY : Γ ⊢V: X × Y)
+    match-with-beta-null : {X : VType} {U : UType}
+      → (V : Γ ⊢V: X)
       → (B : Γ ⊢M: U)
       -----------------
-      → {!!}
+      → Γ ⊢M match {!V!} `with {!!} ≡ {!!}
       --→ Γ ⊢M  (Match XxY With {!!}) ≡ B -- Unsure
 
-    using-run-finally-beta-return :{U V W : VType} 
-      → {!Γ ⊢V: !}
-      → {!!}
-      → {!!}
+    using-run-finally-beta-return :
+      {Σ Σ' : Sig} {C : KState} {X Y : VType}
+      → (V : Γ ⊢V: Σ ⇒ Σ' , C)
+      → (W : Γ ⊢V: gnd C)
+      → (V' : Γ ⊢V: X)
       ------------
-      → {!!}
+      → Γ ⊢M `using V at W `run return V' finally {!!} ≡ {!!}
       --→ Γ ⊢M Using {!!} At {!!} Run (return {!!}) Finally (return {!!}) ≡ {!!}
 
-    using-run-finally-beta-op :{U V W : VType} 
-      → {!Γ ⊢V: !}
-      → {!!}
-      → {!!}
+    using-run-finally-beta-op :
+      {Σ Σ' : Sig} {C : KState} {X Y : VType}
+      → (V : Γ ⊢V: Σ ⇒ Σ' , C)
+      → (W : Γ ⊢V: gnd C)
+      → (V' : Γ ⊢V: X)
+      {op : Op}
+      → (W : Γ ⊢V: gnd C)
       ------------
-      → {!!}
+      → Γ ⊢M `using {!!} at W `run (opᵤ op {!!} {!!}) finally {!!}
+          ≡ kernel {!!} at W finally {!!}
 --→ Γ ⊢M Using {!!} At {!!} Run (return {!!}) Finally (return {!!}) ≡ {!!}
 
     kernel-at-finally-beta-return : {X : VType}
-      → {!!}
+      {Σ Σ' : Sig} {C : KState}
+      → (V : Γ ⊢V: X)
+      → (W : Γ ⊢V: gnd C)
       -------------------
-      → {!!}
+      → Γ ⊢M kernel return V at W finally {!!} ≡ {!!}
       
-    kernel-at-finally-beta-getenv : {X : VType}
-      → {!!}
+    kernel-at-finally-beta-getenv : {X Y : VType}
+      {Σ Σ' : Sig} {C : KState}
+      → (V : Γ ⊢V: X)
+      → (W : Γ ⊢V: gnd C)
+      → (K : Γ ∷ gnd C ⊢K: Y ↯ Σ , C)
       -------------------
-      → {!!}
+      → Γ ⊢M kernel getenv K at W finally {!!}
+          ≡ kernel {!!} at W finally {!!}
       
-    kernel-at-finally-setenv : {X : VType}
-      → {!!}
+    kernel-at-finally-setenv : {X Y : VType}
+      {Σ Σ' : Sig} {C : KState}
+      → (V W : Γ ⊢V: gnd C)
+      → (K : Γ ⊢K: Y ↯ Σ , C)
       -------------------
-      → {!!}
+      → Γ ⊢M kernel setenv V K at W finally {!!}
+          ≡ kernel K at V finally {!!}
       
     kernel-at-finally-beta-op : {X : VType}
       → (op : Op)
       → {!!}
       -------------------
-      → Γ ⊢M {!!} ≡ {!!}
+      → Γ ⊢M kernel (opₖ op  {!!} {!!}) at {!!} finally {!!} ≡ {!!}
 
 
     let-in-beta-M : {X : VType}    -- let-eta
@@ -306,12 +322,13 @@ interleaved mutual
 
     opₖ-cong :
       {X Y : VType} {Σ : Sig} {C : KState}
+      {op : Op}
       {V₁ V₂ : Γ ⊢V: X}
       {K₁ K₂ : Γ ∷ Y ⊢K: X ↯ Σ , C}
       → Γ ⊢V V₁ ≡ V₂
       → Γ ⊢K {!!} ≡ {!!}
       ----------------
-      → Γ ⊢K opₖ V₁ K₁ ≡ opₖ V₂ K₂
+      → Γ ⊢K opₖ op V₁ K₁ ≡ opₖ op  V₂ K₂
 
     getenv-cong :
       {X : VType} {C : KState} {Σ : Sig}
@@ -334,7 +351,7 @@ interleaved mutual
       {M₁ M₂ : Γ ⊢M: X ! Σ}
       {K₁ K₂ : Γ ∷ X ⊢K: Y ↯ Σ , C}
       → Γ ⊢M M₁ ≡ M₂
-      → Γ ⊢K {!!} ≡ {!!} 
+      → Γ ∷ X ⊢K K₁ ≡ K₂ 
       -------------------
       → Γ ⊢K user M₁ `with K₁ ≡ user M₂ `with K₂
 
@@ -420,3 +437,4 @@ interleaved mutual
       → Γ ⊢K {!!} ≡ {!!}
 
 
+infix 1 _⊢V_≡_ _⊢M_≡_ _⊢K_≡_

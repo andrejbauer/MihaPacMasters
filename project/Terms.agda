@@ -150,6 +150,7 @@ interleaved mutual
     -- TODO: fix!
  
     opₖ : {X Y : VType} {Σ : Sig} {C : KState}
+      → (op : Op)
       → Γ ⊢V: X
       → Γ ∷ Y ⊢K: X ↯ Σ , C
       ------------------------------
