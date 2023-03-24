@@ -1,11 +1,11 @@
 open import Parameters
 
-module Equations where --(G : GTypes) (O : Ops G) where
+module Equations where 
 
-open import Types -- G O
-open import Terms -- G O
-open import Contexts -- G O
-open import Substitution -- G O
+open import Types
+open import Terms
+open import Contexts 
+open import Substitution
 
 open GTypes G
 open Ops O

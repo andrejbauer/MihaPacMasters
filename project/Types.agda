@@ -3,7 +3,7 @@ open import Relation.Binary.PropositionalEquality
 
 open import Parameters
 
-module Types where --(G : GTypes) (O : Ops G) where
+module Types where 
 
 open GTypes G
 open Ops O
@@ -47,7 +47,6 @@ interleaved mutual
  
   data _⊑ᵥ_ where -- "\squb="
  
-    --  I wrote ⊑ᵥ as "\squb\_v and then choosing the 4th v
     ⊑ᵥ-ground : {A : GType}
               -------------
               → gnd A ⊑ᵥ gnd A
@@ -99,8 +98,6 @@ interleaved mutual
  
     
  
-  -- That might be it
- 
  
 infix 12 _⟶ᵤ_ _⟶ₖ_ _⇒_,_
 infix 10 _⊑ᵥ_ _⊑ᵤ_ _⊑ₖ_
@@ -108,4 +105,3 @@ infix 15 _!_ _↯_,_
 infix 40 _×_
  
  
--- ...

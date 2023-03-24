@@ -1,16 +1,13 @@
 open import Parameters
 
-module Terms where --(G : GTypes) (O : Ops G) where
+module Terms where 
    
-open import Types -- G O
-open import Contexts -- G O
+open import Types 
+open import Contexts 
  
 open GTypes G
 open Ops O
  
--- replaced ⦂ with ː because my computer's font does not show the former.
--- ː is \:3
--- Replaced ː with :, because I don't see the point
 -- Well-typed value and computation terms
 interleaved mutual
  
