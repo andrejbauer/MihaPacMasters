@@ -123,12 +123,14 @@ interleaved mutual
 
     opᵤ-cong :
       {X : VType} {Σ : Sig}
-      {op : Op} {V₁ V₂ : Γ ⊢V: gnd (param op)}
+      {op : Op}
+      {V₁ V₂ : Γ ⊢V: gnd (param op)}
       {M₁ M₂ : Γ ∷ gnd (result op) ⊢M: X ! Σ}
+      → (p : op ∈ₒ Σ)
       → Γ ⊢V V₁ ≡ V₂
       → (Γ ∷ gnd (result op)) ⊢M M₁ ≡ M₂
       --------------------
-      → Γ ⊢M opᵤ op {!!}  V₁ M₁ ≡ opᵤ op {!!} V₂ M₂
+      → Γ ⊢M opᵤ op p  V₁ M₁ ≡ opᵤ op p V₂ M₂
 
     let-in-cong :
       {X Y : VType} {Σ : Sig}
@@ -189,13 +191,12 @@ interleaved mutual
 
     let-in-beta-op : {X Y : VType} {Σ : Sig} {V : VType}
       → (op : Op)
+      → (p : op ∈ₒ Σ)
       → (V : Γ ⊢V: gnd (param op))
       → (M : Γ ∷ gnd (result op) ⊢M: X ! Σ)
       → (N : Γ ∷ X ⊢M: Y ! Σ)
       --------------------------------
-      → Γ ⊢M `let (opᵤ op {!!} V M) `in N ≡ opᵤ op {!!} V (`let M `in {!!})
-      --→ Γ ⊢M Try (opᵤ op V M) With N
-      --     ≡ opᵤ op V (Try M With (N [ wkᵣ ∘ᵣ exchᵣ ]ᵤᵣ))
+      → Γ ⊢M `let (opᵤ op p V M) `in N ≡ opᵤ op p V (`let M `in {!!})
 
     match-with-beta-prod : {X Y : VType} {U : UType} {V : Γ ⊢M: U}
       → (XxY : Γ ⊢V: X × Y)
@@ -257,10 +258,12 @@ interleaved mutual
           ≡ kernel K at V finally {!!}
 
     kernel-at-finally-beta-op : {X : VType}
+      {Σ : Sig}
       → (op : Op)
+      → (p : op ∈ₒ Σ)
       → {!!}
       -------------------
-      → Γ ⊢M kernel (opₖ op {!!} {!!} {!!}) at {!!} finally {!!} ≡ {!!}
+      → Γ ⊢M kernel (opₖ op {!p!} {!!} {!!}) at {!!} finally {!!} ≡ {!!}
 
 
     let-in-eta-M : {X : VType}    -- let-eta
