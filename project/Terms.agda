@@ -42,12 +42,12 @@ interleaved mutual
         -------------------
         → Γ ⊢V: X × Y
  
-    funM_ : {X : VType} {U : UType}
+    funM : {X : VType} {U : UType}
          → Γ ∷ X ⊢M: U
          ---------------------
          → Γ ⊢V: X ⟶ᵤ U
     
-    funK_ : {X : VType} {K : KType}
+    funK : {X : VType} {K : KType}
          → (Γ ∷ X) ⊢K: K
          ------------------------------
          → Γ ⊢V: X ⟶ₖ K
@@ -90,7 +90,7 @@ interleaved mutual
       ----------
       → Γ ⊢M: Y ! Σ
  
-    match_`with_ : {X Y : VType} {U : UType}
+    match_`with : {X Y : VType} {U : UType}
       → Γ ⊢V: X × Y
       → Γ ∷ X ∷ Y ⊢M: U
       ----------------------------
@@ -138,7 +138,7 @@ interleaved mutual
       ---------------------------
       → Γ ⊢K: Y ↯ Σ , C
  
-    match_`with_ : {X Y : VType} {K : KType}
+    match_`with : {X Y : VType} {K : KType}
       → Γ ⊢V: X × Y
       → Γ ∷ X ∷ Y ⊢K: K
       ---------------------

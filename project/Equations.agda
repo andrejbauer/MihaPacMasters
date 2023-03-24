@@ -187,7 +187,7 @@ interleaved mutual
       ----------------------------
       → Γ ⊢M `let (return V) `in N ≡ {!!}
       
-    let-in-beta-op : {X Y : VType} {Σ : Sig} {V : VType}            -- TODO: naming conventions, e.g., let-beta-op
+    let-in-beta-op : {X Y : VType} {Σ : Sig} {V : VType}            
       → (op : Op)
       → (V : Γ ⊢V: gnd (param op))
       → (M : Γ ∷ gnd (result op) ⊢M: X ! Σ)
