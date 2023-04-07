@@ -25,12 +25,12 @@ idᵣ x = x
 -- composition of renamings
 
 _∘ᵣ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → Ren Γ Γ' → Ren Γ Γ''
-ρ' ∘ᵣ ρ = λ z → ρ (ρ' z)
+(ρ ∘ᵣ ρ') p = ρ' (ρ p)
 
 -- weakening renaming
 
 wkᵣ : ∀ {Γ X} → Ren (Γ ∷ X) Γ
-wkᵣ x = there x
+wkᵣ x =  there x
 
 -- exchange renaming
 
@@ -51,7 +51,7 @@ interleaved mutual
   sub-value V x [ ρ ]ᵥᵣ = sub-value ( V [ ρ ]ᵥᵣ) x
   ⟨⟩ [ ρ ]ᵥᵣ = ⟨⟩
   ⟨ V , W ⟩ [ ρ ]ᵥᵣ = ⟨  V [ ρ ]ᵥᵣ , W [ ρ ]ᵥᵣ ⟩
-  (funM M) [ ρ ]ᵥᵣ = funM {!!}
+  (funM M) [ ρ ]ᵥᵣ = funM (M [ {!ρ!} ]ᵤᵣ)
   (funK K) [ ρ ]ᵥᵣ = {!!}
   runner R [ ρ ]ᵥᵣ = {!!}
   -- User

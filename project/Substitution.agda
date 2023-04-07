@@ -28,7 +28,17 @@ extend : ∀ {Γ Γ' X} → Sub Γ Γ' → Sub (Γ ∷ X) (Γ' ∷ X)
 extend σ here = var here
 extend σ (there x) =  σ x [ wkᵣ ]ᵥᵣ
 
+addₛ : ∀ {Γ Γ' X} → Sub Γ Γ' → Sub (Γ ∷ X) Γ'
+addₛ σ here = {!wkᵣ σ!}
+addₛ σ (there p) = {!!}
 
+cont : Ctx → Ctx → Ctx -- concatenation
+cont Γ [] = Γ
+cont Γ (Δ ∷ X) = (cont Γ Δ) ∷ X
+
+fun1 : ∀ {Γ Γ' X} → Sub Γ Γ' → Γ ⊢V: X → Sub Γ (Γ' ∷ X)
+fun1 σ V here = V
+fun1 σ V (there p) = σ p -- I do not understand what exactly happened here. It is a bad solution.
 
 -- Action of substitutions
 
