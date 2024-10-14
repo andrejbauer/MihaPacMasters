@@ -26,11 +26,19 @@ Sub Γ Γ' = {X : VType} → X ∈ Γ' → Γ ⊢V: X
 --       (2) given τ : Sub Δ Δ' and Δ ⊢ v : X, we get ⟨τ, v⟩ : Sub Δ (Δ' ∷ X)
 extend : ∀ {Γ Γ' X} → Sub Γ Γ' → Sub (Γ ∷ X) (Γ' ∷ X)
 extend σ here = var here
-extend σ (there x) =  σ x [ wkᵣ ]ᵥᵣ
+extend σ (there p) =  σ p [ wkᵣ ]ᵥᵣ
+
+obvious : ∀ {Γ X Y} → X ∈ Γ → X ∈ (Γ ∷ Y) -- This might be a completely pointless function
+obvious here = there here
+obvious (there p) = there (there p)
+
+obvious2 : ∀ {Γ X Y} → X ∈ (Γ ∷ Y) → X ∈ Γ -- I have a hard time believing this wouldn't already be present somewhere else
+obvious2 here = {!   !}
+obvious2 (there p) = p
 
 addₛ : ∀ {Γ Γ' X} → Sub Γ Γ' → Sub (Γ ∷ X) Γ'
-addₛ σ here = {!wkᵣ σ!}
-addₛ σ (there p) = {!!}
+addₛ σ here = σ here [ wkᵣ ]ᵥᵣ -- To add another variable to the start, we have to simply say that we will add a new variable at the start
+addₛ σ (there p) =  σ (obvious p) [ wkᵣ ]ᵥᵣ -- EXPLAIN WHAT wkᵣ ACTUALLY DOES
 
 cont : Ctx → Ctx → Ctx -- concatenation
 cont Γ [] = Γ
@@ -40,6 +48,8 @@ fun1 : ∀ {Γ Γ' X} → Sub Γ Γ' → Γ ⊢V: X → Sub Γ (Γ' ∷ X)
 fun1 σ V here = V
 fun1 σ V (there p) = σ p -- I do not understand what exactly happened here. It is a bad solution.
 
+fun2 : ∀ {Γ Γ' X K } → Sub Γ' Γ → Γ ∷ X ⊢K: K → Sub (Γ' ∷ X) (Γ ∷ X)
+fun2 σ K p = addₛ σ {!   !}
 -- Action of substitutions
 
 interleaved mutual
@@ -53,7 +63,7 @@ interleaved mutual
   ⟨⟩ [ σ ]ᵥ = ⟨⟩
   ⟨ V , W ⟩ [ σ ]ᵥ = ⟨ V [ σ ]ᵥ , W [ σ ]ᵥ ⟩
   (funM M) [ σ ]ᵥ = funM ( M [ extend σ ]ᵤ)
-  (funK K) [ σ ]ᵥ = funK (K [ {!!} ]ₖ)
+  (funK K) [ σ ]ᵥ = funK (K [ {! !} ]ₖ)
   runner R [ σ ]ᵥ = runner {!R [ ? ]ᵥ!}
 
   sub-user M x [ σ ]ᵤ = sub-user (M [ σ ]ᵤ) x
