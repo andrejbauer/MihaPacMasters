@@ -70,7 +70,7 @@ interleaved mutual
                 -----------------------------------
                 → X ⟶ₖ K ⊑ᵥ X' ⟶ₖ K' 
  
-    ⊑ᵥ-runner : {Σ₁ Σ₁' Σ₂ Σ₂' : Sig} {C C' : KState}
+    ⊑ᵥ-rename-cooper : {Σ₁ Σ₁' Σ₂ Σ₂' : Sig} {C C' : KState}
                → Σ₁' ⊆ₛ Σ₁
                → Σ₂ ⊆ₛ Σ₂'
                → C ≡ C'

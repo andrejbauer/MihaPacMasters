@@ -12,7 +12,7 @@ open Ops O
 interleaved mutual
 
   data _⊢V:_ (Γ : Ctx) : VType → Set
-  data _⊢M:_ (Γ : Ctx) : UType → Set
+  data _⊢U:_ (Γ : Ctx) : UType → Set
   data _⊢K:_ (Γ : Ctx) : KType → Set
 
   -- Co-operations
@@ -43,7 +43,7 @@ interleaved mutual
         → Γ ⊢V: X × Y
 
     funM : {X : VType} {U : UType}
-         → Γ ∷ X ⊢M: U
+         → Γ ∷ X ⊢U: U
          ---------------------
          → Γ ⊢V: X ⟶ᵤ U
 
@@ -52,65 +52,65 @@ interleaved mutual
          ------------------------------
          → Γ ⊢V: X ⟶ₖ K
 
-    runner : {Σ Σ' : Sig} {C : KState}
+    rename-cooper : {Σ Σ' : Sig} {C : KState}
            → ((op : Op) → (op ∈ₒ Σ) → co-op Γ Σ' C op)
            ---------------------------------------------
            → Γ ⊢V: Σ ⇒ Σ' , C
 
-  data _⊢M:_ where
+  data _⊢U:_ where
 
     sub-user : {U U' : UType}
-         → Γ ⊢M: U
+         → Γ ⊢U: U
          → U ⊑ᵤ U'
          -----------------------
-         → Γ ⊢M: U'
+         → Γ ⊢U: U'
 
     return : {X : VType} {Σ : Sig}
     -- TyUser-Return
        → Γ ⊢V: X
        ----------
-       → Γ ⊢M: X ! Σ
+       → Γ ⊢U: X ! Σ
 
     _∘_ : {X : VType} {U : UType} -- Formerly apply
       → Γ ⊢V: X ⟶ᵤ U
       → Γ ⊢V: X
       -------------------------
-      → Γ ⊢M: U
+      → Γ ⊢U: U
 
     opᵤ : {X : VType} {Σ : Sig}
        → (op : Op)
        → op ∈ₒ Σ
        → Γ ⊢V: gnd (param op)
-       → Γ ∷ gnd (result op) ⊢M: X ! Σ
+       → Γ ∷ gnd (result op) ⊢U: X ! Σ
        -------------------------------
-       → Γ ⊢M: X ! Σ
+       → Γ ⊢U: X ! Σ
 
     `let_`in : {X Y : VType} { Σ : Sig }
-      → Γ ⊢M: X ! Σ
-      → Γ ∷ X ⊢M: Y ! Σ
+      → Γ ⊢U: X ! Σ
+      → Γ ∷ X ⊢U: Y ! Σ
       ----------
-      → Γ ⊢M: Y ! Σ
+      → Γ ⊢U: Y ! Σ
 
     match_`with : {X Y : VType} {U : UType}
       → Γ ⊢V: X × Y
-      → Γ ∷ X ∷ Y ⊢M: U
+      → Γ ∷ X ∷ Y ⊢U: U
       ----------------------------
-      → Γ ⊢M: U
+      → Γ ⊢U: U
 
     `using_at_`run_finally : {Σ Σ' : Sig} {C : KState} {X Y : VType}
       → Γ ⊢V: Σ ⇒ Σ' , C
       → Γ ⊢V: gnd C
-      → Γ ⊢M: X ! Σ
-      → Γ ∷ X ∷ gnd C ⊢M: Y ! Σ'
+      → Γ ⊢U: X ! Σ
+      → Γ ∷ X ∷ gnd C ⊢U: Y ! Σ'
       -----------------
-      → Γ ⊢M: Y ! Σ'
+      → Γ ⊢U: Y ! Σ'
 
     kernel_at_finally :{X Y : VType} {Σ : Sig} {C : KState}
       → Γ ⊢K: X ↯ Σ , C
       → Γ ⊢V: gnd C
-      → Γ ∷ X ∷ gnd C ⊢M: Y ! Σ
+      → Γ ∷ X ∷ gnd C ⊢U: Y ! Σ
       --------------
-      → Γ ⊢M: Y ! Σ
+      → Γ ⊢U: Y ! Σ
 
   data _⊢K:_ where
 
@@ -167,10 +167,10 @@ interleaved mutual
       → Γ ⊢K: X ↯ Σ , C
 
     user_`with : {Σ : Sig} {C : KState} {X Y : VType}
-      → Γ ⊢M: X ! Σ
+      → Γ ⊢U: X ! Σ
       → Γ ∷ X ⊢K: Y ↯ Σ , C
       --------------------------
       → Γ ⊢K: Y ↯ Σ , C
 
 
-infix 1 _⊢M:_ _⊢K:_ _⊢V:_
+infix 1 _⊢U:_ _⊢K:_ _⊢V:_
