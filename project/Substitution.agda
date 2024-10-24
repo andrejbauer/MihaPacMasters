@@ -77,7 +77,7 @@ interleaved mutual
   ⟨ V , W ⟩ [ σ ]ᵥ = {!   !} -- ⟨ V [ σ ]ᵥ , W [ σ ]ᵥ ⟩
   (funM M) [ σ ]ᵥ = funM ( M [ extendₛ σ ]ᵤ)
   (funK K) [ σ ]ᵥ = funK (K [ extendₛ σ ]ₖ)
-  rename-cooper R [ σ ]ᵥ = rename-cooper λ op p → sub-coop (R op p) σ 
+  runner R [ σ ]ᵥ = runner λ op p → sub-coop (R op p) σ 
   
   sub-user M x [ σ ]ᵤ = sub-user (M [ σ ]ᵤ) x
   return V [ σ ]ᵤ = return (V [ σ ]ᵥ)

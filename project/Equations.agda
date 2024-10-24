@@ -62,12 +62,12 @@ interleaved mutual
       -----------------
       → Γ ⊢V funK M ≡ (funK N)
 
-    rename-cooper-cong :
+    runner-cong :
       {X : VType} {Σ Σ' : Sig} {C : KState}
       {R R' : ((op : Op) → (op ∈ₒ Σ) → co-op Γ Σ' C op)}
       → ((op : Op) → (p : op ∈ₒ Σ) → (Γ ∷ gnd (param op)) ⊢K R op p ≡ R' op p)
       ------------------------------------------------------------------------
-      → Γ ⊢V rename-cooper R ≡ rename-cooper R'
+      → Γ ⊢V runner R ≡ runner R'
 
     -- rules from the paper
 
@@ -201,50 +201,41 @@ interleaved mutual
       → Γ ⊢U `let (opᵤ op p V M) `in N ≡ opᵤ op p V (`let M `in (N [ (extendₛ (wkₛ idₛ)) ]ᵤ))
 
     match-with-beta-prod : {X Y : VType} {U : UType} {V : Γ ⊢V: X × Y} -- LOOK WITH A MORE CAREFUL LOOK AS I CHANGED THE V from being a usertype (for whatever reason) to a valuetype computation
+      -- Bodi pazliv da ne zamenjas V1 in V2 na koncu
       (V₁ : Γ ⊢V: X)
       (V₂ : Γ ⊢V: Y)
-      -- → (V : Γ ⊢V: X × Y) -- {! ⟨ ? , ? ⟩ !}) --(V : Γ ⊢V: X × Y)
       → (M : Γ ∷ X ∷ Y ⊢U: U)
       -----------------
       → Γ ⊢U match ⟨ V₁ , V₂ ⟩ `with M ≡ (M [ ((idₛ ∷ₛ V₁) ∷ₛ V₂) ]ᵤ)
-  -- → Γ ⊢U match V `with M ≡  ? --(M [ (idₛ ∷ₛ {!   !}) ∷ₛ {!   !} ]ᵤ) --(M [ {!   !} ∷ₛ {!   !} ]ᵤ) -- Is it renaming or substitution here?
-    --→ Γ ⊢U (Match XxY With W) ≡ {!!} -- Unsure
 
-    match-with-beta-null : {U : UType} --{X : VType} {U : UType}
-      -- → (V : Γ ⊢V: X)
+{-     match-with-beta-null : {U : UType} -- Zaenkrat naj to ostane prazno
+      → (V : Γ ⊢U: gnd 
       → (B : Γ ⊢U: U)
       -----------------
-      → Γ ⊢U match ⟨ ⟨⟩ , ⟨⟩ ⟩ `with (B [ (wkₛ (wkₛ idₛ)) ]ᵤ) ≡ B  -- This might be correct but it feels wrong to write ⟨ ⟨⟩ , ⟨⟩ ⟩ as an empty set
-      --→ Γ ⊢U  (Match XxY With {!!}) ≡ B -- Unsure
+      → Γ ⊢U match ? `with (B [ (wkₛ (wkₛ idₛ)) ]ᵤ) ≡ B -}
 
     using-run-finally-beta-return :
       {Σ Σ' : Sig} {C : KState} {X Y : VType}
-      → (V : Γ ⊢V: Σ ⇒ Σ' , C)
+      → (R : Γ ⊢V: Σ ⇒ Σ' , C)
       → (W : Γ ⊢V: gnd C)
-      → (V' : Γ ⊢V: X)
-      → (F : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ') 
-      → (N : Γ ⊢U: Y ! Σ')
+      → (V : Γ ⊢V: X)
+      → (N : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ') 
       ------------
-      → Γ ⊢U `using V at W `run return V' finally F ≡ (N [ idₛ ]ᵤ)
-      --→ Γ ⊢U Using {!!} At {!!} Run (return {!!}) Finally (return {!!}) ≡ {!!}
+      → Γ ⊢U `using R at W `run return V finally N ≡ (N [ (idₛ ∷ₛ V) ∷ₛ W ]ᵤ)
 
     using-run-finally-beta-op :
       {Σ Σ' : Sig} {C : KState} {X Y : VType}
-      → (V : Γ ⊢V: Σ ⇒ Σ' , C)
+      → (R : ((op : Op) → (op ∈ₒ Σ) → co-op Γ Σ' C op))
       → (W : Γ ⊢V: gnd C)
-      → (V' : Γ ⊢V: X)
       → (op : Op)
-      → (Vₒ : Γ ⊢V: gnd (param op))
-      → (p : op ∈ₒ {!   !})
+      → (V : Γ ⊢V: gnd (param op))
+      → (p : op ∈ₒ Σ)
       → (M : Γ ∷ gnd (result op) ⊢U: X ! Σ)
-      → (F : {!   !} ⊢U: {!   !} ! {!   !})
-      → (W : Γ ⊢V: gnd C)
-      → (K : Γ ⊢K: {!   !})
+      → (N : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ')
       ------------
-      → Γ ⊢U `using V at W `run (opᵤ op p Vₒ M) finally (F [ {!   !} ]ᵤ) --(F [ wkₛ (wkₛ idₛ) ]ᵤ)
-          ≡ kernel K at W finally (`using {!   !} at {!   !} `run {!   !} finally (F [ {!   !} ]ᵤ))
---→ Γ ⊢U Using {!!} At {!!} Run (return {!!}) Finally (return {!!}) ≡ {!!}
-
+      → Γ ⊢U `using runner R at W `run (opᵤ op p V M) finally N
+          ≡ kernel R op p [ idₛ ∷ₛ V ]ₖ at W finally (`using (runner (rename-runner R (wkᵣ ∘ᵣ wkᵣ))) at var here `run M [ wkᵣ ]ᵤᵣ finally (N [ extdᵣ (extdᵣ (wkᵣ ∘ᵣ wkᵣ)) ]ᵤᵣ))
+          
     kernel-at-finally-beta-return : {X : VType}
       {Σ Σ' : Sig} {C : KState}
       → (V : Γ ⊢V: X)
@@ -253,21 +244,22 @@ interleaved mutual
       → Γ ⊢U kernel return V at W finally {!!} ≡ {!!}
 
     kernel-at-finally-beta-getenv : {X Y : VType}
-      {Σ Σ' : Sig} {C : KState}
-      → (V : Γ ⊢V: X)
+      {Σ : Sig} {C : KState}
       → (W : Γ ⊢V: gnd C)
-      → (K : Γ ∷ gnd C ⊢K: Y ↯ Σ , C)
+      → (K : Γ ∷ gnd C ⊢K: X ↯ Σ , C)
+      → (N : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ)
       -------------------
-      → Γ ⊢U kernel getenv K at W finally {!!}
-          ≡ kernel {!!} at W finally {!!}
+      → Γ ⊢U kernel getenv K at W finally N
+          ≡ kernel K [ (idₛ ∷ₛ W) ]ₖ at W finally N
 
     kernel-at-finally-setenv : {X Y : VType}
-      {Σ Σ' : Sig} {C : KState}
+      {Σ : Sig} {C : KState}
       → (V W : Γ ⊢V: gnd C)
-      → (K : Γ ⊢K: Y ↯ Σ , C)
+      → (K : Γ ⊢K: X ↯ Σ , C)
+      → (N : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ)
       -------------------
-      → Γ ⊢U kernel setenv V K at W finally {!!}
-          ≡ kernel K at V finally {!!}
+      → Γ ⊢U kernel setenv V K at W finally N
+          ≡ kernel K at V finally N
 
     kernel-at-finally-beta-op : {X : VType}
       {Σ : Sig}
@@ -489,3 +481,4 @@ interleaved mutual
 
 
 infix 1 _⊢V_≡_ _⊢U_≡_ _⊢K_≡_
+   

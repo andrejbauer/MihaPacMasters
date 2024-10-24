@@ -52,7 +52,7 @@ interleaved mutual
          ------------------------------
          → Γ ⊢V: X ⟶ₖ K
 
-    rename-cooper : {Σ Σ' : Sig} {C : KState}
+    runner : {Σ Σ' : Sig} {C : KState}
            → ((op : Op) → (op ∈ₒ Σ) → co-op Γ Σ' C op)
            ---------------------------------------------
            → Γ ⊢V: Σ ⇒ Σ' , C
