@@ -27,30 +27,20 @@ idₛ = var
 -- TASK: implement this one as two simpler functions:
 --       (1) σ : Sub Γ Γ' is transformed to σ' : Sub (Γ ∷ X) Γ'
 --       (2) given τ : Sub Δ Δ' and Δ ⊢ v : X, we get ⟨τ, v⟩ : Sub Δ (Δ' ∷ X)
+
 extendₛ : ∀ {Γ Γ' X} → Sub Γ Γ' → Sub (Γ ∷ X) (Γ' ∷ X)
 extendₛ σ here = var here
 extendₛ σ (there p) =  σ p [ wkᵣ ]ᵥᵣ
-
---obvious : ∀ {Γ X Y} → X ∈ Γ → X ∈ (Γ ∷ Y) -- This might be a completely pointless function
---obvious here = there here
---obvious (there p) = there (there p)
-
---obvious2 : ∀ {Γ X Y} → X ∈ (Γ ∷ Y) → X ∈ Γ -- I have a hard time believing this wouldn't already be present somewhere else
---obvious2 here = {!   !}
---obvious2 (there p) = p
 
 wkₛ : ∀ {Γ Γ' X} → Sub Γ Γ' → Sub (Γ ∷ X) Γ'
 wkₛ σ p = σ p [ wkᵣ ]ᵥᵣ
 --wkₛ σ here = σ here [ wkᵣ ]ᵥᵣ -- To add another variable to the start, we have to simply say that we will add a new variable at the start
 --wkₛ σ (there p) =  σ (obvious p) [ wkᵣ ]ᵥᵣ -- EXPLAIN WHAT wkᵣ ACTUALLY DOES
 
---cont : Ctx → Ctx → Ctx -- concatenation, should be called concat or _++_
---cont Γ [] = Γ
---cont Γ (Δ ∷ X) = (cont Γ Δ) ∷ X
-
 _∷ₛ_ : ∀ {Γ Γ' X} → Sub Γ Γ' → Γ ⊢V: X → Sub Γ (Γ' ∷ X)
 (σ ∷ₛ V) here = V
 (σ ∷ₛ V) (there p) = σ p
+
 
 -- Action of substitutions
 
@@ -74,7 +64,7 @@ interleaved mutual
   var p [ σ ]ᵥ = σ p
   sub-value V p [ σ ]ᵥ = sub-value (V [ σ ]ᵥ) p
   ⟨⟩ [ σ ]ᵥ = ⟨⟩
-  ⟨ V , W ⟩ [ σ ]ᵥ = {!   !} -- ⟨ V [ σ ]ᵥ , W [ σ ]ᵥ ⟩
+  ⟨ V , W ⟩ [ σ ]ᵥ = ⟨ V [ σ ]ᵥ , W [ σ ]ᵥ ⟩
   (funM M) [ σ ]ᵥ = funM ( M [ extendₛ σ ]ᵤ)
   (funK K) [ σ ]ᵥ = funK (K [ extendₛ σ ]ₖ)
   runner R [ σ ]ᵥ = runner λ op p → sub-coop (R op p) σ 
@@ -97,4 +87,4 @@ interleaved mutual
   getenv K [ σ ]ₖ = getenv (K [ (extendₛ σ) ]ₖ)
   setenv V K [ σ ]ₖ = setenv (V [ σ ]ᵥ) (K [ σ ]ₖ)
   user M `with K [ σ ]ₖ = user (M [ σ ]ᵤ) `with (K [ (extendₛ σ) ]ₖ)
- 
+  

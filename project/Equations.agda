@@ -236,12 +236,13 @@ interleaved mutual
       → Γ ⊢U `using runner R at W `run (opᵤ op p V M) finally N
           ≡ kernel R op p [ idₛ ∷ₛ V ]ₖ at W finally (`using (runner (rename-runner R (wkᵣ ∘ᵣ wkᵣ))) at var here `run M [ wkᵣ ]ᵤᵣ finally (N [ extdᵣ (extdᵣ (wkᵣ ∘ᵣ wkᵣ)) ]ᵤᵣ))
           
-    kernel-at-finally-beta-return : {X : VType}
-      {Σ Σ' : Sig} {C : KState}
+    kernel-at-finally-beta-return : {X Y : VType}
+      {Σ : Sig} {C : KState}
       → (V : Γ ⊢V: X)
       → (W : Γ ⊢V: gnd C)
+      → (N : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ)
       -------------------
-      → Γ ⊢U kernel return V at W finally {!!} ≡ {!!}
+      → Γ ⊢U kernel return V at W finally N ≡ (N [ ((idₛ ∷ₛ V) ∷ₛ W) ]ᵤ)
 
     kernel-at-finally-beta-getenv : {X Y : VType}
       {Σ : Sig} {C : KState}
@@ -261,13 +262,16 @@ interleaved mutual
       → Γ ⊢U kernel setenv V K at W finally N
           ≡ kernel K at V finally N
 
-    kernel-at-finally-beta-op : {X : VType}
-      {Σ : Sig}
+    kernel-at-finally-beta-op : {X Y : VType}
+      {Σ : Sig} {C : KState}
       → (op : Op)
       → (p : op ∈ₒ Σ)
-      → {!!}
+      → (V : Γ ⊢V: gnd (param op))
+      → (W : Γ ⊢V: gnd C)
+      → (K : Γ ∷ gnd (result op) ⊢K: X ↯ Σ , C)
+      → (N : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ)
       -------------------
-      → Γ ⊢U kernel (opₖ op {!p!} {!!} {!!}) at {!!} finally {!!} ≡ {!!}
+      → Γ ⊢U kernel (opₖ op p V K) at W finally N ≡ opᵤ op p V (kernel K at (W [ (wkₛ idₛ) ]ᵥ) finally (N [ extendₛ (extendₛ (wkₛ idₛ)) ]ᵤ))
 
 
     let-in-eta-M : {X : VType}    -- let-eta
@@ -329,15 +333,16 @@ interleaved mutual
       ----------------
       → Γ ⊢K match V₁ `with K₁ ≡ (match V₂ `with K₂)
 
-    opₖ-cong :
+    opₖ-cong :  -- cong pravilo, poglej še enkrat če pravilno
       {X Y : VType} {Σ : Sig} {C : KState}
       {op : Op}
-      {V₁ V₂ : Γ ⊢V: X}
-      {K₁ K₂ : Γ ∷ Y ⊢K: X ↯ Σ , C}
+      {p : op ∈ₒ Σ}
+      {V₁ V₂ : Γ ⊢V: gnd (param op)}
+      {K₁ K₂ : Γ ∷ gnd (result op) ⊢K: X ↯ Σ , C}
       → Γ ⊢V V₁ ≡ V₂
-      → Γ ∷ Y ⊢K K₁ ≡ K₂
+      → Γ ∷ gnd (result op) ⊢K K₁ ≡ K₂
       ----------------
-      → Γ ⊢K opₖ op {!!} {! V₁ !} {! K₁ !} ≡ opₖ op {!!} {! V₂ !} {! K₂ !}
+      → Γ ⊢K opₖ op p V₁ K₁ ≡ opₖ op p V₂ K₂
 
     getenv-cong :
       {X : VType} {C : KState} {Σ : Sig}
@@ -371,72 +376,73 @@ interleaved mutual
       → (K : Γ ∷ X ⊢K: L)
       → (V : Γ ⊢V: X)
       -------------------
-      → Γ ⊢K (funK K) ∘ V ≡ (K [ {!!} ]ₖ)
+      → Γ ⊢K (funK K) ∘ V ≡ (K [ idₛ ∷ₛ V ]ₖ)
 
-    let-in-beta-return : {X Y : VType}
+    let-in-beta-return : {X Y : VType} --preveri pozneje
       {Σ : Sig} {C : KState}
       → (V : Γ ⊢V: X)
-      → (G : Γ ∷ X ⊢K: Y ↯ Σ , C)
-      → (L : Γ ⊢K: Y ↯ Σ , C)
+      → (L : Γ ∷ X ⊢K: Y ↯ Σ , C )
       -----------------
-      → Γ ⊢K `let (return V) `in G ≡ (L [ {!!} ]ₖ)
+      → Γ ⊢K `let (return V) `in L ≡ (L [ idₛ ∷ₛ V ]ₖ )
 
     let-in-beta-op :
       {X Y Z : VType}
       {Σ : Sig} {C : KState}
       → (op : Op)
-      → (V : Γ ⊢V: X)
-      → (K : Γ ∷ Y ⊢K: {!!} ↯ Σ , C)
-      → (G : Γ ∷ X ⊢K: {!!} ↯ Σ , C)
+      → (p : op ∈ₒ Σ)
+      → (V : Γ ⊢V: gnd (param op))
+      → (K : Γ ∷ gnd (result op) ⊢K: X ↯ Σ , C)
+      → (L : Γ ∷ X ⊢K: Y ↯ Σ , C)
       -----------------
-      → Γ ⊢K `let (opₖ op {!!} {! V !} {!!}) `in {!!}
-          ≡ opₖ op {!!} {! V !} (`let {!!} `in {!G!})
+      → Γ ⊢K `let (opₖ op p V K) `in L ≡ opₖ op p V (`let K `in (L [ (extendₛ (wkₛ idₛ)) ]ₖ))
 
-    let-in-beta-getenv : {X Y : VType}
+    let-in-beta-getenv : {X Y : VType} -- nisem povsem preprican tu
       {C : KState} {Σ : Sig}
       → (K : Γ ∷ gnd C ⊢K: X ↯ Σ , C)
-      → (G : Γ ∷ X ⊢K: Y ↯ Σ , C)
+      → (L : Γ ∷ X ⊢K: Y ↯ Σ , C)
       -----------------
-      → Γ ⊢K `let (getenv K) `in G
-          ≡ getenv (`let K `in {!!})
+      → Γ ⊢K `let (getenv K) `in L
+          ≡ getenv (`let K `in (L [ (extendₛ (wkₛ idₛ)) ]ₖ))
 
-    let-in-beta-setenv : {X : VType}
-      → {!!}
+    let-in-beta-setenv : {X Y : VType}
+      {C : KState} {Σ : Sig} 
+      → (V : Γ ⊢V: gnd C)
+      → (K : Γ ⊢K: X ↯ Σ , C)
+      → (L : Γ ∷ X ⊢K: Y ↯ Σ , C) 
       -----------------
-      → Γ ⊢K `let (setenv {!!} {!!}) `in {!!}
-          ≡ setenv {!!} (`let {!!} `in {!!})
+      → Γ ⊢K `let (setenv V K) `in L
+          ≡ setenv V (`let K `in L)
 
-    match-with-beta-prod : {X Y : VType}
-      {G : KType}
+    match-with-beta-prod : {X Y Z : VType}
+      {Σ : Sig} {C : KState}
       → (V : Γ ⊢V: X)
       → (W : Γ ⊢V: Y)
-      → (K' : Γ ∷ X ∷ Y ⊢K: G)
-      → (K : Γ ⊢K: G)
+      → (K : Γ ∷ X ∷ Y ⊢K: Z ↯ Σ , C)
       -------------------
-      → Γ ⊢K match ⟨ V , W ⟩ `with K' ≡ (K [ {!!} ]ₖ)
+      → Γ ⊢K match ⟨ V , W ⟩ `with K ≡ (K [ (idₛ ∷ₛ V) ∷ₛ W ]ₖ)
 
-    match-with-beta-null : {X : VType}
+    {- match-with-beta-null : {X : VType}
       → {!!}
       -------------------
-      → Γ ⊢K {!!} ≡ {!!}
+      → Γ ⊢K {!!} ≡ {!!} -}
 
     user-with-beta-return : {X Y : VType}
       {Σ : Sig} {C : KState}
       → (V : Γ ⊢V: X)
-      → (M : Γ ⊢U: X ! Σ)
-      → (G : Γ ∷ X ⊢K: Y ↯ Σ , C)
+      → (L : Γ ∷ X ⊢K: Y ↯ Σ , C)
       ----------------------
-      → Γ ⊢K user return V `with G ≡ {!!}
+      → Γ ⊢K user return V `with L ≡ (L [ (idₛ ∷ₛ V) ]ₖ)
 
     user-with-beta-op : {X Y : VType}
-      (Σ : Sig) (C : KState)
+      {Σ : Sig} {C : KState}
       → (op : Op)
+      → (p : op ∈ₒ Σ)
       → (V : Γ ⊢V: gnd (param op))
       → (M : Γ ∷ gnd (result op) ⊢U: X ! Σ)
-      → (G : Γ ∷ X ⊢K: {!!} ↯ Σ , C)
+      → (L : Γ ∷ X ⊢K: Y ↯ Σ , C)
       ----------------------
-      → Γ ⊢K user (opᵤ op {!!} V M) `with G
-          ≡ opₖ op {!!} V {!!}
+      → Γ ⊢K user (opᵤ op p V M) `with L
+          ≡ opₖ op p V (user M `with (L [ extendₛ (wkₛ idₛ) ]ₖ))
 
     let-in-eta-K : {X : VType}
       {Σ : Sig} {C : KState}
@@ -444,17 +450,17 @@ interleaved mutual
       -------------------
       → Γ ⊢K `let K `in (return (var here)) ≡ K -- Also a questionable use of crtl-a
 
-    GetSetenv : {C : KState} {X : VType} {Σ : Sig}
-      → (K : Γ ∷ gnd C ⊢K: X ↯ Σ , C)
-      → (V : Γ ⊢V: gnd C)
+    GetSetenv : {C : KState} {X Y : VType} {Σ : Sig} --tudi za pogledati
+      → (K : Γ ⊢K: X ↯ Σ , C)
+      → (V : Γ ∷ gnd C ⊢V: gnd C)
       -------------
-      → Γ ⊢K setenv V (getenv K) ≡ {!!}
+      → Γ ⊢K getenv (setenv V (K [ wkₛ idₛ ]ₖ)) ≡ K
 
     SetGetenv : {C : KState} {X : VType} {Σ : Sig}
       → (V : Γ ⊢V: gnd C)
-      → (K : Γ ∷ gnd C ⊢K: {!!} ↯ Σ , C)
+      → (K : Γ ∷ gnd C ⊢K: X ↯ Σ , C)
       --------------
-      → Γ ⊢K setenv V (getenv K) ≡ setenv V {!!}
+      → Γ ⊢K setenv V (getenv K) ≡ setenv V (K [ idₛ ∷ₛ V ]ₖ)
 
     SetSetenv : {C C' : KState} {X : VType} {Σ : Sig}
       → (W : Γ ⊢V: gnd C)
@@ -463,22 +469,23 @@ interleaved mutual
       --------------
       → Γ ⊢K setenv V (setenv W K) ≡ setenv W K
 
-    GetOpEnv : {X Y : VType}{C  : KState} {Σ Σ' : Sig}
+    GetOpEnv : {X Y : VType}{C  : KState} {Σ : Sig} -- tu se zdi problematicno kar vtikati gnd notri, poglej pozneje
       → (op : Op)
-      → (V : Γ ∷ gnd C ⊢V: X)
-      → (K : Γ ∷ gnd C ∷ Y ⊢K: X ↯ Σ' , C)
+      → (p : op ∈ₒ Σ)
+      → (V : Γ ⊢V: gnd (param op))
+      → (K : Γ ⊢K: X ↯ Σ , C)
       -----------------
-      → Γ ⊢K getenv (opₖ op {!!} {! V !} {! K !})
-          ≡ opₖ op {!!} {!!} {!!}
+      → Γ ⊢K getenv (opₖ op p (V [ wkₛ idₛ ]ᵥ) (K [ wkₛ (wkₛ idₛ) ]ₖ))
+          ≡ opₖ op p V (getenv (K [ wkₛ (wkₛ idₛ) ]ₖ))
 
-    SetOpEnv : {X Y : VType}{C  : KState} {Σ Σ' : Sig}
+    SetOpEnv : {X Y : VType}{C  : KState} {Σ : Sig} -- Negotovost glede param op
       → (op : Op)
-      → (W : Γ ⊢V: gnd C)
-      → (V : Γ ∷ gnd C ⊢V: X)
-      → (K : Γ ∷ gnd C ∷ Y ⊢K: X ↯ Σ' , C)
+      → (p : op ∈ₒ Σ)
+      → (V : Γ ⊢V: gnd (param op))
+      → (K : Γ ⊢K: X ↯ Σ , param op)
       ----------------
-      → Γ ⊢K setenv W (opₖ op {!!} {!!} {!!}) ≡ {!!}
+      → Γ ⊢K setenv V (opₖ op p V (K [ wkₛ idₛ ]ₖ)) ≡ K
 
 
 infix 1 _⊢V_≡_ _⊢U_≡_ _⊢K_≡_
-   
+         
