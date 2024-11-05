@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 open import Parameters
 
 module Substitution (G : GTypes) (O : Ops G) where

@@ -29,8 +29,3 @@ record Ops (G : GTypes) : Set₁ where
   _∈ₒ_ : Op → Sig → Set
   op ∈ₒ Σ = Σ op ≡ true
 
--- Assuming given some ground types and operations
--- TODO: temporary fix, due to importing of parameterised
---       modules retaining qualified names of constructors
-postulate G : GTypes
-postulate O : Ops G

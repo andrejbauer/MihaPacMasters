@@ -70,7 +70,7 @@ mutual
 ⟦ var x ⟧-value Γ = {!   !}
 ⟦ sub-value x p ⟧-value Γ = {!   !}
 ⟦ ⟨⟩ ⟧-value Γ = tt
-⟦ ⟨ V , W ⟩ ⟧-value Γ = {!   !}
+⟦ ⟨ V , W ⟩ ⟧-value Γ = {!   !} , {!   !}
 ⟦ funM x ⟧-value Γ = {!   !}
 ⟦ funK x ⟧-value Γ = {!   !}
 ⟦ runner x ⟧-value Γ = {!   !}
