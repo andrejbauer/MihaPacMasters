@@ -28,4 +28,3 @@ record Ops (G : GTypes) : Set₁ where
 
   _∈ₒ_ : Op → Sig → Set
   op ∈ₒ Σ = Σ op ≡ true
-
