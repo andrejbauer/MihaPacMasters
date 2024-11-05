@@ -1,13 +1,11 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 open import Parameters
 
 module Substitution (G : GTypes) (O : Ops G) where
 
-open import Types G O 
-open import Terms G O 
-open import Contexts G O 
-open import Renaming G O 
+open import Types G O
+open import Terms G O
+open import Contexts G O
+open import Renaming G O
 
 open GTypes G
 open Ops O
@@ -67,8 +65,8 @@ interleaved mutual
   ⟨ V , W ⟩ [ σ ]ᵥ = ⟨ V [ σ ]ᵥ , W [ σ ]ᵥ ⟩
   (funM M) [ σ ]ᵥ = funM ( M [ extendₛ σ ]ᵤ)
   (funK K) [ σ ]ᵥ = funK (K [ extendₛ σ ]ₖ)
-  runner R [ σ ]ᵥ = runner λ op p → sub-coop (R op p) σ 
-  
+  runner R [ σ ]ᵥ = runner λ op p → sub-coop (R op p) σ
+
   sub-user M x [ σ ]ᵤ = sub-user (M [ σ ]ᵤ) x
   return V [ σ ]ᵤ = return (V [ σ ]ᵥ)
   (V₁ ∘ V₂) [ σ ]ᵤ = (V₁ [ σ ]ᵥ) ∘ (V₂ [ σ ]ᵥ)
@@ -87,4 +85,3 @@ interleaved mutual
   getenv K [ σ ]ₖ = getenv (K [ (extendₛ σ) ]ₖ)
   setenv V K [ σ ]ₖ = setenv (V [ σ ]ᵥ) (K [ σ ]ₖ)
   user M `with K [ σ ]ₖ = user (M [ σ ]ᵤ) `with (K [ (extendₛ σ) ]ₖ)
-  
