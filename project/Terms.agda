@@ -2,8 +2,8 @@ open import Parameters
 
 module Terms (G : GTypes) (O : Ops G) where
 
-open import Types G O 
-open import Contexts G O 
+open import Types G O
+open import Contexts G O
 
 open GTypes G
 open Ops O
