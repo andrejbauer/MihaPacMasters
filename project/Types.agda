@@ -3,7 +3,7 @@ open import Relation.Binary.PropositionalEquality
 
 open import Parameters
 
-module Types where 
+module Types (G : GTypes) (O : Ops G) where 
 
 open GTypes G
 open Ops O
@@ -20,7 +20,7 @@ interleaved mutual
   -- Value type
   data VType where
     gnd   : GType → VType
-    _×_   : VType → VType → VType -- Written as "\x"
+    _×v_   : VType → VType → VType -- Written as "\x"
     _⟶ᵤ_  : VType → UType → VType -- "\r--"
     _⟶ₖ_  : VType → KType → VType
     _⇒_,_ : Sig → Sig → KState → VType -- "\r="
@@ -55,7 +55,7 @@ interleaved mutual
                → X ⊑ᵥ Z
                → Y ⊑ᵥ W
                --------------------
-                 → (X × Y) ⊑ᵥ (Z × W)
+                 → (X ×v Y) ⊑ᵥ (Z ×v W)
  
     
     ⊑ᵥ-Ufun : {X X' : VType} {Σ Σ' : UType}
@@ -102,6 +102,6 @@ interleaved mutual
 infix 12 _⟶ᵤ_ _⟶ₖ_ _⇒_,_
 infix 10 _⊑ᵥ_ _⊑ᵤ_ _⊑ₖ_
 infix 15 _!_ _↯_,_
-infix 40 _×_
+infix 40 _×v_
  
  

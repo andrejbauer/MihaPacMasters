@@ -2,12 +2,12 @@
 
 open import Parameters
 
-module Substitution where
+module Substitution (G : GTypes) (O : Ops G) where
 
-open import Types
-open import Terms
-open import Contexts
-open import Renaming
+open import Types G O 
+open import Terms G O 
+open import Contexts G O 
+open import Renaming G O 
 
 open GTypes G
 open Ops O

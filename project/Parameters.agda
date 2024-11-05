@@ -1,4 +1,5 @@
 open import Data.Bool
+open import Data.Nat
 open import Relation.Binary.PropositionalEquality
 
 module Parameters where
@@ -7,11 +8,12 @@ module Parameters where
 record GTypes : Set₁ where
   field
     BaseType : Set
+    ⟦_⟧b : BaseType → Set --interpretation of base types
 
   data GType : Set where
     base : BaseType → GType
     unit : GType
-    _×_  : GType → GType → GType -- Written as "\x"
+    _×b_  : GType → GType → GType -- Written as "\x"
 
 -- Operations
 record Ops (G : GTypes) : Set₁ where

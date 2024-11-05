@@ -2,11 +2,11 @@
 
 open import Parameters
 
-module Renaming where
+module Renaming (G : GTypes) (O : Ops G) where
 
-open import Types
-open import Terms
-open import Contexts
+open import Types G O
+open import Terms G O 
+open import Contexts G O 
 
 open GTypes G
 open Ops O

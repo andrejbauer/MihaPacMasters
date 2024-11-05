@@ -1,12 +1,12 @@
 open import Parameters
 
-module Equations where
+module Equations (G : GTypes) (O : Ops G) where
 
-open import Types
-open import Terms
-open import Contexts
-open import Renaming
-open import Substitution
+open import Types G O
+open import Terms G O 
+open import Contexts G O 
+open import Renaming G O 
+open import Substitution G O 
 
 
 open GTypes G
@@ -110,9 +110,10 @@ interleaved mutual
 
     return-cong :
       {X : VType} {V W : Γ ⊢V: X}
+      {Σ : Sig}
       → Γ ⊢V V ≡ W
       ------------------
-      → Γ ⊢U return V ≡ return W
+      → Γ ⊢U return {Σ = Σ} V ≡ return W
 
     ∘-cong :
       {X : VType} {U : UType}
@@ -145,7 +146,7 @@ interleaved mutual
 
     match-with-cong :
       {X Y : VType} {U : UType}
-      {V₁ V₂ : Γ ⊢V: X × Y}
+      {V₁ V₂ : Γ ⊢V: X ×v Y}
       {M₁ M₂ : Γ ∷ X ∷ Y ⊢U: U}
       → Γ ⊢V V₁ ≡ V₂
       → Γ ∷ X ∷ Y ⊢U M₁ ≡ M₂
@@ -200,7 +201,7 @@ interleaved mutual
       --------------------------------
       → Γ ⊢U `let (opᵤ op p V M) `in N ≡ opᵤ op p V (`let M `in (N [ (extendₛ (wkₛ idₛ)) ]ᵤ))
 
-    match-with-beta-prod : {X Y : VType} {U : UType} {V : Γ ⊢V: X × Y} -- LOOK WITH A MORE CAREFUL LOOK AS I CHANGED THE V from being a usertype (for whatever reason) to a valuetype computation
+    match-with-beta-prod : {X Y : VType} {U : UType} {V : Γ ⊢V: X ×v Y} -- LOOK WITH A MORE CAREFUL LOOK AS I CHANGED THE V from being a usertype (for whatever reason) to a valuetype computation
       -- Bodi pazliv da ne zamenjas V1 in V2 na koncu
       (V₁ : Γ ⊢V: X)
       (V₂ : Γ ⊢V: Y)
@@ -304,7 +305,7 @@ interleaved mutual
       {V₁ V₂ : Γ ⊢V: X}
       → Γ ⊢V V₁ ≡ V₂
       ----------------
-      → Γ ⊢K return V₁ ≡ return V₂
+      → Γ ⊢K return {Σ = Σ} {C = C} V₁ ≡ return V₂
 
     ∘-cong :
       {X : VType} {K : KType}
@@ -326,7 +327,7 @@ interleaved mutual
 
     match-with-cong :
       {X Y : VType} {K : KType}
-      {V₁ V₂ : Γ ⊢V: X × Y}
+      {V₁ V₂ : Γ ⊢V: X ×v Y}
       {K₁ K₂ : Γ ∷ X ∷ Y ⊢K: K}
       → Γ ⊢V V₁ ≡ V₂
       → Γ ∷ X ∷ Y ⊢K K₁ ≡ K₂

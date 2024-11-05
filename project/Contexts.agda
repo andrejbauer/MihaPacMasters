@@ -3,9 +3,9 @@ open import Relation.Binary.PropositionalEquality
 
 open import Parameters
 
-module Contexts where 
+module Contexts (G : GTypes) (O : Ops G) where 
 
-open import Types 
+open import Types G O
  
 open GTypes G
 open Ops O

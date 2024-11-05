@@ -1,9 +1,9 @@
 open import Parameters
 
-module Terms where
+module Terms (G : GTypes) (O : Ops G) where
 
-open import Types
-open import Contexts
+open import Types G O 
+open import Contexts G O 
 
 open GTypes G
 open Ops O
@@ -40,7 +40,7 @@ interleaved mutual
         → Γ ⊢V: X
         → Γ ⊢V: Y
         -------------------
-        → Γ ⊢V: X × Y
+        → Γ ⊢V: X ×v Y
 
     funM : {X : VType} {U : UType}
          → Γ ∷ X ⊢U: U
@@ -92,7 +92,7 @@ interleaved mutual
       → Γ ⊢U: Y ! Σ
 
     match_`with : {X Y : VType} {U : UType}
-      → Γ ⊢V: X × Y
+      → Γ ⊢V: X ×v Y
       → Γ ∷ X ∷ Y ⊢U: U
       ----------------------------
       → Γ ⊢U: U
@@ -140,7 +140,7 @@ interleaved mutual
       → Γ ⊢K: Y ↯ Σ , C
 
     match_`with : {X Y : VType} {K : KType}
-      → Γ ⊢V: X × Y
+      → Γ ⊢V: X ×v Y
       → Γ ∷ X ∷ Y ⊢K: K
       ---------------------
       → Γ ⊢K: K
