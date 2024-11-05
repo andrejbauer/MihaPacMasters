@@ -76,14 +76,14 @@ mutual
 ⟦ runner x ⟧-value Γ = {!   !}
   
 ⟦_⟧-user : ∀ {Γ t Σ} → (Γ ⊢U: t ! Σ) → ⟦ Γ ⟧-ctx → ⟦ t ! Σ ⟧u
-⟦ sub-user t x ⟧-user Γ = {!   !}
-⟦ return x ⟧-user Γ = {!   !}
-⟦ x ∘ x₁ ⟧-user Γ = {!   !}
-⟦ opᵤ op x x₁ t ⟧-user Γ = {!   !}
-⟦ `let t `in t₁ ⟧-user Γ = {!   !}
-⟦ match x `with t ⟧-user Γ = {!   !}
-⟦ `using x at x₁ `run t finally t₁ ⟧-user Γ = {!   !}
-⟦ kernel x at x₁ finally t ⟧-user Γ = {!   !}
+⟦ sub-user M p ⟧-user Γ = {!   !}
+⟦ return V ⟧-user Γ = {!   !}
+⟦ V ∘ W ⟧-user Γ = {!   !}
+⟦ opᵤ op p V M ⟧-user Γ = {!   !}
+⟦ `let M `in N ⟧-user Γ = {!   !}
+⟦ match V `with M ⟧-user Γ = {!   !}
+⟦ `using V at W `run M finally N ⟧-user Γ = {!   !}
+⟦ kernel K at V finally M ⟧-user Γ = {!   !}
 
 ⟦_⟧-kernel : ∀ {Γ t Σ C} → (Γ ⊢K: t ↯ Σ , C) → ⟦ Γ ⟧-ctx → ⟦ t ↯ Σ , C ⟧k
 ⟦ sub-kernel K p ⟧-kernel Γ = {!   !}
@@ -94,4 +94,4 @@ mutual
 ⟦ opₖ op p V K ⟧-kernel Γ = {!   !}
 ⟦ getenv K ⟧-kernel Γ = {!   !}
 ⟦ setenv V K ⟧-kernel Γ = {!   !}
-⟦ user U `with K ⟧-kernel Γ = {!   !} 
+⟦ user M `with K ⟧-kernel Γ = {!   !} 
