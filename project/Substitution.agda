@@ -63,7 +63,7 @@ interleaved mutual
   sub-value V p [ σ ]ᵥ = sub-value (V [ σ ]ᵥ) p
   ⟨⟩ [ σ ]ᵥ = ⟨⟩
   ⟨ V , W ⟩ [ σ ]ᵥ = ⟨ V [ σ ]ᵥ , W [ σ ]ᵥ ⟩
-  (funM M) [ σ ]ᵥ = funM ( M [ extendₛ σ ]ᵤ)
+  (funU M) [ σ ]ᵥ = funU ( M [ extendₛ σ ]ᵤ)
   (funK K) [ σ ]ᵥ = funK (K [ extendₛ σ ]ₖ)
   runner R [ σ ]ᵥ = runner λ op p → sub-coop (R op p) σ
 

@@ -53,7 +53,7 @@ interleaved mutual
         {M N : Γ ∷ X ⊢U: U}
       → (Γ ∷ X) ⊢U M ≡ N
       -------------------------
-      → Γ ⊢V (funM M) ≡ (funM N)
+      → Γ ⊢V (funU M) ≡ (funU N)
 
     funK-cong :
       {X : VType} {K : KType}
@@ -76,10 +76,10 @@ interleaved mutual
            ----------------------
            → Γ ⊢V V ≡ ⟨⟩
 
-    funM-eta : {X : VType} {U : UType} --funU-eta
+    funU-eta : {X : VType} {U : UType} --funU-eta
       {V : Γ ⊢V: X ⟶ᵤ U}
       ------------
-      → Γ ⊢V funM ((V [ wkᵣ ]ᵥᵣ) ∘ var here) ≡ V -- str 32 fig 12 druga enačba v prvi vrstici
+      → Γ ⊢V funU ((V [ wkᵣ ]ᵥᵣ) ∘ var here) ≡ V -- str 32 fig 12 druga enačba v prvi vrstici
 
     funK-eta : {X : VType} {K : KType}
       {V : Γ ⊢V: X ⟶ₖ K}
@@ -180,11 +180,11 @@ interleaved mutual
       → Γ ⊢U kernel K₁ at V₁ finally M₁ ≡ kernel K₂ at V₂ finally M₂
 
     -- rules from the paper
-    funM-beta : {X : VType} {U : UType} -- str32 prva vrstica
+    funU-beta : {X : VType} {U : UType} -- str32 prva vrstica
       → (M : (Γ ∷ X) ⊢U: U)
       → (V : Γ ⊢V: X)
       -------------------------------
-      → Γ ⊢U (funM M) ∘ V ≡ (M [ idₛ ∷ₛ V ]ᵤ)
+      → Γ ⊢U (funU M) ∘ V ≡ (M [ idₛ ∷ₛ V ]ᵤ)
 
     let-in-beta-return_ : {X Y : VType} {Σ : Sig}  {U : UType} {V : Γ ⊢U: U}
       → (V : Γ ⊢V: X)

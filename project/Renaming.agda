@@ -96,7 +96,7 @@ interleaved mutual
   sub-value V x [ ρ ]ᵥᵣ = sub-value ( V [ ρ ]ᵥᵣ) x
   ⟨⟩ [ ρ ]ᵥᵣ = ⟨⟩
   ⟨ V , W ⟩ [ ρ ]ᵥᵣ = ⟨  V [ ρ ]ᵥᵣ , W [ ρ ]ᵥᵣ ⟩
-  (funM M) [ ρ ]ᵥᵣ = funM (M [ extendᵣ ρ ]ᵤᵣ) -- EXPLANATION: We know that ρ won't change the funM constructor, so we can simply use the action of ρ on M
+  (funU M) [ ρ ]ᵥᵣ = funU (M [ extendᵣ ρ ]ᵤᵣ) -- EXPLANATION: We know that ρ won't change the funU constructor, so we can simply use the action of ρ on M
                                            -- with the addition of an extra variable as a function adds that
   (funK K) [ ρ ]ᵥᵣ = funK (K [ extendᵣ ρ ]ₖᵣ) -- EXPLANATION: This method is repeated throughout
   runner R [ ρ ]ᵥᵣ = runner (rename-runner R ρ) -- EXPLANATION: I am unsure if this even works
