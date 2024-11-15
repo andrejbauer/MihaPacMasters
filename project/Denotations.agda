@@ -1,5 +1,7 @@
 open import Data.Unit
 open import Data.Product
+open import Relation.Binary.PropositionalEquality
+open import Function
 
 import Contexts
 open import Parameters
@@ -15,26 +17,52 @@ open Contexts G O
 open Types G O
 open Terms G O
 
+-- GENERAL TODO: naming conventions (think for yourself what to do, try to stay close to the paper/thesis)
+-- - upper-case letters for types, lower-case letters for terms
+-- - use X, Y, Z for value types
+-- - use A, B, C for ground types
+-- - something for base types? (could be 'b')
+-- - use Xᵤ, Yᵤ, Zᵤ for user types
+-- - use Xk, Yk, Zk  for kernel types
+
+-- TODO: look up "Wadler's law" (named after Phil Wadler)
+
 -- Denotation of ground types
 ⟦_⟧g : GType → Set
 ⟦ base b ⟧g =  ⟦ b ⟧b
 ⟦ unit ⟧g = ⊤
-⟦ g ×b h ⟧g = ⟦ g ⟧g × ⟦ h ⟧g
+⟦ A ×b B ⟧g = ⟦ A ⟧g × ⟦ B ⟧g
 
 
 -- A computation tree that hold values of type T in their leaves
-data Tree (T : Set) : Set where
-  leaf : T → Tree T
-  node : ∀ (op : Op) → ⟦ param op ⟧g → (⟦ result op ⟧g → Tree T) → Tree T
-  error : Tree T
+data Tree  (Σ : Sig) (X : Set) : Set where
+  leaf : X → Tree Σ X
+  node : ∀ (op : Op) → op ∈ₒ Σ → ⟦ param op ⟧g → (⟦ result op ⟧g → Tree Σ X) → Tree Σ X
 
--- Denotation of a user computation returning elements of X
-UComp : Set → Set
-UComp X = Tree X
+include-tree : ∀ {Σ₁ Σ₂ X} → Σ₁ ⊆ₛ Σ₂ → Tree Σ₁ X → Tree Σ₂ X
+include-tree p t = {!!} -- TODO
+
+-- Monadic bind for trees
+bind-tree : ∀ {Σ X Y} → (X → Tree Σ Y) → Tree Σ X → Tree Σ Y
+bind-tree f (leaf x) = f x
+bind-tree f (node op p par c) = node op p par (λ res → bind-tree f (c res))
+
+map-tree : ∀ {Σ X Y} → (X → Y) → Tree Σ X → Tree Σ Y
+map-tree f t = bind-tree (leaf ∘ f) t
+
+-- Denotation of a user computation returning elements of X and performing operations Σ
+UComp : Sig → Set → Set
+UComp Σ X = Tree Σ X
+
+-- TODO: write the type of bind-user
+bind-user = bind-tree
 
 -- Denotation of a kernel computation with state C returning elements of X
-KComp : Set → Set → Set
-KComp C X = C → Tree (X × C)
+KComp : Sig → Set → Set → Set
+KComp Σ C X = C → Tree Σ (X × C)
+
+bind-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → (KComp Σ C X → KComp Σ C Y)
+bind-kernel = {!!} -- TODO
 
 mutual
   -- Denotation of value types
@@ -44,11 +72,11 @@ mutual
   ⟦ t ×v u ⟧v = ⟦ t ⟧v × ⟦ u ⟧v
   ⟦ t ⟶ᵤ u ⟧v = ⟦ t ⟧v → ⟦ u ⟧u
   ⟦ t ⟶ₖ u ⟧v = ⟦ t ⟧v → ⟦ u ⟧k
-  ⟦ Σ₁ ⇒ Σ₂ , c ⟧v = Runner ⟦ c ⟧g
+  ⟦ Σ₁ ⇒ Σ₂ , c ⟧v = Runner Σ₁ Σ₂ ⟦ c ⟧g
 
   -- Denotation of a skeletal runner
-  Runner : Set → Set
-  Runner C = ∀ (op : Op) → ⟦ param op ⟧g → KComp C ⟦ result op ⟧g
+  Runner : Sig → Sig → Set → Set
+  Runner Σ₁ Σ₂ C = ∀ (op : Op) → op ∈ₒ Σ₁ → ⟦ param op ⟧g → KComp Σ₂ C ⟦ result op ⟧g
 
   -- Denotation of user computation types
   -- Idea: the elements of t!Σ are computations, each computation
@@ -58,11 +86,11 @@ mutual
   -- * tree node: labeled by an operation and a parameter,
   --              subtrees are computations
   ⟦_⟧u : UType → Set
-  ⟦ t ! _ ⟧u = UComp ⟦ t ⟧v
+  ⟦ t ! Σ ⟧u = UComp Σ ⟦ t ⟧v
 
   -- Denotation of kernel computation types
   ⟦_⟧k : KType → Set
-  ⟦ t ↯ _ , c ⟧k = KComp ⟦ c ⟧g ⟦ t ⟧v
+  ⟦ t ↯ Σ , c ⟧k = KComp Σ ⟦ c ⟧g ⟦ t ⟧v
 
 -- Denotation of contexts are runtime environments
 ⟦_⟧-ctx : Ctx → Set
@@ -74,9 +102,6 @@ lookup : ∀ {Γ t} (x : t ∈ Γ) → ⟦ Γ ⟧-ctx → ⟦ t ⟧v
 lookup here η = proj₂ η
 lookup (there x) η = lookup x (proj₁ η)
 
-prune : ∀ {Γ t Σ} (M : Γ ⊢U: t ! Σ) → Γ ⊢V: t
-prune = {!   !}
-
 mutual
   -- Denotation of value subtyping
   coerceᵥ : ∀ {t u} → t ⊑ᵥ u → ⟦ t ⟧v → ⟦ u ⟧v
@@ -84,17 +109,15 @@ mutual
   coerceᵥ (⊑ᵥ-product p q) (a₁ , a₂) = (coerceᵥ p a₁ , coerceᵥ q a₂)
   coerceᵥ (⊑ᵥ-Ufun p q) f = λ a' → coerceᵤ q (f (coerceᵥ p a'))
   coerceᵥ (⊑ᵥ-Kfun p q) f = λ a' → coerceₖ q (f (coerceᵥ p a'))
-  coerceᵥ (⊑ᵥ-runner p q eq) a = λ op par z₁ → node op par (λ z₂ → leaf (z₂ , z₁))
+  coerceᵥ (⊑ᵥ-runner p q refl) R = λ op r par state → include-tree q (R op {!!} par state)
 
   -- Denotation of user computation subtyping
-  coerceᵤ : ∀ {t u} → t ⊑ᵤ u → ⟦ t ⟧u → ⟦ u ⟧u
-  coerceᵤ (Types.⊑ᵤ-ground p q) (leaf x) = leaf (coerceᵥ p x)
-  coerceᵤ (Types.⊑ᵤ-ground p q) (node op par c) = node op par λ res → {!  c res !}
-  coerceᵤ (Types.⊑ᵤ-ground p q) error = error
+  coerceᵤ : ∀ {X Y} → X ⊑ᵤ Y → ⟦ X ⟧u → ⟦ Y ⟧u
+  coerceᵤ (⊑ᵤ-ground p q) t = {!!} -- TODO: use include-tree and map-tree on t
 
   -- Denotation of user computation subtyping
   coerceₖ : ∀ {t u} → t ⊑ₖ u → ⟦ t ⟧k → ⟦ u ⟧k
-  coerceₖ (⊑ₖ-kernel val sig eq) a = λ c' → {!   !}
+  coerceₖ (⊑ₖ-kernel val sig refl) a = λ c' → {!!} -- TODO: like above
 
 
 -- Denotations of terms
@@ -107,35 +130,25 @@ mutual
   ⟦ ⟨ V , W ⟩ ⟧-value η = (⟦ V ⟧-value η) , (⟦ W ⟧-value η)
   ⟦ funU t ⟧-value η = λ a → ⟦ t ⟧-user (η , a)
   ⟦ funK t ⟧-value η = λ a → ⟦ t ⟧-kernel (η , a)
-  ⟦ runner r ⟧-value η = λ op a c → node op a λ x → leaf (x , c) -- Look into this
-
-  aux : ∀ {Γ t Σ} → (Γ ⊢U: t ! Σ) → ⟦ Γ ⟧-ctx → ⟦ t ⟧v
-  aux (Terms.sub-user M x) γ = {!   !}
-  aux (Terms.return x) γ = ⟦ x ⟧-value γ
-  aux (M ∘ N) γ = ⟦ {! N  !} ⟧-value γ
-  aux (Terms.opᵤ op x x₁ M) γ = {!   !}
-  aux (Terms.`let M `in M₁) γ = {!   !}
-  aux (Terms.match x `with M) γ = {!   !}
-  aux (Terms.`using x at x₁ `run M finally M₁) γ = {!   !}
-  aux (Terms.kernel x at x₁ finally M) γ = {!   !}
+  ⟦ runner r ⟧-value η = {!!}
 
   ⟦_⟧-user : ∀ {Γ U} → (Γ ⊢U: U) → ⟦ Γ ⟧-ctx → ⟦ U ⟧u
   ⟦ sub-user M p ⟧-user η = coerceᵤ p (⟦ M ⟧-user η)
   ⟦ return V ⟧-user η = leaf (⟦ V ⟧-value η)
-  ⟦ V ∘ W ⟧-user η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
-  ⟦ opᵤ op p V M ⟧-user η = node op (⟦ V ⟧-value η) λ res → ⟦ M ⟧-user (η , res)
-  ⟦ `let M `in N ⟧-user η = ⟦ N ⟧-user (η , {! prune M !})
+  ⟦ V · W ⟧-user η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
+  ⟦ opᵤ op p V M ⟧-user η = node op p (⟦ V ⟧-value η) λ res → ⟦ M ⟧-user (η , res)
+  ⟦ `let M `in N ⟧-user η = ⟦ N ⟧-user (η , {!  !}) -- TODO: use bind-user here
   ⟦ match V `with M ⟧-user η = ⟦ M ⟧-user ((η , (proj₁ (⟦ V ⟧-value η))) , (proj₂ (⟦ V ⟧-value η)))
   ⟦ `using V at W `run M finally N ⟧-user η = {!   !}
-  ⟦ kernel K at V finally M ⟧-user η = {!   !}
+  ⟦ kernel K at V finally M ⟧-user η = {!  ⟦ K ⟧-kernel η   !}
 
   ⟦_⟧-kernel : ∀ {Γ K} → (Γ ⊢K: K) → ⟦ Γ ⟧-ctx → ⟦ K ⟧k
   ⟦ sub-kernel K p ⟧-kernel η = coerceₖ p (⟦ K ⟧-kernel η)
   ⟦ return V ⟧-kernel η c = leaf ((⟦ V ⟧-value η) , c)
-  ⟦ V ∘ W ⟧-kernel η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
-  ⟦ `let K `in L ⟧-kernel η c = {!   !}
+  ⟦ V · W ⟧-kernel η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
+  ⟦ `let K `in L ⟧-kernel η c = {!   !} -- TODO: use bind-kernel here
   ⟦ match V `with K ⟧-kernel η = ⟦ K ⟧-kernel ((η , proj₁ (⟦ V ⟧-value η)) , proj₂ (⟦ V ⟧-value η))
-  ⟦ opₖ op p V K ⟧-kernel η c = node op (⟦ V ⟧-value η) (λ res → ⟦ K ⟧-kernel (η , res) c)
+  ⟦ opₖ op p V K ⟧-kernel η c =  node op p (⟦ V ⟧-value η) (λ res → ⟦ K ⟧-kernel (η , res) c)
   ⟦ getenv K ⟧-kernel η c = ⟦ K ⟧-kernel (η , c) c
   ⟦ setenv V K ⟧-kernel η _ = ⟦ K ⟧-kernel η (⟦ V ⟧-value η)
-  ⟦ user M `with K ⟧-kernel η c = {!   !}  
+  ⟦ user M `with K ⟧-kernel η c = {!   !}

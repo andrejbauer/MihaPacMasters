@@ -71,7 +71,7 @@ interleaved mutual
        ----------
        → Γ ⊢U: X ! Σ
 
-    _∘_ : {X : VType} {U : UType} -- Formerly apply
+    _·_ : {X : VType} {U : UType} -- Formerly apply
       → Γ ⊢V: X ⟶ᵤ U
       → Γ ⊢V: X
       -------------------------
@@ -127,7 +127,7 @@ interleaved mutual
       --------------------------
       → Γ ⊢K: X ↯ Σ , C
 
-    _∘_ : {X : VType} {K : KType}
+    _·_ : {X : VType} {K : KType}
       → Γ ⊢V: X ⟶ₖ K
       → Γ ⊢V: X
       ---------------------------------
