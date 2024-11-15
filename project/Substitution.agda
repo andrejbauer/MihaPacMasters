@@ -51,7 +51,7 @@ interleaved mutual
   sub-coop : ∀ {Γ Γ' Σ C op} → co-op Γ Σ C op → Sub Γ' Γ → co-op Γ' Σ C op
   sub-coop (sub-kernel K p) σ = sub-kernel (K [ (extendₛ σ) ]ₖ) p
   sub-coop (return V) σ = return (V [ (extendₛ σ) ]ᵥ)
-  sub-coop (V ∘ U) σ = (V [ extendₛ σ ]ᵥ) ∘ (U [ (extendₛ σ) ]ᵥ)
+  sub-coop (V · U) σ = (V [ extendₛ σ ]ᵥ) · (U [ (extendₛ σ) ]ᵥ)
   sub-coop (`let K `in L) σ = `let K [ (extendₛ σ) ]ₖ `in (L [ (extendₛ (extendₛ σ)) ]ₖ)
   sub-coop (match V `with K) σ = match (V [ extendₛ σ ]ᵥ) `with (K [ (extendₛ (extendₛ (extendₛ σ))) ]ₖ)
   sub-coop (opₖ op p V K) σ = opₖ op p (V [ (extendₛ σ) ]ᵥ) (K [ (extendₛ (extendₛ σ)) ]ₖ)
@@ -78,7 +78,7 @@ interleaved mutual
 
   sub-kernel K p [ σ ]ₖ = sub-kernel (K [ σ ]ₖ) p
   return V [ σ ]ₖ = return (V [ σ ]ᵥ)
-  (V₁ ∘ V₂) [ σ ]ₖ = (V₁ [ σ ]ᵥ) ∘ (V₂ [ σ ]ᵥ)
+  (V₁ · V₂) [ σ ]ₖ = (V₁ [ σ ]ᵥ) · (V₂ [ σ ]ᵥ)
   `let K `in L [ σ ]ₖ = `let (K [ σ ]ₖ) `in (L [ (extendₛ σ) ]ₖ)
   (match V `with K) [ σ ]ₖ = match V [ σ ]ᵥ `with (K [ (extendₛ (extendₛ σ)) ]ₖ)
   opₖ op p V K [ σ ]ₖ = opₖ op p (V [ σ ]ᵥ) (K [ extendₛ σ ]ₖ)
