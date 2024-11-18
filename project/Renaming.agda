@@ -5,8 +5,8 @@ open import Parameters
 module Renaming (G : GTypes) (O : Ops G) where
 
 open import Types G O
-open import Terms G O 
-open import Contexts G O 
+open import Terms G O
+open import Contexts G O
 
 open GTypes G
 open Ops O
@@ -66,12 +66,12 @@ interleaved mutual
   -- THE FOLLOWING IS AN AUXILLIARY FUNCTION
   -- Something for Γ ⊢V: X ⟶ₖ Y and ρ = Ren Γ' Γ FOR (V ∘ U) (Named nth for nothing)
   -- Explanation: It takes a value calculation(Not right term) of a specific type and a renaming, then
-  -- proves that the renaming transforms the calculation(?) in the expected way  
+  -- proves that the renaming transforms the calculation(?) in the expected way
   rename-funK : ∀ {Γ Γ' X Y } → Γ ⊢V: X ⟶ₖ Y → Ren Γ' Γ → Γ' ⊢V: X ⟶ₖ Y  -- EXPLANATION: TODO
   rename-funK (var x) ρ = var (ρ x)
   rename-funK (sub-value V p) ρ = sub-value (V [ ρ ]ᵥᵣ) p
   rename-funK (funK K) ρ = funK (K [ extendᵣ ρ ]ₖᵣ)
-  
+
   -- Value
   -- THE FOLLOWING IS AN AUXILLIARY FUNCTION
   -- MIGHT BE SUPERFLUOUS (might exist a better method)
@@ -79,7 +79,7 @@ interleaved mutual
   rename-coop : ∀ { Γ Γ' Σ C op} → co-op Γ Σ C op → Ren Γ' Γ → co-op Γ' Σ C op -- This might be doable in a less brute force way
   rename-coop (sub-kernel K p) ρ = sub-kernel (K [ extendᵣ ρ ]ₖᵣ) p
   rename-coop (return V) ρ = return (V [ extendᵣ ρ ]ᵥᵣ)
-  rename-coop (V ∘ U) ρ = rename-funK V (extendᵣ ρ) ∘ (U [ extendᵣ ρ ]ᵥᵣ)
+  rename-coop (V · U) ρ = rename-funK V (extendᵣ ρ) · (U [ extendᵣ ρ ]ᵥᵣ)
   rename-coop (`let K `in L) ρ = `let K [ extendᵣ ρ ]ₖᵣ `in (L [ extendᵣ (extendᵣ ρ) ]ₖᵣ)
   rename-coop (match V `with K) ρ = match V [ extendᵣ ρ ]ᵥᵣ `with (K [ extendᵣ (extendᵣ (extendᵣ ρ)) ]ₖᵣ)
   rename-coop (opₖ op p V K) ρ = opₖ op p (V [ extendᵣ ρ ]ᵥᵣ) (K [ extendᵣ (extendᵣ ρ) ]ₖᵣ)
@@ -112,13 +112,12 @@ interleaved mutual
   -- Kernel -- EXPLANATIONS: The standard method throughout
   sub-kernel K p [ ρ ]ₖᵣ = sub-kernel (K [ ρ ]ₖᵣ) p
   return V [ ρ ]ₖᵣ = return (V [ ρ ]ᵥᵣ)
-  (V ∘ U) [ ρ ]ₖᵣ = rename-funK V ρ ∘ (U [ ρ ]ᵥᵣ) -- rename-funK necessary here, because I do not know how to prove anything about Γ ⊢V: X ⟶ₖ Y
+  (V · U) [ ρ ]ₖᵣ = rename-funK V ρ · (U [ ρ ]ᵥᵣ) -- rename-funK necessary here, because I do not know how to prove anything about Γ ⊢V: X ⟶ₖ Y
   `let K `in L [ ρ ]ₖᵣ = `let K [ ρ ]ₖᵣ `in (L [ extendᵣ ρ ]ₖᵣ)
   match V `with K [ ρ ]ₖᵣ = match V [ ρ ]ᵥᵣ `with (K [ extendᵣ (extendᵣ ρ) ]ₖᵣ)
   opₖ op p V K [ ρ ]ₖᵣ = opₖ op p (V [ ρ ]ᵥᵣ) (K [ extendᵣ ρ ]ₖᵣ)
   getenv K [ ρ ]ₖᵣ = getenv (K [ extendᵣ ρ ]ₖᵣ)
   setenv V K [ ρ ]ₖᵣ = setenv (V [ ρ ]ᵥᵣ) (K [ ρ ]ₖᵣ)
   user U `with K [ ρ ]ₖᵣ = user U [ ρ ]ᵤᵣ `with (K [ extendᵣ ρ ]ₖᵣ)
- 
+
 -- ...
-    

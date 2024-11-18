@@ -3,10 +3,10 @@ open import Parameters
 module Equations (G : GTypes) (O : Ops G) where
 
 open import Types G O
-open import Terms G O 
-open import Contexts G O 
-open import Renaming G O 
-open import Substitution G O 
+open import Terms G O
+open import Contexts G O
+open import Renaming G O
+open import Substitution G O
 
 
 open GTypes G
@@ -84,7 +84,7 @@ interleaved mutual
     funK-eta : {X : VType} {K : KType}
       {V : Γ ⊢V: X ⟶ₖ K}
       ---------------
-      → Γ ⊢V funK ((V [ wkᵣ ]ᵥᵣ) ∘ (var here)) ≡ V
+      → Γ ⊢V funK ((V [ wkᵣ ]ᵥᵣ) · (var here)) ≡ V
 
 
 
@@ -210,7 +210,7 @@ interleaved mutual
       → Γ ⊢U match ⟨ V₁ , V₂ ⟩ `with M ≡ (M [ ((idₛ ∷ₛ V₁) ∷ₛ V₂) ]ᵤ)
 
 {-     match-with-beta-null : {U : UType} -- Zaenkrat naj to ostane prazno
-      → (V : Γ ⊢U: gnd 
+      → (V : Γ ⊢U: gnd
       → (B : Γ ⊢U: U)
       -----------------
       → Γ ⊢U match ? `with (B [ (wkₛ (wkₛ idₛ)) ]ᵤ) ≡ B -}
@@ -220,7 +220,7 @@ interleaved mutual
       → (R : Γ ⊢V: Σ ⇒ Σ' , C)
       → (W : Γ ⊢V: gnd C)
       → (V : Γ ⊢V: X)
-      → (N : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ') 
+      → (N : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ')
       ------------
       → Γ ⊢U `using R at W `run return V finally N ≡ (N [ (idₛ ∷ₛ V) ∷ₛ W ]ᵤ)
 
@@ -236,7 +236,7 @@ interleaved mutual
       ------------
       → Γ ⊢U `using runner R at W `run (opᵤ op p V M) finally N
           ≡ kernel R op p [ idₛ ∷ₛ V ]ₖ at W finally (`using (runner (rename-runner R (wkᵣ ∘ᵣ wkᵣ))) at var here `run M [ wkᵣ ]ᵤᵣ finally (N [ extdᵣ (extdᵣ (wkᵣ ∘ᵣ wkᵣ)) ]ᵤᵣ))
-          
+
     kernel-at-finally-beta-return : {X Y : VType}
       {Σ : Sig} {C : KState}
       → (V : Γ ⊢V: X)
@@ -314,7 +314,7 @@ interleaved mutual
       → Γ ⊢V V₁ ≡ V₂
       → Γ ⊢V W₁ ≡ W₂
       -----------------------
-      → Γ ⊢K V₁ ∘ W₁ ≡ (V₂ ∘ W₂)
+      → Γ ⊢K V₁ · W₁ ≡ (V₂ · W₂)
 
     let-in-cong :
       {X Y : VType} {Σ : Sig} {C : KState}
@@ -377,7 +377,7 @@ interleaved mutual
       → (K : Γ ∷ X ⊢K: L)
       → (V : Γ ⊢V: X)
       -------------------
-      → Γ ⊢K (funK K) ∘ V ≡ (K [ idₛ ∷ₛ V ]ₖ)
+      → Γ ⊢K (funK K) · V ≡ (K [ idₛ ∷ₛ V ]ₖ)
 
     let-in-beta-return : {X Y : VType} --preveri pozneje
       {Σ : Sig} {C : KState}
@@ -406,10 +406,10 @@ interleaved mutual
           ≡ getenv (`let K `in (L [ (extendₛ (wkₛ idₛ)) ]ₖ))
 
     let-in-beta-setenv : {X Y : VType}
-      {C : KState} {Σ : Sig} 
+      {C : KState} {Σ : Sig}
       → (V : Γ ⊢V: gnd C)
       → (K : Γ ⊢K: X ↯ Σ , C)
-      → (L : Γ ∷ X ⊢K: Y ↯ Σ , C) 
+      → (L : Γ ∷ X ⊢K: Y ↯ Σ , C)
       -----------------
       → Γ ⊢K `let (setenv V K) `in L
           ≡ setenv V (`let K `in L)
@@ -489,4 +489,3 @@ interleaved mutual
 
 
 infix 1 _⊢V_≡_ _⊢U_≡_ _⊢K_≡_
-         
