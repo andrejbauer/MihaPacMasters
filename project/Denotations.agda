@@ -23,14 +23,13 @@ open Terms G O
 
 
 -- A computation tree that hold values of type T in their leaves
-data Tree (T : Set) : Set where
-  leaf : T → Tree T
-  node : ∀ (op : Op) → ⟦ param op ⟧g → (⟦ result op ⟧g → Tree T) → Tree T
-  error : Tree T
+data Tree (Σ : Sig) (T : Set) : Set where
+  leaf : T → Tree Σ T
+  node : ∀ (op : Op) → (op ∈ₒ Σ) → ⟦ param op ⟧g → (⟦ result op ⟧g → Tree Σ T) → Tree Σ T
 
 -- Denotation of a user computation returning elements of X
 UComp : Set → Set
-UComp X = Tree X
+UComp Σ X = Tree Σ X
 
 -- Denotation of a kernel computation with state C returning elements of X
 KComp : Set → Set → Set
@@ -74,9 +73,6 @@ lookup : ∀ {Γ t} (x : t ∈ Γ) → ⟦ Γ ⟧-ctx → ⟦ t ⟧v
 lookup here η = proj₂ η
 lookup (there x) η = lookup x (proj₁ η)
 
-prune : ∀ {Γ t Σ} (M : Γ ⊢U: t ! Σ) → Γ ⊢V: t
-prune = {!   !}
-
 mutual
   -- Denotation of value subtyping
   coerceᵥ : ∀ {t u} → t ⊑ᵥ u → ⟦ t ⟧v → ⟦ u ⟧v
@@ -88,13 +84,23 @@ mutual
 
   -- Denotation of user computation subtyping
   coerceᵤ : ∀ {t u} → t ⊑ᵤ u → ⟦ t ⟧u → ⟦ u ⟧u
-  coerceᵤ (Types.⊑ᵤ-ground p q) (leaf x) = leaf (coerceᵥ p x)
-  coerceᵤ (Types.⊑ᵤ-ground p q) (node op par c) = node op par λ res → {!  c res !}
-  coerceᵤ (Types.⊑ᵤ-ground p q) error = error
+  coerceᵤ (⊑ᵤ-ground p q) (leaf x) = leaf (coerceᵥ p x)
+  coerceᵤ (⊑ᵤ-ground ⊑ᵥ-ground q) (node op par c) = node op par c
+  coerceᵤ (⊑ᵤ-ground (⊑ᵥ-product p q) r) (node op par c) = {!   !}
+  coerceᵤ (⊑ᵤ-ground (⊑ᵥ-Ufun p x) q) (node op par c) = error
+  coerceᵤ (⊑ᵤ-ground (⊑ᵥ-Kfun p x) q) (node op par c) = error
+  coerceᵤ (⊑ᵤ-ground (⊑ᵥ-runner x x₁ x₂) q) (node op par c) = error
+  coerceᵤ (⊑ᵤ-ground p q) error = error
 
-  -- Denotation of user computation subtyping
+-- Interesting thing about these explicit coercions in thesis
+
+  -- Denotation of kernel computation subtyping
   coerceₖ : ∀ {t u} → t ⊑ₖ u → ⟦ t ⟧k → ⟦ u ⟧k
-  coerceₖ (⊑ₖ-kernel val sig eq) a = λ c' → {!   !}
+  coerceₖ (⊑ₖ-kernel ⊑ᵥ-ground sig eq) a = λ c' → leaf ( {!   !} , c')
+  coerceₖ (⊑ₖ-kernel (⊑ᵥ-product val val₁) sig eq) a = {!   !}
+  coerceₖ (⊑ₖ-kernel (⊑ᵥ-Ufun val x) sig eq) a = {!   !}
+  coerceₖ (⊑ₖ-kernel (⊑ᵥ-Kfun val x) sig eq) a = {!   !}
+  coerceₖ (⊑ₖ-kernel (⊑ᵥ-runner x x₁ x₂) sig eq) a = {!   !}
 
 
 -- Denotations of terms
@@ -119,12 +125,14 @@ mutual
   aux (Terms.`using x at x₁ `run M finally M₁) γ = {!   !}
   aux (Terms.kernel x at x₁ finally M) γ = {!   !}
 
+
+
   ⟦_⟧-user : ∀ {Γ U} → (Γ ⊢U: U) → ⟦ Γ ⟧-ctx → ⟦ U ⟧u
   ⟦ sub-user M p ⟧-user η = coerceᵤ p (⟦ M ⟧-user η)
   ⟦ return V ⟧-user η = leaf (⟦ V ⟧-value η)
   ⟦ V ∘ W ⟧-user η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
   ⟦ opᵤ op p V M ⟧-user η = node op (⟦ V ⟧-value η) λ res → ⟦ M ⟧-user (η , res)
-  ⟦ `let M `in N ⟧-user η = ⟦ N ⟧-user (η , {! prune M !})
+  ⟦ `let M `in N ⟧-user η = ⟦ N ⟧-user (η , {! ⟦ M ⟧-user !}) --binding/lifting 
   ⟦ match V `with M ⟧-user η = ⟦ M ⟧-user ((η , (proj₁ (⟦ V ⟧-value η))) , (proj₂ (⟦ V ⟧-value η)))
   ⟦ `using V at W `run M finally N ⟧-user η = {!   !}
   ⟦ kernel K at V finally M ⟧-user η = {!   !}
