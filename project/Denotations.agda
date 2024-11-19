@@ -39,8 +39,12 @@ data Tree  (Σ : Sig) (X : Set) : Set where
   leaf : X → Tree Σ X
   node : ∀ (op : Op) → op ∈ₒ Σ → ⟦ param op ⟧g → (⟦ result op ⟧g → Tree Σ X) → Tree Σ X
 
+aux : ∀{op Σ₁ Σ₂ } → op ∈ₒ Σ₁ → Σ₁ ⊆ₛ Σ₂ → op ∈ₒ Σ₂ -- auxilliary function for include-tree
+aux {op} p q = q op p 
+
 include-tree : ∀ {Σ₁ Σ₂ X} → Σ₁ ⊆ₛ Σ₂ → Tree Σ₁ X → Tree Σ₂ X
-include-tree p t = {!!} -- TODO
+include-tree p (leaf x) = leaf x
+include-tree p (node op q par c) = node op (aux q p) par (λ res → include-tree p (c res))
 
 -- Monadic bind for trees
 bind-tree : ∀ {Σ X Y} → (X → Tree Σ Y) → Tree Σ X → Tree Σ Y
@@ -54,15 +58,16 @@ map-tree f t = bind-tree (leaf ∘ f) t
 UComp : Sig → Set → Set
 UComp Σ X = Tree Σ X
 
--- TODO: write the type of bind-user
-bind-user = bind-tree
+bind-user : ∀ {Σ X Y} → (X → UComp Σ Y) → UComp Σ X → UComp Σ Y
+bind-user f (leaf x) = f x
+bind-user f (node op p par c) = node op p par (λ res → bind-user f (c res))
 
 -- Denotation of a kernel computation with state C returning elements of X
 KComp : Sig → Set → Set → Set
 KComp Σ C X = C → Tree Σ (X × C)
 
-bind-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → (KComp Σ C X → KComp Σ C Y)
-bind-kernel = {!!} -- TODO
+bind-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → KComp Σ C X → KComp Σ C Y
+bind-kernel f K state = {!   !} -- TODO
 
 mutual
   -- Denotation of value types
@@ -113,11 +118,11 @@ mutual
 
   -- Denotation of user computation subtyping
   coerceᵤ : ∀ {X Y} → X ⊑ᵤ Y → ⟦ X ⟧u → ⟦ Y ⟧u
-  coerceᵤ (⊑ᵤ-ground p q) t = {!!} -- TODO: use include-tree and map-tree on t
+  coerceᵤ (⊑ᵤ-user p q) t = include-tree q (map-tree (coerceᵥ p) t)
 
   -- Denotation of kernel computation subtyping
   coerceₖ : ∀ {t u} → t ⊑ₖ u → ⟦ t ⟧k → ⟦ u ⟧k
-  coerceₖ (⊑ₖ-kernel val sig refl) a = λ c' → {!!} -- TODO: like above
+  coerceₖ (⊑ₖ-kernel val p refl) a = λ c' → include-tree p (map-tree {!   !} {!   !}) --(λ x → (coerceᵥ val x) , c') {! include-tree  !}) -- TODO: like above
 
 
 -- Denotations of terms
@@ -137,18 +142,19 @@ mutual
   ⟦ return V ⟧-user η = leaf (⟦ V ⟧-value η)
   ⟦ V · W ⟧-user η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
   ⟦ opᵤ op p V M ⟧-user η = node op p (⟦ V ⟧-value η) λ res → ⟦ M ⟧-user (η , res)
-  ⟦ `let M `in N ⟧-user η = ⟦ N ⟧-user (η , {!  !}) -- TODO: use bind-user here
+  ⟦ `let M `in N ⟧-user η = bind-user ⟦ N ⟧-user ( ⟦ {!   !} ⟧-user {!   !}) -- TODO: use bind-user here
   ⟦ match V `with M ⟧-user η = ⟦ M ⟧-user ((η , (proj₁ (⟦ V ⟧-value η))) , (proj₂ (⟦ V ⟧-value η)))
-  ⟦ `using V at W `run M finally N ⟧-user η = {!   !}
+  ⟦ `using V at W `run M finally N ⟧-user η = bind-user ⟦ N ⟧-user {!   !}
   ⟦ kernel K at V finally M ⟧-user η = {!  ⟦ K ⟧-kernel η   !}
 
   ⟦_⟧-kernel : ∀ {Γ K} → (Γ ⊢K: K) → ⟦ Γ ⟧-ctx → ⟦ K ⟧k
   ⟦ sub-kernel K p ⟧-kernel η = coerceₖ p (⟦ K ⟧-kernel η)
   ⟦ return V ⟧-kernel η c = leaf ((⟦ V ⟧-value η) , c)
   ⟦ V · W ⟧-kernel η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
-  ⟦ `let K `in L ⟧-kernel η c = {!   !} -- TODO: use bind-kernel here
+  ⟦ `let K `in L ⟧-kernel η c = bind-kernel ⟦ L ⟧-kernel (λ x → {!   !}) {!   !} -- TODO: use bind-kernel here
   ⟦ match V `with K ⟧-kernel η = ⟦ K ⟧-kernel ((η , proj₁ (⟦ V ⟧-value η)) , proj₂ (⟦ V ⟧-value η))
   ⟦ opₖ op p V K ⟧-kernel η c =  node op p (⟦ V ⟧-value η) (λ res → ⟦ K ⟧-kernel (η , res) c)
   ⟦ getenv K ⟧-kernel η c = ⟦ K ⟧-kernel (η , c) c
   ⟦ setenv V K ⟧-kernel η _ = ⟦ K ⟧-kernel η (⟦ V ⟧-value η)
   ⟦ user M `with K ⟧-kernel η c = {!   !}
+  

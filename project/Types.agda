@@ -80,7 +80,7 @@ interleaved mutual
   data _⊑ᵤ_ where
 
 
-    ⊑ᵤ-ground : {X X' : VType} {Σ Σ' : Sig} -- TODO: this shoul dbe called ⊑ᵤ-user
+    ⊑ᵤ-user : {X X' : VType} {Σ Σ' : Sig}
                 → X ⊑ᵥ X'
                 → Σ ⊆ₛ Σ'
                 → X ! Σ ⊑ᵤ X' ! Σ'
