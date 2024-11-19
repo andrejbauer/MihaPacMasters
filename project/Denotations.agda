@@ -66,8 +66,11 @@ bind-user f (node op p par c) = node op p par (λ res → bind-user f (c res))
 KComp : Sig → Set → Set → Set
 KComp Σ C X = C → Tree Σ (X × C)
 
+KComp' : Sig → (Set × Set) → Set
+KComp' Σ XxC = proj₂ XxC → Tree Σ {! (XxC)  !} 
+
 bind-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → KComp Σ C X → KComp Σ C Y
-bind-kernel f K state = {!   !} -- TODO
+bind-kernel f K state = {! K  !} -- TODO
 
 mutual
   -- Denotation of value types
@@ -128,6 +131,8 @@ mutual
 -- Denotations of terms
 mutual
 
+--  sub-coop : ∀ { } → 
+
   ⟦_⟧-value : ∀ {Γ t} → (Γ ⊢V: t) → ⟦ Γ ⟧-ctx → ⟦ t ⟧v
   ⟦ var x ⟧-value η = lookup x η
   ⟦ sub-value t p ⟧-value η = coerceᵥ p (⟦ t ⟧-value η)
@@ -135,26 +140,26 @@ mutual
   ⟦ ⟨ V , W ⟩ ⟧-value η = (⟦ V ⟧-value η) , (⟦ W ⟧-value η)
   ⟦ funU t ⟧-value η = λ a → ⟦ t ⟧-user (η , a)
   ⟦ funK t ⟧-value η = λ a → ⟦ t ⟧-kernel (η , a)
-  ⟦ runner r ⟧-value η = {!!}
+  ⟦ runner r ⟧-value η = λ op p par c → ⟦ (r op p) ⟧-kernel (η , par) c
 
   ⟦_⟧-user : ∀ {Γ U} → (Γ ⊢U: U) → ⟦ Γ ⟧-ctx → ⟦ U ⟧u
   ⟦ sub-user M p ⟧-user η = coerceᵤ p (⟦ M ⟧-user η)
   ⟦ return V ⟧-user η = leaf (⟦ V ⟧-value η)
   ⟦ V · W ⟧-user η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
   ⟦ opᵤ op p V M ⟧-user η = node op p (⟦ V ⟧-value η) λ res → ⟦ M ⟧-user (η , res)
-  ⟦ `let M `in N ⟧-user η = bind-user ⟦ N ⟧-user ( ⟦ {!   !} ⟧-user {!   !}) -- TODO: use bind-user here
+  ⟦ `let M `in N ⟧-user η = bind-user (λ x → ⟦ N ⟧-user (η , x)) (⟦ M ⟧-user η)
   ⟦ match V `with M ⟧-user η = ⟦ M ⟧-user ((η , (proj₁ (⟦ V ⟧-value η))) , (proj₂ (⟦ V ⟧-value η)))
-  ⟦ `using V at W `run M finally N ⟧-user η = bind-user ⟦ N ⟧-user {!   !}
-  ⟦ kernel K at V finally M ⟧-user η = {!  ⟦ K ⟧-kernel η   !}
+  ⟦ `using V at W `run M finally N ⟧-user η = bind-user (λ x → bind-user (λ y → ⟦ N ⟧-user ((η , {! y?  !}) , {! x?  !})) {!   !}) {!   !}
+  ⟦ kernel K at V finally M ⟧-user η = bind-user (λ (x , y) → ⟦ M ⟧-user ((η , x) , y)) (bind-kernel (λ x' c' → ⟦ K ⟧-kernel η c') {!   !} {!   !})
 
   ⟦_⟧-kernel : ∀ {Γ K} → (Γ ⊢K: K) → ⟦ Γ ⟧-ctx → ⟦ K ⟧k
   ⟦ sub-kernel K p ⟧-kernel η = coerceₖ p (⟦ K ⟧-kernel η)
   ⟦ return V ⟧-kernel η c = leaf ((⟦ V ⟧-value η) , c)
   ⟦ V · W ⟧-kernel η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
-  ⟦ `let K `in L ⟧-kernel η c = bind-kernel ⟦ L ⟧-kernel (λ x → {!   !}) {!   !} -- TODO: use bind-kernel here
+  ⟦ `let K `in L ⟧-kernel η c = bind-kernel ⟦ L ⟧-kernel (λ c' → ⟦ {! K  !} ⟧-kernel η c') c -- TODO: use bind-kernel here
   ⟦ match V `with K ⟧-kernel η = ⟦ K ⟧-kernel ((η , proj₁ (⟦ V ⟧-value η)) , proj₂ (⟦ V ⟧-value η))
   ⟦ opₖ op p V K ⟧-kernel η c =  node op p (⟦ V ⟧-value η) (λ res → ⟦ K ⟧-kernel (η , res) c)
   ⟦ getenv K ⟧-kernel η c = ⟦ K ⟧-kernel (η , c) c
   ⟦ setenv V K ⟧-kernel η _ = ⟦ K ⟧-kernel η (⟦ V ⟧-value η)
-  ⟦ user M `with K ⟧-kernel η c = {!   !}
+  ⟦ user M `with K ⟧-kernel η c = {!   !} -- bind-kernel (λ x c' → ⟦ K ⟧-kernel (η , x) c') {!   !} c
   
