@@ -23,7 +23,11 @@ open Terms G O
 -- - use A, B, C for ground types
 -- - something for base types? (could be 'b')
 -- - use Xᵤ, Yᵤ, Zᵤ for user types
--- - use Xk, Yk, Zk  for kernel types
+-- - use Xₖ, Yₖ, Zₖ  for kernel types
+
+-- Trees are t, u, ...
+-- UComps are M, N, ... 
+-- KComps are K, L, ...
 
 -- TODO: look up "Wadler's law" (named after Phil Wadler)
 
@@ -56,7 +60,8 @@ map-tree f t = bind-tree (leaf ∘ f) t
 
 -- Denotation of a user computation returning elements of X and performing operations Σ
 UComp : Sig → Set → Set
-UComp Σ X = Tree Σ X
+UComp Σ X = Tree Σ X --TODO: Prove that THIS/Tree(X) is a Monad, the UComp will be T, bind is the bind-tree, leaf is the unit η, 
+--when verifying equations keep in mind that you might have to use funext
 
 bind-user : ∀ {Σ X Y} → (X → UComp Σ Y) → UComp Σ X → UComp Σ Y
 bind-user f (leaf x) = f x
@@ -65,12 +70,17 @@ bind-user f (node op p par c) = node op p par (λ res → bind-user f (c res))
 -- Denotation of a kernel computation with state C returning elements of X
 KComp : Sig → Set → Set → Set
 KComp Σ C X = C → Tree Σ (X × C)
-
-KComp' : Sig → (Set × Set) → Set
-KComp' Σ XxC = proj₂ XxC → Tree Σ {! (XxC)  !} 
+-- Monad1 - C → ? × C
+-- Monad2 - Tree Σ ?
+-- KComp is the combination of Monad1 and Monad2
+-- TODO: Prove the Kernel is also a Monad (in this file, possibly)
 
 bind-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → KComp Σ C X → KComp Σ C Y
-bind-kernel f K state = {! K  !} -- TODO
+bind-kernel f K c = bind-tree (λ {(x , c') → f x c'}) (K c)
+
+{- bind-kernel f K c with K c 
+... | leaf (x , c') = f x c'
+... | node op p par t = node op p par (λ res → bind-kernel f {!  !} c) -} -- TODO: Cleanup
 
 mutual
   -- Denotation of value types
@@ -117,15 +127,15 @@ mutual
   coerceᵥ (⊑ᵥ-product p q) (a₁ , a₂) = (coerceᵥ p a₁ , coerceᵥ q a₂)
   coerceᵥ (⊑ᵥ-Ufun p q) f = λ a' → coerceᵤ q (f (coerceᵥ p a'))
   coerceᵥ (⊑ᵥ-Kfun p q) f = λ a' → coerceₖ q (f (coerceᵥ p a'))
-  coerceᵥ (⊑ᵥ-runner p q refl) R = λ op r par state → include-tree q (R op {!!} par state)
+  coerceᵥ (⊑ᵥ-runner p q refl) R = λ op r par state → include-tree q (R op (p _ r) par state) -- TODO: Make the first argument of p implicit 
 
   -- Denotation of user computation subtyping
   coerceᵤ : ∀ {X Y} → X ⊑ᵤ Y → ⟦ X ⟧u → ⟦ Y ⟧u
   coerceᵤ (⊑ᵤ-user p q) t = include-tree q (map-tree (coerceᵥ p) t)
 
   -- Denotation of kernel computation subtyping
-  coerceₖ : ∀ {t u} → t ⊑ₖ u → ⟦ t ⟧k → ⟦ u ⟧k
-  coerceₖ (⊑ₖ-kernel val p refl) a = λ c' → include-tree p (map-tree {!   !} {!   !}) --(λ x → (coerceᵥ val x) , c') {! include-tree  !}) -- TODO: like above
+  coerceₖ : ∀ {Xₖ Yₖ} → Xₖ ⊑ₖ Yₖ → ⟦ Xₖ ⟧k → ⟦ Yₖ ⟧k
+  coerceₖ (⊑ₖ-kernel p q refl) K c = include-tree q (map-tree (λ {(x , c') → (coerceᵥ p x) , c'}) (K c))
 
 
 -- Denotations of terms
@@ -149,17 +159,17 @@ mutual
   ⟦ opᵤ op p V M ⟧-user η = node op p (⟦ V ⟧-value η) λ res → ⟦ M ⟧-user (η , res)
   ⟦ `let M `in N ⟧-user η = bind-user (λ x → ⟦ N ⟧-user (η , x)) (⟦ M ⟧-user η)
   ⟦ match V `with M ⟧-user η = ⟦ M ⟧-user ((η , (proj₁ (⟦ V ⟧-value η))) , (proj₂ (⟦ V ⟧-value η)))
-  ⟦ `using V at W `run M finally N ⟧-user η = bind-user (λ x → bind-user (λ y → ⟦ N ⟧-user ((η , {! y?  !}) , {! x?  !})) {!   !}) {!   !}
+  ⟦ `using R at V `run M finally N ⟧-user η = {! ⟦ R ⟧-value η !}
   ⟦ kernel K at V finally M ⟧-user η = bind-user (λ (x , y) → ⟦ M ⟧-user ((η , x) , y)) (bind-kernel (λ x' c' → ⟦ K ⟧-kernel η c') {!   !} {!   !})
 
   ⟦_⟧-kernel : ∀ {Γ K} → (Γ ⊢K: K) → ⟦ Γ ⟧-ctx → ⟦ K ⟧k
   ⟦ sub-kernel K p ⟧-kernel η = coerceₖ p (⟦ K ⟧-kernel η)
   ⟦ return V ⟧-kernel η c = leaf ((⟦ V ⟧-value η) , c)
   ⟦ V · W ⟧-kernel η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
-  ⟦ `let K `in L ⟧-kernel η c = bind-kernel ⟦ L ⟧-kernel (λ c' → ⟦ {! K  !} ⟧-kernel η c') c -- TODO: use bind-kernel here
+  ⟦ `let K `in L ⟧-kernel η = bind-kernel (λ x → ⟦ L ⟧-kernel (η , x)) (⟦ K ⟧-kernel η)
   ⟦ match V `with K ⟧-kernel η = ⟦ K ⟧-kernel ((η , proj₁ (⟦ V ⟧-value η)) , proj₂ (⟦ V ⟧-value η))
   ⟦ opₖ op p V K ⟧-kernel η c =  node op p (⟦ V ⟧-value η) (λ res → ⟦ K ⟧-kernel (η , res) c)
   ⟦ getenv K ⟧-kernel η c = ⟦ K ⟧-kernel (η , c) c
   ⟦ setenv V K ⟧-kernel η _ = ⟦ K ⟧-kernel η (⟦ V ⟧-value η)
-  ⟦ user M `with K ⟧-kernel η c = {!   !} -- bind-kernel (λ x c' → ⟦ K ⟧-kernel (η , x) c') {!   !} c
-  
+  ⟦ user M `with K ⟧-kernel η c = {!   !}
+   

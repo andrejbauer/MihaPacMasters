@@ -59,6 +59,7 @@ interleaved mutual
   sub-coop (setenv V K) σ = setenv (V [ (extendₛ σ) ]ᵥ) (K [ (extendₛ σ) ]ₖ)
   sub-coop (user M `with K) σ = user (M [ (extendₛ σ) ]ᵤ) `with (K [ (extendₛ (extendₛ σ)) ]ₖ)
 
+  -- Value
   var p [ σ ]ᵥ = σ p
   sub-value V p [ σ ]ᵥ = sub-value (V [ σ ]ᵥ) p
   ⟨⟩ [ σ ]ᵥ = ⟨⟩
@@ -67,6 +68,7 @@ interleaved mutual
   (funK K) [ σ ]ᵥ = funK (K [ extendₛ σ ]ₖ)
   runner R [ σ ]ᵥ = runner λ op p → sub-coop (R op p) σ
 
+  -- User
   sub-user M x [ σ ]ᵤ = sub-user (M [ σ ]ᵤ) x
   return V [ σ ]ᵤ = return (V [ σ ]ᵥ)
   (V₁ ∘ V₂) [ σ ]ᵤ = (V₁ [ σ ]ᵥ) ∘ (V₂ [ σ ]ᵥ)
@@ -76,6 +78,7 @@ interleaved mutual
   `using V at U `run M finally N [ σ ]ᵤ = `using V [ σ ]ᵥ at U [ σ ]ᵥ `run M [ σ ]ᵤ finally (N [ extendₛ (extendₛ σ) ]ᵤ)
   kernel K at V finally M [ σ ]ᵤ = kernel (K [ σ ]ₖ) at (V [ σ ]ᵥ) finally (M [ (extendₛ (extendₛ σ)) ]ᵤ)
 
+  -- Kernel
   sub-kernel K p [ σ ]ₖ = sub-kernel (K [ σ ]ₖ) p
   return V [ σ ]ₖ = return (V [ σ ]ᵥ)
   (V₁ · V₂) [ σ ]ₖ = (V₁ [ σ ]ᵥ) · (V₂ [ σ ]ᵥ)
