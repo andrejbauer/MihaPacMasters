@@ -1,6 +1,10 @@
 open import Data.Unit
 open import Data.Product
-open import Relation.Binary.PropositionalEquality
+--open import Relation.Binary.PropositionalEquality
+import Relation.Binary.PropositionalEquality as Eq
+open Eq                  using (_≡_; refl; sym; trans; cong; cong₂; subst; [_]; inspect)
+open Eq.≡-Reasoning      using (begin_; _≡⟨⟩_; step-≡; _∎)
+
 open import Function
 
 import Contexts
@@ -173,3 +177,62 @@ mutual
   ⟦ setenv V K ⟧-kernel η _ = ⟦ K ⟧-kernel η (⟦ V ⟧-value η)
   ⟦ user M `with K ⟧-kernel η c = {!   !}
    
+
+module Module where
+
+open import Level        renaming (zero to lzero; suc to lsuc)
+
+record Monad {l} : Set (lsuc l) where
+  field
+    -- carrier (object map) fo the Kleisli triple
+    T       : Set → Set
+    -- unit
+    η       : {X : Set} → X → T X
+    -- bind
+    _>>=_   : {X Y : Set} → T X → (X → T Y) → T Y
+    -- laws
+    η-left  : {X Y : Set} (x : X) (f : X → T Y) → η x >>= f ≡ f x
+    η-right : {X : Set} (c : T X) → c >>= η ≡ c
+    >>=-assoc : {X Y Z : Set} (c : T X) (f : X → T Y) (g : Y → T Z)
+              → ((c >>= f) >>= g) ≡ c >>= (λ x → f x >>= g)
+
+
+
+module _ {l} where
+
+
+{-bind-tree : ∀ {Σ X Y} → (X → Tree Σ Y) → Tree Σ X → Tree Σ Y
+bind-tree f (leaf x) = f x
+bind-tree f (node op p par c) = node op p par (λ res → bind-tree f (c res))-}
+
+
+
+  TreeMonad : (Σ : Sig) → Monad {l}
+  TreeMonad Σ = record {
+    T         = λ X → Tree Σ X ;
+    η         = leaf ;
+    _>>=_     = λ x f → bind-tree f x ;
+    η-left    = λ x f → refl ;
+    -- (_≡_; refl; sym; trans; cong; cong₂; subst; [_]; inspect)
+    η-right   = λ {(leaf x) → refl
+                ; (node op p param c) → cong (node op p param) {!   !}} ;
+    >>=-assoc = λ {(leaf x) f g → refl
+                 ; (node op p param c) f g → cong (node op p param) {!   !} } }
+  
+  UMonad : (Σ : Sig) → Monad {l}
+  UMonad Σ = record {
+    T         = UComp Σ ;
+    η         = leaf ;
+    _>>=_     = λ M f → bind-user f M ;
+    η-left    = λ x f → refl ;
+    η-right   = λ {M → {!   !}} ;
+    >>=-assoc = λ M f g → {!   !} }
+  
+  KMonad : (Σ : Sig) → (C : Set) → Monad {l}
+  KMonad Σ C = record {
+    T         = KComp Σ C ;
+    η         = λ x c → leaf (x , c) ;
+    _>>=_     = λ K f c → bind-kernel f K c ;
+    η-left    = λ c f → refl ;
+    η-right   = {!   !} ;  
+    >>=-assoc = {!   !} }       
