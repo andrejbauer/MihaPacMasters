@@ -12,7 +12,11 @@ open import Parameters
 import Types
 import Terms
 
-module Denotations (G : GTypes) (O : Ops G) where
+module Monads (G : GTypes) (O : Ops G) where --TODO: Organize things into separate files (17. 12. 2024)
+
+open import Level        renaming (zero to lzero; suc to lsuc)
+open import Axiom.Extensionality.Propositional using (Extensionality)
+postulate fun-ext : ∀ {a b} → Extensionality a b
 
 open GTypes G
 open Ops O
@@ -81,108 +85,8 @@ KComp Σ C X = C → Tree Σ (X × C)
 bind-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → KComp Σ C X → KComp Σ C Y
 bind-kernel f K c = bind-tree (λ {(x , c') → f x c'}) (K c)
 
-{- bind-kernel f K c with K c 
-... | leaf (x , c') = f x c'
-... | node op p par t = node op p par (λ res → bind-kernel f {!  !} c) -} -- TODO: Cleanup
 
-mutual --TODO: This should go into a different module/file. Essentially putting the monads in one and the ⟦ ⟧ stuff into another file.
-  -- Denotation of value types
-  ⟦_⟧v : VType → Set
-
-  ⟦ gnd g ⟧v = ⟦ g ⟧g
-  ⟦ t ×v u ⟧v = ⟦ t ⟧v × ⟦ u ⟧v
-  ⟦ t ⟶ᵤ u ⟧v = ⟦ t ⟧v → ⟦ u ⟧u
-  ⟦ t ⟶ₖ u ⟧v = ⟦ t ⟧v → ⟦ u ⟧k
-  ⟦ Σ₁ ⇒ Σ₂ , c ⟧v = Runner Σ₁ Σ₂ ⟦ c ⟧g
-
-  -- Denotation of a skeletal runner
-  Runner : Sig → Sig → Set → Set
-  Runner Σ₁ Σ₂ C = ∀ (op : Op) → op ∈ₒ Σ₁ → ⟦ param op ⟧g → KComp Σ₂ C ⟦ result op ⟧g
-
-  -- Denotation of user computation types
-  -- Idea: the elements of t!Σ are computations, each computation
-  -- either returns a value of type t, or triggers an operation in Σ
-  -- This is described by a *computation tree*:
-  -- * leaves: return value
-  -- * tree node: labeled by an operation and a parameter,
-  --              subtrees are computations
-  ⟦_⟧u : UType → Set
-  ⟦ t ! Σ ⟧u = UComp Σ ⟦ t ⟧v
-
-  -- Denotation of kernel computation types
-  ⟦_⟧k : KType → Set
-  ⟦ t ↯ Σ , c ⟧k = KComp Σ ⟦ c ⟧g ⟦ t ⟧v
-
--- Denotation of contexts are runtime environments
-⟦_⟧-ctx : Ctx → Set
-⟦ [] ⟧-ctx = ⊤
-⟦ Γ ∷ t ⟧-ctx = ⟦ Γ ⟧-ctx × ⟦ t ⟧v
-
--- Lookup a variable in a runtime environment
-lookup : ∀ {Γ t} (x : t ∈ Γ) → ⟦ Γ ⟧-ctx → ⟦ t ⟧v
-lookup here η = proj₂ η
-lookup (there x) η = lookup x (proj₁ η)
-
-mutual
-  -- Denotation of value subtyping
-  coerceᵥ : ∀ {t u} → t ⊑ᵥ u → ⟦ t ⟧v → ⟦ u ⟧v
-  coerceᵥ ⊑ᵥ-ground a = a
-  coerceᵥ (⊑ᵥ-product p q) (a₁ , a₂) = (coerceᵥ p a₁ , coerceᵥ q a₂)
-  coerceᵥ (⊑ᵥ-Ufun p q) f = λ a' → coerceᵤ q (f (coerceᵥ p a'))
-  coerceᵥ (⊑ᵥ-Kfun p q) f = λ a' → coerceₖ q (f (coerceᵥ p a'))
-  coerceᵥ (⊑ᵥ-runner p q refl) R = λ op r par state → include-tree q (R op (p _ r) par state) -- TODO: Make the first argument of p implicit 
-
-  -- Denotation of user computation subtyping
-  coerceᵤ : ∀ {X Y} → X ⊑ᵤ Y → ⟦ X ⟧u → ⟦ Y ⟧u
-  coerceᵤ (⊑ᵤ-user p q) t = include-tree q (map-tree (coerceᵥ p) t)
-
-  -- Denotation of kernel computation subtyping
-  coerceₖ : ∀ {Xₖ Yₖ} → Xₖ ⊑ₖ Yₖ → ⟦ Xₖ ⟧k → ⟦ Yₖ ⟧k
-  coerceₖ (⊑ₖ-kernel p q refl) K c = include-tree q (map-tree (λ {(x , c') → (coerceᵥ p x) , c'}) (K c))
-
-
--- Denotations of terms
-mutual
-
---  sub-coop : ∀ { } → 
-
-  ⟦_⟧-value : ∀ {Γ t} → (Γ ⊢V: t) → ⟦ Γ ⟧-ctx → ⟦ t ⟧v
-  ⟦ var x ⟧-value η = lookup x η
-  ⟦ sub-value t p ⟧-value η = coerceᵥ p (⟦ t ⟧-value η)
-  ⟦ ⟨⟩ ⟧-value η = tt
-  ⟦ ⟨ V , W ⟩ ⟧-value η = (⟦ V ⟧-value η) , (⟦ W ⟧-value η)
-  ⟦ funU t ⟧-value η = λ a → ⟦ t ⟧-user (η , a)
-  ⟦ funK t ⟧-value η = λ a → ⟦ t ⟧-kernel (η , a)
-  ⟦ runner r ⟧-value η = λ op p par c → ⟦ (r op p) ⟧-kernel (η , par) c
-
-  ⟦_⟧-user : ∀ {Γ U} → (Γ ⊢U: U) → ⟦ Γ ⟧-ctx → ⟦ U ⟧u
-  ⟦ sub-user M p ⟧-user η = coerceᵤ p (⟦ M ⟧-user η)
-  ⟦ return V ⟧-user η = leaf (⟦ V ⟧-value η)
-  ⟦ V · W ⟧-user η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
-  ⟦ opᵤ op p V M ⟧-user η = node op p (⟦ V ⟧-value η) λ res → ⟦ M ⟧-user (η , res)
-  ⟦ `let M `in N ⟧-user η = bind-user (λ x → ⟦ N ⟧-user (η , x)) (⟦ M ⟧-user η)
-  ⟦ match V `with M ⟧-user η = ⟦ M ⟧-user ((η , (proj₁ (⟦ V ⟧-value η))) , (proj₂ (⟦ V ⟧-value η)))
-  ⟦ `using R at V `run M finally N ⟧-user η = {!   !} --{! ⟦ R ⟧-value η !}
-  ⟦ kernel K at V finally M ⟧-user η = {!   !} --bind-user (λ (x , y) → ⟦ M ⟧-user ((η , x) , y)) (bind-kernel (λ x' c' → ⟦ K ⟧-kernel η c') {!   !} {!   !})
-
-  ⟦_⟧-kernel : ∀ {Γ K} → (Γ ⊢K: K) → ⟦ Γ ⟧-ctx → ⟦ K ⟧k
-  ⟦ sub-kernel K p ⟧-kernel η = coerceₖ p (⟦ K ⟧-kernel η)
-  ⟦ return V ⟧-kernel η c = leaf ((⟦ V ⟧-value η) , c)
-  ⟦ V · W ⟧-kernel η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
-  ⟦ `let K `in L ⟧-kernel η = bind-kernel (λ x → ⟦ L ⟧-kernel (η , x)) (⟦ K ⟧-kernel η)
-  ⟦ match V `with K ⟧-kernel η = ⟦ K ⟧-kernel ((η , proj₁ (⟦ V ⟧-value η)) , proj₂ (⟦ V ⟧-value η))
-  ⟦ opₖ op p V K ⟧-kernel η c =  node op p (⟦ V ⟧-value η) (λ res → ⟦ K ⟧-kernel (η , res) c)
-  ⟦ getenv K ⟧-kernel η c = ⟦ K ⟧-kernel (η , c) c
-  ⟦ setenv V K ⟧-kernel η _ = ⟦ K ⟧-kernel η (⟦ V ⟧-value η)
-  ⟦ user M `with K ⟧-kernel η c = {!   !}
    
-
-module Module where --TODO: Organize things into separate files (17. 12. 2024)
-
-open import Level        renaming (zero to lzero; suc to lsuc)
-open import Axiom.Extensionality.Propositional using (Extensionality)
-postulate fun-ext : ∀ {a b} → Extensionality a b
-
 record Monad {l} : Set (lsuc l) where
   field
     -- carrier (object map) fo the Kleisli triple
