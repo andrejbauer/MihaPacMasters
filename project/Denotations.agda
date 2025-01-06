@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 open import Data.Unit
 open import Data.Product
 --open import Relation.Binary.PropositionalEquality
@@ -11,6 +13,7 @@ import Contexts
 open import Parameters
 import Types
 import Terms
+import Monads
 
 module Denotations (G : GTypes) (O : Ops G) where
 
@@ -20,6 +23,7 @@ open Ops O
 open Contexts G O
 open Types G O
 open Terms G O
+open Monads G O 
 
 -- GENERAL TODO: naming conventions (think for yourself what to do, try to stay close to the paper/thesis)
 -- - upper-case letters for types, lower-case letters for terms
@@ -32,68 +36,19 @@ open Terms G O
 -- Trees are t, u, ...
 -- UComps are M, N, ... 
 -- KComps are K, L, ...
+-- Values are V, W, ...
 
 -- TODO: look up "Wadler's law" (named after Phil Wadler)
-
--- Denotation of ground types
-⟦_⟧g : GType → Set
-⟦ base b ⟧g =  ⟦ b ⟧b
-⟦ unit ⟧g = ⊤
-⟦ A ×b B ⟧g = ⟦ A ⟧g × ⟦ B ⟧g
-
--- A computation tree that hold values of type T in their leaves
-data Tree  (Σ : Sig) (X : Set) : Set where
-  leaf : X → Tree Σ X
-  node : ∀ (op : Op) → (p : op ∈ₒ Σ) → (par : ⟦ param op ⟧g) → (t : (res : ⟦ result op ⟧g) → Tree Σ X) → Tree Σ X
-
-aux : ∀{op Σ₁ Σ₂ } → op ∈ₒ Σ₁ → Σ₁ ⊆ₛ Σ₂ → op ∈ₒ Σ₂ -- auxilliary function for include-tree
-aux {op} p q = q op p 
-
-include-tree : ∀ {Σ₁ Σ₂ X} → Σ₁ ⊆ₛ Σ₂ → Tree Σ₁ X → Tree Σ₂ X
-include-tree p (leaf x) = leaf x
-include-tree p (node op q par c) = node op (aux q p) par (λ res → include-tree p (c res))
-
--- Monadic bind for trees
-bind-tree : ∀ {Σ X Y} → (X → Tree Σ Y) → Tree Σ X → Tree Σ Y
-bind-tree f (leaf x) = f x
-bind-tree f (node op p par c) = node op p par (λ res → bind-tree f (c res))
-
-map-tree : ∀ {Σ X Y} → (X → Y) → Tree Σ X → Tree Σ Y
-map-tree f t = bind-tree (leaf ∘ f) t
-
--- Denotation of a user computation returning elements of X and performing operations Σ 
-UComp : Sig → Set → Set
-UComp Σ X = Tree Σ X --TODO: Prove that THIS/Tree(X) is a Monad, the UComp will be T, bind is the bind-tree, leaf is the unit η, 
---when verifying equations keep in mind that you might have to use funext
-
-bind-user : ∀ {Σ X Y} → (X → UComp Σ Y) → UComp Σ X → UComp Σ Y
-bind-user f (leaf x) = f x
-bind-user f (node op p par c) = node op p par (λ res → bind-user f (c res))
-
--- Denotation of a kernel computation with state C returning elements of X
-KComp : Sig → Set → Set → Set
-KComp Σ C X = C → Tree Σ (X × C)
--- Monad1 - C → ? × C
--- Monad2 - Tree Σ ?
--- KComp is the combination of Monad1 and Monad2
--- TODO: Prove the Kernel is also a Monad (in this file, possibly)
-
-bind-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → KComp Σ C X → KComp Σ C Y
-bind-kernel f K c = bind-tree (λ {(x , c') → f x c'}) (K c)
-
-{- bind-kernel f K c with K c 
-... | leaf (x , c') = f x c'
-... | node op p par t = node op p par (λ res → bind-kernel f {!  !} c) -} -- TODO: Cleanup
 
 mutual --TODO: This should go into a different module/file. Essentially putting the monads in one and the ⟦ ⟧ stuff into another file.
   -- Denotation of value types
   ⟦_⟧v : VType → Set
 
-  ⟦ gnd g ⟧v = ⟦ g ⟧g
-  ⟦ t ×v u ⟧v = ⟦ t ⟧v × ⟦ u ⟧v
-  ⟦ t ⟶ᵤ u ⟧v = ⟦ t ⟧v → ⟦ u ⟧u
-  ⟦ t ⟶ₖ u ⟧v = ⟦ t ⟧v → ⟦ u ⟧k
-  ⟦ Σ₁ ⇒ Σ₂ , c ⟧v = Runner Σ₁ Σ₂ ⟦ c ⟧g
+  ⟦ gnd A ⟧v = ⟦ A ⟧g
+  ⟦ X ×v Y ⟧v = ⟦ X ⟧v × ⟦ Y ⟧v
+  ⟦ X ⟶ᵤ Y ⟧v = ⟦ X ⟧v → ⟦ Y ⟧u
+  ⟦ X ⟶ₖ Y ⟧v = ⟦ X ⟧v → ⟦ Y ⟧k
+  ⟦ Σ₁ ⇒ Σ₂ , C ⟧v = Runner Σ₁ Σ₂ ⟦ C ⟧g
 
   -- Denotation of a skeletal runner
   Runner : Sig → Sig → Set → Set
@@ -107,38 +62,38 @@ mutual --TODO: This should go into a different module/file. Essentially putting 
   -- * tree node: labeled by an operation and a parameter,
   --              subtrees are computations
   ⟦_⟧u : UType → Set
-  ⟦ t ! Σ ⟧u = UComp Σ ⟦ t ⟧v
+  ⟦ X ! Σ ⟧u = UComp Σ ⟦ X ⟧v
 
   -- Denotation of kernel computation types
   ⟦_⟧k : KType → Set
-  ⟦ t ↯ Σ , c ⟧k = KComp Σ ⟦ c ⟧g ⟦ t ⟧v
+  ⟦ X ↯ Σ , C ⟧k = KComp Σ ⟦ C ⟧g ⟦ X ⟧v
 
 -- Denotation of contexts are runtime environments
 ⟦_⟧-ctx : Ctx → Set
 ⟦ [] ⟧-ctx = ⊤
-⟦ Γ ∷ t ⟧-ctx = ⟦ Γ ⟧-ctx × ⟦ t ⟧v
+⟦ Γ ∷ X ⟧-ctx = ⟦ Γ ⟧-ctx × ⟦ X ⟧v
 
 -- Lookup a variable in a runtime environment
 lookup : ∀ {Γ t} (x : t ∈ Γ) → ⟦ Γ ⟧-ctx → ⟦ t ⟧v
 lookup here η = proj₂ η
-lookup (there x) η = lookup x (proj₁ η)
+lookup (there p) η = lookup p (proj₁ η)
 
 mutual
   -- Denotation of value subtyping
   coerceᵥ : ∀ {t u} → t ⊑ᵥ u → ⟦ t ⟧v → ⟦ u ⟧v
-  coerceᵥ ⊑ᵥ-ground a = a
-  coerceᵥ (⊑ᵥ-product p q) (a₁ , a₂) = (coerceᵥ p a₁ , coerceᵥ q a₂)
-  coerceᵥ (⊑ᵥ-Ufun p q) f = λ a' → coerceᵤ q (f (coerceᵥ p a'))
-  coerceᵥ (⊑ᵥ-Kfun p q) f = λ a' → coerceₖ q (f (coerceᵥ p a'))
-  coerceᵥ (⊑ᵥ-runner p q refl) R = λ op r par state → include-tree q (R op (p _ r) par state) -- TODO: Make the first argument of p implicit 
+  coerceᵥ ⊑ᵥ-ground A = A
+  coerceᵥ (⊑ᵥ-product p q) (X , Y) = (coerceᵥ p X , coerceᵥ q Y)
+  coerceᵥ (⊑ᵥ-Ufun p q) f = λ X' → coerceᵤ q (f (coerceᵥ p X'))
+  coerceᵥ (⊑ᵥ-Kfun p q) f = λ X' → coerceₖ q (f (coerceᵥ p X'))
+  coerceᵥ (⊑ᵥ-runner p q refl) r = λ op p' param state → include-tree q (r op (p _ p') param state) -- TODO: Make the first argument of p implicit 
 
   -- Denotation of user computation subtyping
   coerceᵤ : ∀ {X Y} → X ⊑ᵤ Y → ⟦ X ⟧u → ⟦ Y ⟧u
-  coerceᵤ (⊑ᵤ-user p q) t = include-tree q (map-tree (coerceᵥ p) t)
+  coerceᵤ (⊑ᵤ-user p q) M = include-tree q (map-tree (coerceᵥ p) M)
 
   -- Denotation of kernel computation subtyping
   coerceₖ : ∀ {Xₖ Yₖ} → Xₖ ⊑ₖ Yₖ → ⟦ Xₖ ⟧k → ⟦ Yₖ ⟧k
-  coerceₖ (⊑ₖ-kernel p q refl) K c = include-tree q (map-tree (λ {(x , c') → (coerceᵥ p x) , c'}) (K c))
+  coerceₖ (⊑ₖ-kernel p q refl) K C = include-tree q (map-tree (λ {(X , C') → (coerceᵥ p X) , C'}) (K C))
 
 
 -- Denotations of terms
@@ -146,113 +101,41 @@ mutual
 
 --  sub-coop : ∀ { } → 
 
-  ⟦_⟧-value : ∀ {Γ t} → (Γ ⊢V: t) → ⟦ Γ ⟧-ctx → ⟦ t ⟧v
-  ⟦ var x ⟧-value η = lookup x η
-  ⟦ sub-value t p ⟧-value η = coerceᵥ p (⟦ t ⟧-value η)
+  ⟦_⟧-value : ∀ {Γ X} → (Γ ⊢V: X) → ⟦ Γ ⟧-ctx → ⟦ X ⟧v
+  ⟦ var p ⟧-value η = lookup p η
+  ⟦ sub-value v p ⟧-value η = coerceᵥ p (⟦ v ⟧-value η)
   ⟦ ⟨⟩ ⟧-value η = tt
   ⟦ ⟨ V , W ⟩ ⟧-value η = (⟦ V ⟧-value η) , (⟦ W ⟧-value η)
-  ⟦ funU t ⟧-value η = λ a → ⟦ t ⟧-user (η , a)
-  ⟦ funK t ⟧-value η = λ a → ⟦ t ⟧-kernel (η , a)
-  ⟦ runner r ⟧-value η = λ op p par c → ⟦ (r op p) ⟧-kernel (η , par) c
+  ⟦ funU M ⟧-value η = λ a → ⟦ M ⟧-user (η , a)
+  ⟦ funK K ⟧-value η = λ a → ⟦ K ⟧-kernel (η , a)
+  ⟦ runner r ⟧-value η = λ op p param C → ⟦ (r op p) ⟧-kernel (η , param) C
 
   ⟦_⟧-user : ∀ {Γ U} → (Γ ⊢U: U) → ⟦ Γ ⟧-ctx → ⟦ U ⟧u
   ⟦ sub-user M p ⟧-user η = coerceᵤ p (⟦ M ⟧-user η)
   ⟦ return V ⟧-user η = leaf (⟦ V ⟧-value η)
   ⟦ V · W ⟧-user η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
   ⟦ opᵤ op p V M ⟧-user η = node op p (⟦ V ⟧-value η) λ res → ⟦ M ⟧-user (η , res)
-  ⟦ `let M `in N ⟧-user η = bind-user (λ x → ⟦ N ⟧-user (η , x)) (⟦ M ⟧-user η)
+  ⟦ `let M `in N ⟧-user η = bind-user (λ X → ⟦ N ⟧-user (η , X)) (⟦ M ⟧-user η)
   ⟦ match V `with M ⟧-user η = ⟦ M ⟧-user ((η , (proj₁ (⟦ V ⟧-value η))) , (proj₂ (⟦ V ⟧-value η)))
   ⟦ `using R at V `run M finally N ⟧-user η = {!   !} --{! ⟦ R ⟧-value η !}
   ⟦ kernel K at V finally M ⟧-user η = {!   !} --bind-user (λ (x , y) → ⟦ M ⟧-user ((η , x) , y)) (bind-kernel (λ x' c' → ⟦ K ⟧-kernel η c') {!   !} {!   !})
 
   ⟦_⟧-kernel : ∀ {Γ K} → (Γ ⊢K: K) → ⟦ Γ ⟧-ctx → ⟦ K ⟧k
   ⟦ sub-kernel K p ⟧-kernel η = coerceₖ p (⟦ K ⟧-kernel η)
-  ⟦ return V ⟧-kernel η c = leaf ((⟦ V ⟧-value η) , c)
+  ⟦ return V ⟧-kernel η C = leaf ((⟦ V ⟧-value η) , C)
   ⟦ V · W ⟧-kernel η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
-  ⟦ `let K `in L ⟧-kernel η = bind-kernel (λ x → ⟦ L ⟧-kernel (η , x)) (⟦ K ⟧-kernel η)
+  ⟦ `let K `in L ⟧-kernel η = bind-kernel (λ X → ⟦ L ⟧-kernel (η , X)) (⟦ K ⟧-kernel η)
   ⟦ match V `with K ⟧-kernel η = ⟦ K ⟧-kernel ((η , proj₁ (⟦ V ⟧-value η)) , proj₂ (⟦ V ⟧-value η))
-  ⟦ opₖ op p V K ⟧-kernel η c =  node op p (⟦ V ⟧-value η) (λ res → ⟦ K ⟧-kernel (η , res) c)
-  ⟦ getenv K ⟧-kernel η c = ⟦ K ⟧-kernel (η , c) c
+  ⟦ opₖ op p V K ⟧-kernel η C =  node op p (⟦ V ⟧-value η) (λ res → ⟦ K ⟧-kernel (η , res) C)
+  ⟦ getenv K ⟧-kernel η C = ⟦ K ⟧-kernel (η , C) C
   ⟦ setenv V K ⟧-kernel η _ = ⟦ K ⟧-kernel η (⟦ V ⟧-value η)
-  ⟦ user M `with K ⟧-kernel η c = {!   !}
+  ⟦ user M `with K ⟧-kernel η C = {!   !}
    
-
-module Module where --TODO: Organize things into separate files (17. 12. 2024)
-
-open import Level        renaming (zero to lzero; suc to lsuc)
-open import Axiom.Extensionality.Propositional using (Extensionality)
-postulate fun-ext : ∀ {a b} → Extensionality a b
-
-record Monad {l} : Set (lsuc l) where
-  field
-    -- carrier (object map) fo the Kleisli triple
-    T       : Set → Set
-    -- unit
-    η       : {X : Set} → X → T X
-    -- bind
-    _>>=_   : {X Y : Set} → T X → (X → T Y) → T Y
-    -- laws
-    η-left  : {X Y : Set} (x : X) (f : X → T Y) → η x >>= f ≡ f x
-    η-right : {X : Set} (c : T X) → c >>= η ≡ c
-    >>=-assoc : {X Y Z : Set} (c : T X) (f : X → T Y) (g : Y → T Z)
-              → ((c >>= f) >>= g) ≡ c >>= (λ x → f x >>= g)
-
-
-
-module _ {l} (Σ : Sig) where --TODO: Put this into a separate file
-
-  η-right-Tree : {X : Set} (c : Tree Σ X) → bind-tree leaf c ≡ c
-  η-right-Tree (leaf x) = refl
-  η-right-Tree (node op p param c) = cong (node op p param) (fun-ext (λ res → η-right-Tree (c res)))
-
-  >>=-assoc-Tree : {X Y Z : Set} (c : Tree Σ X) (f : X → Tree Σ Y)
-      (g : Y → Tree Σ Z) →
-      bind-tree g (bind-tree f c) ≡ bind-tree (λ x → bind-tree g (f x)) c
-  >>=-assoc-Tree (leaf x) f g = refl
-  >>=-assoc-Tree (node op p param c) f g = cong (node op p param) (fun-ext (λ res → >>=-assoc-Tree (c res) f g))
-
-
-  TreeMonad : Monad {l}
-  TreeMonad   = record {
-    T         = Tree Σ ;
-    η         = leaf ;
-    _>>=_     = λ x f → bind-tree f x ;
-    η-left    = λ x f → refl ;
-    -- (_≡_; refl; sym; trans; cong; cong₂; subst; [_]; inspect)
-    η-right   = η-right-Tree ;
-    >>=-assoc = >>=-assoc-Tree }
-
-
-  UMonad : Monad {l} --TODO: this is the same as TreeMonad
-  UMonad = record {
-    T         = UComp Σ ;
-    η         = leaf ;
-    _>>=_     = λ M f → bind-user f M ;
-    η-left    = λ x f → refl ;
-    η-right   = λ {M → {!   !}} ;
-    >>=-assoc = λ M f g → {!   !} }
-
-
-  KMonad : (C : Set) → Monad {l}
-  KMonad C = record {
-    T         = KComp Σ C ;
-    η         = λ x c → leaf (x , c) ;
-    _>>=_     = λ K f c → bind-kernel f K c ;
-    η-left    = λ c f → refl ;
-    η-right   = η-right-Kernel ;   
-    >>=-assoc = {!   !} }     
-    where
-      η-right-Kernel : {X : Set} (k : KComp Σ C X) → bind-kernel (λ x c → leaf (x , c)) k ≡ k --TODO: rename things as you go so that it makes sense
-      η-right-Kernel k = fun-ext λ c → η-right-Tree (k c) 
-
-      >>=-assoc-Kernel : {X Y Z : Set} (k : KComp Σ C X) (f : X → KComp Σ C Y) (g : Y → KComp Σ C Z) 
-        → bind-kernel g (bind-kernel f k) ≡ bind-kernel (λ x → bind-kernel g (f x)) k
-      >>=-assoc-Kernel k f g = fun-ext (λ c → >>=-assoc-Tree (k c) (λ { (x , c') → f x c' }) (λ { (y , c') → g y c' }))
 
 
 --TODOs for next time (17. 12. 2024)
---1. Split Denotations.agda into 2 files, one file has all definitions regarding Monads, the other has the ⟦ ⟧ stuff, except the ⟦ ⟧g stuff (which goes with Monads).
---2. Use consistent fixed variable names. Then keep it consistent forevermore.
+--1. Split Denotations.agda into 2 files, one file has all definitions regarding Monads, the other has the ⟦ ⟧ stuff, except the ⟦ ⟧g stuff (which goes with Monads). DONE
+--2. Use consistent fixed variable names. Then keep it consistent forevermore. DONE
 --3. Finish the definitions of the ⟦ ⟧-kernel and ⟦ ⟧-user 
 --- ^What is expected^ --
 --3.5. Rewrite the ⟦ ⟧ stuff to use the Monad structure

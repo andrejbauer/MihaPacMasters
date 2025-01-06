@@ -64,11 +64,11 @@ interleaved mutual
                 -----------------------
                 → X ⟶ᵤ Σ ⊑ᵥ X' ⟶ᵤ Σ'
 
-    ⊑ᵥ-Kfun : {X X' : VType} {K K' : KType}
+    ⊑ᵥ-Kfun : {X X' : VType} {Xₖ Xₖ' : KType}
                 → X' ⊑ᵥ X
-                → K ⊑ₖ K'
+                → Xₖ ⊑ₖ Xₖ'
                 -----------------------------------
-                → X ⟶ₖ K ⊑ᵥ X' ⟶ₖ K'
+                → X ⟶ₖ Xₖ ⊑ᵥ X' ⟶ₖ Xₖ'
 
     ⊑ᵥ-runner : {Σ₁ Σ₁' Σ₂ Σ₂' : Sig} {C C' : KState}
                → Σ₁' ⊆ₛ Σ₁

@@ -42,15 +42,15 @@ interleaved mutual
         -------------------
         → Γ ⊢V: X ×v Y
 
-    funU : {X : VType} {U : UType}
-         → Γ ∷ X ⊢U: U
+    funU : {X : VType} {Xᵤ : UType}
+         → Γ ∷ X ⊢U: Xᵤ
          ---------------------
-         → Γ ⊢V: X ⟶ᵤ U
+         → Γ ⊢V: X ⟶ᵤ Xᵤ
 
-    funK : {X : VType} {K : KType}
-         → (Γ ∷ X) ⊢K: K
+    funK : {X : VType} {Xₖ : KType}
+         → (Γ ∷ X) ⊢K: Xₖ
          ------------------------------
-         → Γ ⊢V: X ⟶ₖ K
+         → Γ ⊢V: X ⟶ₖ Xₖ
 
     runner : {Σ Σ' : Sig} {C : KState}
            → ((op : Op) → (op ∈ₒ Σ) → co-op Γ Σ' C op)
@@ -59,11 +59,11 @@ interleaved mutual
 
   data _⊢U:_ where
 
-    sub-user : {U U' : UType}
-         → Γ ⊢U: U
-         → U ⊑ᵤ U'
+    sub-user : {Xᵤ Xᵤ' : UType}
+         → Γ ⊢U: Xᵤ
+         → Xᵤ ⊑ᵤ Xᵤ'
          -----------------------
-         → Γ ⊢U: U'
+         → Γ ⊢U: Xᵤ'
 
     return : {X : VType} {Σ : Sig}
     -- TyUser-Return
@@ -71,11 +71,11 @@ interleaved mutual
        ----------
        → Γ ⊢U: X ! Σ
 
-    _·_ : {X : VType} {U : UType} -- Formerly apply
-      → Γ ⊢V: X ⟶ᵤ U
+    _·_ : {X : VType} {Xᵤ : UType} -- Formerly apply
+      → Γ ⊢V: X ⟶ᵤ Xᵤ
       → Γ ⊢V: X
       -------------------------
-      → Γ ⊢U: U
+      → Γ ⊢U: Xᵤ
 
     opᵤ : {X : VType} {Σ : Sig}
        → (op : Op)
@@ -91,11 +91,11 @@ interleaved mutual
       ----------
       → Γ ⊢U: Y ! Σ
 
-    match_`with : {X Y : VType} {U : UType}
+    match_`with : {X Y : VType} {Xᵤ : UType}
       → Γ ⊢V: X ×v Y
-      → Γ ∷ X ∷ Y ⊢U: U
+      → Γ ∷ X ∷ Y ⊢U: Xᵤ
       ----------------------------
-      → Γ ⊢U: U
+      → Γ ⊢U: Xᵤ
 
     `using_at_`run_finally : {Σ Σ' : Sig} {C : KState} {X Y : VType}
       → Γ ⊢V: Σ ⇒ Σ' , C
@@ -114,11 +114,11 @@ interleaved mutual
 
   data _⊢K:_ where
 
-    sub-kernel : {K K' : KType}
-         → Γ ⊢K: K
-         → K ⊑ₖ K'
+    sub-kernel : {Xₖ Xₖ' : KType}
+         → Γ ⊢K: Xₖ
+         → Xₖ ⊑ₖ Xₖ'
          ------------------------------------
-         → Γ ⊢K: K'
+         → Γ ⊢K: Xₖ'
 
 
 
@@ -127,11 +127,11 @@ interleaved mutual
       --------------------------
       → Γ ⊢K: X ↯ Σ , C
 
-    _·_ : {X : VType} {K : KType}
-      → Γ ⊢V: X ⟶ₖ K
+    _·_ : {X : VType} {Xₖ : KType}
+      → Γ ⊢V: X ⟶ₖ Xₖ
       → Γ ⊢V: X
       ---------------------------------
-      → Γ ⊢K: K
+      → Γ ⊢K: Xₖ
 
     `let_`in : {X Y : VType} {Σ : Sig} {C : KState}
       → Γ ⊢K: X ↯ Σ , C
@@ -139,11 +139,11 @@ interleaved mutual
       ---------------------------
       → Γ ⊢K: Y ↯ Σ , C
 
-    match_`with : {X Y : VType} {K : KType}
+    match_`with : {X Y : VType} {Xₖ : KType}
       → Γ ⊢V: X ×v Y
-      → Γ ∷ X ∷ Y ⊢K: K
+      → Γ ∷ X ∷ Y ⊢K: Xₖ
       ---------------------
-      → Γ ⊢K: K
+      → Γ ⊢K: Xₖ
 
     -- TODO: fix!
 

@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 open import Data.Unit
 open import Data.Product
 --open import Relation.Binary.PropositionalEquality
@@ -48,19 +50,19 @@ open Terms G O
 -- A computation tree that hold values of type T in their leaves
 data Tree  (Σ : Sig) (X : Set) : Set where
   leaf : X → Tree Σ X
-  node : ∀ (op : Op) → (p : op ∈ₒ Σ) → (par : ⟦ param op ⟧g) → (t : (res : ⟦ result op ⟧g) → Tree Σ X) → Tree Σ X
+  node : ∀ (op : Op) → (p : op ∈ₒ Σ) → (param : ⟦ param op ⟧g) → (t : (res : ⟦ result op ⟧g) → Tree Σ X) → Tree Σ X
 
 aux : ∀{op Σ₁ Σ₂ } → op ∈ₒ Σ₁ → Σ₁ ⊆ₛ Σ₂ → op ∈ₒ Σ₂ -- auxilliary function for include-tree
 aux {op} p q = q op p 
 
 include-tree : ∀ {Σ₁ Σ₂ X} → Σ₁ ⊆ₛ Σ₂ → Tree Σ₁ X → Tree Σ₂ X
 include-tree p (leaf x) = leaf x
-include-tree p (node op q par c) = node op (aux q p) par (λ res → include-tree p (c res))
+include-tree p (node op q param c) = node op (aux q p) param (λ res → include-tree p (c res))
 
 -- Monadic bind for trees
 bind-tree : ∀ {Σ X Y} → (X → Tree Σ Y) → Tree Σ X → Tree Σ Y
 bind-tree f (leaf x) = f x
-bind-tree f (node op p par c) = node op p par (λ res → bind-tree f (c res))
+bind-tree f (node op p param c) = node op p param (λ res → bind-tree f (c res))
 
 map-tree : ∀ {Σ X Y} → (X → Y) → Tree Σ X → Tree Σ Y
 map-tree f t = bind-tree (leaf ∘ f) t
@@ -72,7 +74,7 @@ UComp Σ X = Tree Σ X --TODO: Prove that THIS/Tree(X) is a Monad, the UComp wil
 
 bind-user : ∀ {Σ X Y} → (X → UComp Σ Y) → UComp Σ X → UComp Σ Y
 bind-user f (leaf x) = f x
-bind-user f (node op p par c) = node op p par (λ res → bind-user f (c res))
+bind-user f (node op p param c) = node op p param (λ res → bind-user f (c res))
 
 -- Denotation of a kernel computation with state C returning elements of X
 KComp : Sig → Set → Set → Set
@@ -146,12 +148,12 @@ module _ {l} (Σ : Sig) where --TODO: Put this into a separate file
     η-right   = η-right-Kernel ;   
     >>=-assoc = {!   !} }     
     where
-      η-right-Kernel : {X : Set} (k : KComp Σ C X) → bind-kernel (λ x c → leaf (x , c)) k ≡ k --TODO: rename things as you go so that it makes sense
-      η-right-Kernel k = fun-ext λ c → η-right-Tree (k c) 
+      η-right-Kernel : {X : Set} (K : KComp Σ C X) → bind-kernel (λ x c → leaf (x , c)) K ≡ K --TODO: rename things as you go so that it makes sense
+      η-right-Kernel K = fun-ext λ c → η-right-Tree (K c) 
 
-      >>=-assoc-Kernel : {X Y Z : Set} (k : KComp Σ C X) (f : X → KComp Σ C Y) (g : Y → KComp Σ C Z) 
-        → bind-kernel g (bind-kernel f k) ≡ bind-kernel (λ x → bind-kernel g (f x)) k
-      >>=-assoc-Kernel k f g = fun-ext (λ c → >>=-assoc-Tree (k c) (λ { (x , c') → f x c' }) (λ { (y , c') → g y c' }))
+      >>=-assoc-Kernel : {X Y Z : Set} (K : KComp Σ C X) (f : X → KComp Σ C Y) (g : Y → KComp Σ C Z) 
+        → bind-kernel g (bind-kernel f K) ≡ bind-kernel (λ x → bind-kernel g (f x)) K
+      >>=-assoc-Kernel K f g = fun-ext (λ c → >>=-assoc-Tree (K c) (λ { (x , c') → f x c' }) (λ { (y , c') → g y c' }))
 
 
 --TODOs for next time (17. 12. 2024)
