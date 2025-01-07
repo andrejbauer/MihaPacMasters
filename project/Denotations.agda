@@ -40,6 +40,8 @@ open Monads G O
 
 -- TODO: look up "Wadler's law" (named after Phil Wadler)
 
+
+
 mutual --TODO: This should go into a different module/file. Essentially putting the monads in one and the ⟦ ⟧ stuff into another file.
   -- Denotation of value types
   ⟦_⟧v : VType → Set
@@ -85,7 +87,7 @@ mutual
   coerceᵥ (⊑ᵥ-product p q) (X , Y) = (coerceᵥ p X , coerceᵥ q Y)
   coerceᵥ (⊑ᵥ-Ufun p q) f = λ X' → coerceᵤ q (f (coerceᵥ p X'))
   coerceᵥ (⊑ᵥ-Kfun p q) f = λ X' → coerceₖ q (f (coerceᵥ p X'))
-  coerceᵥ (⊑ᵥ-runner p q refl) r = λ op p' param state → include-tree q (r op (p _ p') param state) -- TODO: Make the first argument of p implicit 
+  coerceᵥ (⊑ᵥ-runner p q refl) r = λ op p' param C → include-tree q (r op (p _ p') param C) -- TODO: Make the first argument of p implicit 
 
   -- Denotation of user computation subtyping
   coerceᵤ : ∀ {X Y} → X ⊑ᵤ Y → ⟦ X ⟧u → ⟦ Y ⟧u
@@ -96,6 +98,12 @@ mutual
   coerceₖ (⊑ₖ-kernel p q refl) K C = include-tree q (map-tree (λ {(X , C') → (coerceᵥ p X) , C'}) (K C))
 
 
+--aux3 : ∀ {Γ C Σ Σ' X} → (V : Γ ⊢V: gnd C) → (R : Γ ⊢V: (Σ ⇒ Σ' , C)) → (M : Γ ⊢U: X ! Σ) → (M' : Γ ⊢U: X ! Σ')
+--aux3 = ?
+
+aux3 : ∀ {Γ C Σ Σ' X} → Γ ⊢V: gnd C → Γ ⊢V: (Σ ⇒ Σ' , C) → Γ ⊢U: (X ! Σ) → Γ ⊢U: X ! Σ'
+aux3 C R M = {!   !}
+
 -- Denotations of terms
 mutual
 
@@ -105,31 +113,42 @@ mutual
   ⟦ var p ⟧-value η = lookup p η
   ⟦ sub-value v p ⟧-value η = coerceᵥ p (⟦ v ⟧-value η)
   ⟦ ⟨⟩ ⟧-value η = tt
-  ⟦ ⟨ V , W ⟩ ⟧-value η = (⟦ V ⟧-value η) , (⟦ W ⟧-value η)
-  ⟦ funU M ⟧-value η = λ a → ⟦ M ⟧-user (η , a)
-  ⟦ funK K ⟧-value η = λ a → ⟦ K ⟧-kernel (η , a)
-  ⟦ runner r ⟧-value η = λ op p param C → ⟦ (r op p) ⟧-kernel (η , param) C
+  ⟦ ⟨ v , w ⟩ ⟧-value η = (⟦ v ⟧-value η) , (⟦ w ⟧-value η)
+  ⟦ funU m ⟧-value η = λ X → ⟦ m ⟧-user (η , X)
+  ⟦ funK k ⟧-value η = λ X → ⟦ k ⟧-kernel (η , X)
+  ⟦ runner r ⟧-value η = λ op p param → ⟦ (r op p) ⟧-kernel (η , param) --Removed C from the ends of this
 
-  ⟦_⟧-user : ∀ {Γ U} → (Γ ⊢U: U) → ⟦ Γ ⟧-ctx → ⟦ U ⟧u
-  ⟦ sub-user M p ⟧-user η = coerceᵤ p (⟦ M ⟧-user η)
-  ⟦ return V ⟧-user η = leaf (⟦ V ⟧-value η)
-  ⟦ V · W ⟧-user η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
-  ⟦ opᵤ op p V M ⟧-user η = node op p (⟦ V ⟧-value η) λ res → ⟦ M ⟧-user (η , res)
-  ⟦ `let M `in N ⟧-user η = bind-user (λ X → ⟦ N ⟧-user (η , X)) (⟦ M ⟧-user η)
-  ⟦ match V `with M ⟧-user η = ⟦ M ⟧-user ((η , (proj₁ (⟦ V ⟧-value η))) , (proj₂ (⟦ V ⟧-value η)))
-  ⟦ `using R at V `run M finally N ⟧-user η = {!   !} --{! ⟦ R ⟧-value η !}
-  ⟦ kernel K at V finally M ⟧-user η = {!   !} --bind-user (λ (x , y) → ⟦ M ⟧-user ((η , x) , y)) (bind-kernel (λ x' c' → ⟦ K ⟧-kernel η c') {!   !} {!   !})
+  using-runner : ∀ { Γ X Σ Σ' C} → UComp Σ X → Runner Σ Σ' C → UComp Σ' X --TODO (7. 1. 2025): THINK IF THIS ACTUALLY IS WHAT YOU NEED
+  using-runner (leaf X) R = leaf X
+  using-runner (node op p param t) R = node op {!   !} param (λ res → {! R op p param  !})
+
+  bind-runner-user : ∀ {Σ Σ' C X Y} → ⟦ C ⟧g → Runner Σ Σ' ⟦ C ⟧g → UComp Σ X → UComp Σ' Y
+  bind-runner-user C R (Monads.leaf x) = {! R ? ? ? ?  !}
+  bind-runner-user C R (Monads.node op p param₁ t) = {!   !}
+
+  ⟦_⟧-user : ∀ {Γ Xᵤ} → (Γ ⊢U: Xᵤ) → ⟦ Γ ⟧-ctx → ⟦ Xᵤ ⟧u
+  ⟦ sub-user m p ⟧-user η = coerceᵤ p (⟦ m ⟧-user η)
+  ⟦ return v ⟧-user η = leaf (⟦ v ⟧-value η)
+  ⟦ v · w ⟧-user η = ⟦ v ⟧-value η (⟦ w ⟧-value η)
+  ⟦ opᵤ op p v m ⟧-user η = node op p (⟦ v ⟧-value η) λ res → ⟦ m ⟧-user (η , res)
+  ⟦ `let m `in n ⟧-user η = bind-user (λ X → ⟦ n ⟧-user (η , X)) (⟦ m ⟧-user η)
+  ⟦ match v `with m ⟧-user η = ⟦ m ⟧-user ((η , (proj₁ (⟦ v ⟧-value η))) , (proj₂ (⟦ v ⟧-value η)))
+  ⟦ `using r at c `run m finally n ⟧-user η = {!   !}
+    --bind-tree (λ {(fst , snd) → ⟦ n ⟧-user ((η , fst) , (snd η))}) (bind-runner-user (⟦ c ⟧-value η) (⟦ r ⟧-value η) (⟦ m ⟧-user η))
+    --bind-tree (λ { X → ⟦ N ⟧-user ((η , X) , (⟦ V ⟧-value η))}) (using-runner (⟦ M ⟧-user η) (⟦ R ⟧-value η))
+  ⟦ kernel k at v finally m ⟧-user η = bind-user ( λ { (X , C) → ⟦ m ⟧-user ((η , X) , C) } ) (bind-kernel (λ x C' → ⟦ k ⟧-kernel η C') (⟦ k ⟧-kernel η) (⟦ v ⟧-value η)) 
 
   ⟦_⟧-kernel : ∀ {Γ K} → (Γ ⊢K: K) → ⟦ Γ ⟧-ctx → ⟦ K ⟧k
-  ⟦ sub-kernel K p ⟧-kernel η = coerceₖ p (⟦ K ⟧-kernel η)
-  ⟦ return V ⟧-kernel η C = leaf ((⟦ V ⟧-value η) , C)
-  ⟦ V · W ⟧-kernel η = ⟦ V ⟧-value η (⟦ W ⟧-value η)
-  ⟦ `let K `in L ⟧-kernel η = bind-kernel (λ X → ⟦ L ⟧-kernel (η , X)) (⟦ K ⟧-kernel η)
-  ⟦ match V `with K ⟧-kernel η = ⟦ K ⟧-kernel ((η , proj₁ (⟦ V ⟧-value η)) , proj₂ (⟦ V ⟧-value η))
-  ⟦ opₖ op p V K ⟧-kernel η C =  node op p (⟦ V ⟧-value η) (λ res → ⟦ K ⟧-kernel (η , res) C)
-  ⟦ getenv K ⟧-kernel η C = ⟦ K ⟧-kernel (η , C) C
-  ⟦ setenv V K ⟧-kernel η _ = ⟦ K ⟧-kernel η (⟦ V ⟧-value η)
-  ⟦ user M `with K ⟧-kernel η C = {!   !}
+  ⟦ sub-kernel k p ⟧-kernel η = coerceₖ p (⟦ k ⟧-kernel η)
+  ⟦ return v ⟧-kernel η C = leaf ((⟦ v ⟧-value η) , C)
+  ⟦ v · w ⟧-kernel η = ⟦ v ⟧-value η (⟦ w ⟧-value η)
+  ⟦ `let k `in l ⟧-kernel η = bind-kernel (λ X → ⟦ l ⟧-kernel (η , X)) (⟦ k ⟧-kernel η)
+  ⟦ match v `with k ⟧-kernel η = ⟦ k ⟧-kernel ((η , proj₁ (⟦ v ⟧-value η)) , proj₂ (⟦ v ⟧-value η))
+  ⟦ opₖ op p v k ⟧-kernel η C =  node op p (⟦ v ⟧-value η) (λ res → ⟦ k ⟧-kernel (η , res) C)
+  ⟦ getenv k ⟧-kernel η C = ⟦ k ⟧-kernel (η , C) C
+  ⟦ setenv v k ⟧-kernel η _ = ⟦ k ⟧-kernel η (⟦ v ⟧-value η)
+  ⟦ user m `with k ⟧-kernel η C = bind-user-kernel (λ X C' → ⟦ k ⟧-kernel (η , X) C') (⟦ m ⟧-user η) C 
+  --⟦ K ⟧-kernel (η , {! ⟦ ? ⟧-user  !}) C
    
 
 
@@ -141,4 +160,4 @@ mutual
 --3.5. Rewrite the ⟦ ⟧ stuff to use the Monad structure
 --4. getenv, setenv and the equations they use (for the Kernel Monad), algebraic operations, algebraicity equation (for both monads)
 --Optional: Read the literature already given. Most important is that the Runners paper is understood as much as possible, the rest is simply background reading to understand that.
---Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.  
+--Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.       

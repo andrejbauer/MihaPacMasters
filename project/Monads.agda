@@ -74,7 +74,7 @@ UComp Σ X = Tree Σ X --TODO: Prove that THIS/Tree(X) is a Monad, the UComp wil
 
 bind-user : ∀ {Σ X Y} → (X → UComp Σ Y) → UComp Σ X → UComp Σ Y
 bind-user f (leaf x) = f x
-bind-user f (node op p param c) = node op p param (λ res → bind-user f (c res))
+bind-user f (node op p param C) = node op p param (λ res → bind-user f (C res))
 
 -- Denotation of a kernel computation with state C returning elements of X
 KComp : Sig → Set → Set → Set
@@ -85,8 +85,16 @@ KComp Σ C X = C → Tree Σ (X × C)
 -- TODO: Prove the Kernel is also a Monad (in this file, possibly)
 
 bind-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → KComp Σ C X → KComp Σ C Y
-bind-kernel f K c = bind-tree (λ {(x , c') → f x c'}) (K c)
+bind-kernel f K C = bind-tree (λ {(x , C') → f x C'}) (K C)
 
+bind-user-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → (UComp Σ X) → KComp Σ C Y
+bind-user-kernel f M C = bind-tree (λ X → f X C) M
+
+--TODO (7. 1. 2025): All of these special binds can just be bind-tree's
+
+
+bind-kernel-user : ∀ {Σ C X Y} → (X → KComp Σ C Y) → (UComp Σ X) → UComp Σ Y
+bind-kernel-user f M = bind-tree {!   !} {!   !}
 
    
 record Monad {l} : Set (lsuc l) where
@@ -164,4 +172,4 @@ module _ {l} (Σ : Sig) where --TODO: Put this into a separate file
 --3.5. Rewrite the ⟦ ⟧ stuff to use the Monad structure
 --4. getenv, setenv and the equations they use (for the Kernel Monad), algebraic operations, algebraicity equation (for both monads)
 --Optional: Read the literature already given. Most important is that the Runners paper is understood as much as possible, the rest is simply background reading to understand that.
---Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.  
+--Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.   
