@@ -76,6 +76,10 @@ bind-user : ∀ {Σ X Y} → (X → UComp Σ Y) → UComp Σ X → UComp Σ Y
 bind-user f (leaf x) = f x
 bind-user f (node op p param C) = node op p param (λ res → bind-user f (C res))
 
+bind-user2 : ∀ {Σ Σ' X Y} → (X → UComp Σ' Y) → UComp Σ X → UComp Σ' Y
+bind-user2 f (leaf x) = f x
+bind-user2 f (node op p param C) = node op {! p  !} {!   !} {!   !}
+
 -- Denotation of a kernel computation with state C returning elements of X
 KComp : Sig → Set → Set → Set
 KComp Σ C X = C → Tree Σ (X × C)

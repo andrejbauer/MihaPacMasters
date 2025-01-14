@@ -118,13 +118,26 @@ mutual
   ⟦ funK k ⟧-value η = λ X → ⟦ k ⟧-kernel (η , X)
   ⟦ runner r ⟧-value η = λ op p param → ⟦ (r op p) ⟧-kernel (η , param) --Removed C from the ends of this
 
-  using-runner : ∀ { Γ X Σ Σ' C} → UComp Σ X → Runner Σ Σ' C → UComp Σ' X --TODO (7. 1. 2025): THINK IF THIS ACTUALLY IS WHAT YOU NEED
+{-   using-runner : ∀ { Γ X Σ Σ' C} → UComp Σ X → Runner Σ Σ' C → UComp Σ' X --TODO (7. 1. 2025): THINK IF THIS ACTUALLY IS WHAT YOU NEED
   using-runner (leaf X) R = leaf X
   using-runner (node op p param t) R = node op {!   !} param (λ res → {! R op p param  !})
 
   bind-runner-user : ∀ {Σ Σ' C X Y} → ⟦ C ⟧g → Runner Σ Σ' ⟦ C ⟧g → UComp Σ X → UComp Σ' Y
   bind-runner-user C R (Monads.leaf x) = {! R ? ? ? ?  !}
-  bind-runner-user C R (Monads.node op p param₁ t) = {!   !}
+  bind-runner-user C R (Monads.node op p param₁ t) = {!   !} -}
+
+  aux2 : ∀ {Σ' result C X } → Tree Σ' (⟦ result ⟧g × ⟦ C ⟧g) → (⟦ result ⟧g × ⟦ C ⟧g → ⟦ X ⟧v) → Tree Σ' ⟦ X ⟧v
+  aux2 {Σ'} R f = bind-tree (λ x → {! Tree Σ' (f x)  !}) R
+
+  wrap-runner : ∀ {Γ Σ Σ' C X} → ⟦ Γ ⟧-ctx → Γ ⊢V: (Σ ⇒ Σ' , C) → Γ ⊢V: gnd C → Γ ⊢U: (X ! Σ) → UComp Σ' ⟦ X ⟧v
+  wrap-runner η r c (sub-user m p) = {!   !}
+  wrap-runner η r c (return x) = leaf (⟦ x ⟧-value η)
+  wrap-runner η r c (x · x₁) = {!   !}
+  wrap-runner η r c (opᵤ op p par m) = bind-tree (λ x → {!   !}) (⟦ r ⟧-value η op p (⟦ par ⟧-value η) (⟦ c ⟧-value η))
+  wrap-runner η r c (`let m `in m₁) = {!   !}
+  wrap-runner η r c (match x `with m) = {!   !}
+  wrap-runner η r c (`using r' at c' `run m finally n) = wrap-runner η {!   !} {!   !} {!   !}
+  wrap-runner η r c (kernel x at x₁ finally m) = {!   !}
 
   ⟦_⟧-user : ∀ {Γ Xᵤ} → (Γ ⊢U: Xᵤ) → ⟦ Γ ⟧-ctx → ⟦ Xᵤ ⟧u
   ⟦ sub-user m p ⟧-user η = coerceᵤ p (⟦ m ⟧-user η)
@@ -133,10 +146,9 @@ mutual
   ⟦ opᵤ op p v m ⟧-user η = node op p (⟦ v ⟧-value η) λ res → ⟦ m ⟧-user (η , res)
   ⟦ `let m `in n ⟧-user η = bind-user (λ X → ⟦ n ⟧-user (η , X)) (⟦ m ⟧-user η)
   ⟦ match v `with m ⟧-user η = ⟦ m ⟧-user ((η , (proj₁ (⟦ v ⟧-value η))) , (proj₂ (⟦ v ⟧-value η)))
-  ⟦ `using r at c `run m finally n ⟧-user η = {!   !}
-    --bind-tree (λ {(fst , snd) → ⟦ n ⟧-user ((η , fst) , (snd η))}) (bind-runner-user (⟦ c ⟧-value η) (⟦ r ⟧-value η) (⟦ m ⟧-user η))
-    --bind-tree (λ { X → ⟦ N ⟧-user ((η , X) , (⟦ V ⟧-value η))}) (using-runner (⟦ M ⟧-user η) (⟦ R ⟧-value η))
-  ⟦ kernel k at v finally m ⟧-user η = bind-user ( λ { (X , C) → ⟦ m ⟧-user ((η , X) , C) } ) (bind-kernel (λ x C' → ⟦ k ⟧-kernel η C') (⟦ k ⟧-kernel η) (⟦ v ⟧-value η)) 
+  ⟦ `using r at c `run m finally n ⟧-user η = bind-tree (λ x → ⟦ n ⟧-user ((η , {!   !}) , ⟦ c ⟧-value η)) {!   !}
+    --bind-tree (λ {x → ⟦ n ⟧-user ((η , x) , ⟦ c ⟧-value η)} ) (wrap-runner η r c m) 
+  ⟦ kernel k at c finally m ⟧-user η = bind-user (λ {(X , C) → ⟦ m ⟧-user ((η , X) , C)} ) (⟦ k ⟧-kernel η (⟦ c ⟧-value η))
 
   ⟦_⟧-kernel : ∀ {Γ K} → (Γ ⊢K: K) → ⟦ Γ ⟧-ctx → ⟦ K ⟧k
   ⟦ sub-kernel k p ⟧-kernel η = coerceₖ p (⟦ k ⟧-kernel η)
@@ -147,7 +159,7 @@ mutual
   ⟦ opₖ op p v k ⟧-kernel η C =  node op p (⟦ v ⟧-value η) (λ res → ⟦ k ⟧-kernel (η , res) C)
   ⟦ getenv k ⟧-kernel η C = ⟦ k ⟧-kernel (η , C) C
   ⟦ setenv v k ⟧-kernel η _ = ⟦ k ⟧-kernel η (⟦ v ⟧-value η)
-  ⟦ user m `with k ⟧-kernel η C = bind-user-kernel (λ X C' → ⟦ k ⟧-kernel (η , X) C') (⟦ m ⟧-user η) C 
+  ⟦ user m `with k ⟧-kernel η C = bind-tree (λ { X → ⟦ k ⟧-kernel (η , X) C}) (⟦ m ⟧-user η)
   --⟦ K ⟧-kernel (η , {! ⟦ ? ⟧-user  !}) C
    
 
@@ -160,4 +172,4 @@ mutual
 --3.5. Rewrite the ⟦ ⟧ stuff to use the Monad structure
 --4. getenv, setenv and the equations they use (for the Kernel Monad), algebraic operations, algebraicity equation (for both monads)
 --Optional: Read the literature already given. Most important is that the Runners paper is understood as much as possible, the rest is simply background reading to understand that.
---Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.       
+--Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.          
