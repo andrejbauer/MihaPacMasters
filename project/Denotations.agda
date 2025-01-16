@@ -2,7 +2,6 @@
 
 open import Data.Unit
 open import Data.Product
---open import Relation.Binary.PropositionalEquality
 import Relation.Binary.PropositionalEquality as Eq
 open Eq                  using (_≡_; refl; sym; trans; cong; cong₂; subst; [_]; inspect)
 open Eq.≡-Reasoning      using (begin_; _≡⟨⟩_; step-≡; _∎)
@@ -14,6 +13,7 @@ open import Parameters
 import Types
 import Terms
 import Monads
+import Equations
 
 module Denotations (G : GTypes) (O : Ops G) where
 
@@ -23,7 +23,7 @@ open Ops O
 open Contexts G O
 open Types G O
 open Terms G O
-open Monads G O 
+open Monads G O
 
 -- GENERAL TODO: naming conventions (think for yourself what to do, try to stay close to the paper/thesis)
 -- - upper-case letters for types, lower-case letters for terms
@@ -34,7 +34,7 @@ open Monads G O
 -- - use Xₖ, Yₖ, Zₖ  for kernel types
 
 -- Trees are t, u, ...
--- UComps are M, N, ... 
+-- UComps are M, N, ...
 -- KComps are K, L, ...
 -- Values are V, W, ...
 
@@ -52,7 +52,7 @@ mutual --TODO: This should go into a different module/file. Essentially putting 
   ⟦ X ⟶ₖ Y ⟧v = ⟦ X ⟧v → ⟦ Y ⟧k
   ⟦ Σ₁ ⇒ Σ₂ , C ⟧v = Runner Σ₁ Σ₂ ⟦ C ⟧g
 
-  -- Denotation of a skeletal runner
+  -- Denotation of a runner
   Runner : Sig → Sig → Set → Set
   Runner Σ₁ Σ₂ C = ∀ (op : Op) → op ∈ₒ Σ₁ → ⟦ param op ⟧g → KComp Σ₂ C ⟦ result op ⟧g
 
@@ -87,7 +87,7 @@ mutual
   coerceᵥ (⊑ᵥ-product p q) (X , Y) = (coerceᵥ p X , coerceᵥ q Y)
   coerceᵥ (⊑ᵥ-Ufun p q) f = λ X' → coerceᵤ q (f (coerceᵥ p X'))
   coerceᵥ (⊑ᵥ-Kfun p q) f = λ X' → coerceₖ q (f (coerceᵥ p X'))
-  coerceᵥ (⊑ᵥ-runner p q refl) r = λ op p' param C → include-tree q (r op (p _ p') param C) -- TODO: Make the first argument of p implicit 
+  coerceᵥ (⊑ᵥ-runner p q refl) r = λ op p' param C → include-tree q (r op (p _ p') param C) -- TODO: Make the first argument of p implicit
 
   -- Denotation of user computation subtyping
   coerceᵤ : ∀ {X Y} → X ⊑ᵤ Y → ⟦ X ⟧u → ⟦ Y ⟧u
@@ -98,16 +98,10 @@ mutual
   coerceₖ (⊑ₖ-kernel p q refl) K C = include-tree q (map-tree (λ {(X , C') → (coerceᵥ p X) , C'}) (K C))
 
 
---aux3 : ∀ {Γ C Σ Σ' X} → (V : Γ ⊢V: gnd C) → (R : Γ ⊢V: (Σ ⇒ Σ' , C)) → (M : Γ ⊢U: X ! Σ) → (M' : Γ ⊢U: X ! Σ')
---aux3 = ?
-
-aux3 : ∀ {Γ C Σ Σ' X} → Γ ⊢V: gnd C → Γ ⊢V: (Σ ⇒ Σ' , C) → Γ ⊢U: (X ! Σ) → Γ ⊢U: X ! Σ'
-aux3 C R M = {!   !}
-
 -- Denotations of terms
 mutual
 
---  sub-coop : ∀ { } → 
+--  sub-coop : ∀ { } →
 
   ⟦_⟧-value : ∀ {Γ X} → (Γ ⊢V: X) → ⟦ Γ ⟧-ctx → ⟦ X ⟧v
   ⟦ var p ⟧-value η = lookup p η
@@ -118,26 +112,12 @@ mutual
   ⟦ funK k ⟧-value η = λ X → ⟦ k ⟧-kernel (η , X)
   ⟦ runner r ⟧-value η = λ op p param → ⟦ (r op p) ⟧-kernel (η , param) --Removed C from the ends of this
 
-{-   using-runner : ∀ { Γ X Σ Σ' C} → UComp Σ X → Runner Σ Σ' C → UComp Σ' X --TODO (7. 1. 2025): THINK IF THIS ACTUALLY IS WHAT YOU NEED
-  using-runner (leaf X) R = leaf X
-  using-runner (node op p param t) R = node op {!   !} param (λ res → {! R op p param  !})
+  apply-runner : ∀ {Σ Σ' C X} → Runner Σ Σ' C → UComp Σ X → KComp Σ' C X
+  apply-runner R (leaf x) c = leaf (x , c)
+  apply-runner R (node op p param κ) = bind-kernel (apply-runner R ∘ κ) (R op p param)
 
-  bind-runner-user : ∀ {Σ Σ' C X Y} → ⟦ C ⟧g → Runner Σ Σ' ⟦ C ⟧g → UComp Σ X → UComp Σ' Y
-  bind-runner-user C R (Monads.leaf x) = {! R ? ? ? ?  !}
-  bind-runner-user C R (Monads.node op p param₁ t) = {!   !} -}
-
-  aux2 : ∀ {Σ' result C X } → Tree Σ' (⟦ result ⟧g × ⟦ C ⟧g) → (⟦ result ⟧g × ⟦ C ⟧g → ⟦ X ⟧v) → Tree Σ' ⟦ X ⟧v
-  aux2 {Σ'} R f = bind-tree (λ x → {! Tree Σ' (f x)  !}) R
-
-  wrap-runner : ∀ {Γ Σ Σ' C X} → ⟦ Γ ⟧-ctx → Γ ⊢V: (Σ ⇒ Σ' , C) → Γ ⊢V: gnd C → Γ ⊢U: (X ! Σ) → UComp Σ' ⟦ X ⟧v
-  wrap-runner η r c (sub-user m p) = {!   !}
-  wrap-runner η r c (return x) = leaf (⟦ x ⟧-value η)
-  wrap-runner η r c (x · x₁) = {!   !}
-  wrap-runner η r c (opᵤ op p par m) = bind-tree (λ x → {!   !}) (⟦ r ⟧-value η op p (⟦ par ⟧-value η) (⟦ c ⟧-value η))
-  wrap-runner η r c (`let m `in m₁) = {!   !}
-  wrap-runner η r c (match x `with m) = {!   !}
-  wrap-runner η r c (`using r' at c' `run m finally n) = wrap-runner η {!   !} {!   !} {!   !}
-  wrap-runner η r c (kernel x at x₁ finally m) = {!   !}
+  kernel-to-user : ∀ {Σ X Y C} → KComp Σ C X → C → (X × C → UComp Σ Y) → UComp Σ Y
+  kernel-to-user k c m = bind-user m (k c)
 
   ⟦_⟧-user : ∀ {Γ Xᵤ} → (Γ ⊢U: Xᵤ) → ⟦ Γ ⟧-ctx → ⟦ Xᵤ ⟧u
   ⟦ sub-user m p ⟧-user η = coerceᵤ p (⟦ m ⟧-user η)
@@ -146,9 +126,10 @@ mutual
   ⟦ opᵤ op p v m ⟧-user η = node op p (⟦ v ⟧-value η) λ res → ⟦ m ⟧-user (η , res)
   ⟦ `let m `in n ⟧-user η = bind-user (λ X → ⟦ n ⟧-user (η , X)) (⟦ m ⟧-user η)
   ⟦ match v `with m ⟧-user η = ⟦ m ⟧-user ((η , (proj₁ (⟦ v ⟧-value η))) , (proj₂ (⟦ v ⟧-value η)))
-  ⟦ `using r at c `run m finally n ⟧-user η = bind-tree (λ x → ⟦ n ⟧-user ((η , {!   !}) , ⟦ c ⟧-value η)) {!   !}
-    --bind-tree (λ {x → ⟦ n ⟧-user ((η , x) , ⟦ c ⟧-value η)} ) (wrap-runner η r c m) 
-  ⟦ kernel k at c finally m ⟧-user η = bind-user (λ {(X , C) → ⟦ m ⟧-user ((η , X) , C)} ) (⟦ k ⟧-kernel η (⟦ c ⟧-value η))
+  ⟦ `using r at c `run m finally n ⟧-user η =
+     kernel-to-user (apply-runner (⟦ r ⟧-value η) (⟦ m ⟧-user η)) (⟦ c ⟧-value η) (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c')})
+
+  ⟦ kernel k at c finally m ⟧-user η = kernel-to-user  (⟦ k ⟧-kernel η) (⟦ c ⟧-value η) (λ {(X , C) → ⟦ m ⟧-user ((η , X) , C)})
 
   ⟦_⟧-kernel : ∀ {Γ K} → (Γ ⊢K: K) → ⟦ Γ ⟧-ctx → ⟦ K ⟧k
   ⟦ sub-kernel k p ⟧-kernel η = coerceₖ p (⟦ k ⟧-kernel η)
@@ -161,15 +142,85 @@ mutual
   ⟦ setenv v k ⟧-kernel η _ = ⟦ k ⟧-kernel η (⟦ v ⟧-value η)
   ⟦ user m `with k ⟧-kernel η C = bind-tree (λ { X → ⟦ k ⟧-kernel (η , X) C}) (⟦ m ⟧-user η)
   --⟦ K ⟧-kernel (η , {! ⟦ ? ⟧-user  !}) C
-   
+
 
 
 --TODOs for next time (17. 12. 2024)
 --1. Split Denotations.agda into 2 files, one file has all definitions regarding Monads, the other has the ⟦ ⟧ stuff, except the ⟦ ⟧g stuff (which goes with Monads). DONE
 --2. Use consistent fixed variable names. Then keep it consistent forevermore. DONE
---3. Finish the definitions of the ⟦ ⟧-kernel and ⟦ ⟧-user 
+--3. Finish the definitions of the ⟦ ⟧-kernel and ⟦ ⟧-user
 --- ^What is expected^ --
 --3.5. Rewrite the ⟦ ⟧ stuff to use the Monad structure
 --4. getenv, setenv and the equations they use (for the Kernel Monad), algebraic operations, algebraicity equation (for both monads)
 --Optional: Read the literature already given. Most important is that the Runners paper is understood as much as possible, the rest is simply background reading to understand that.
---Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.          
+--Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.
+
+-- Validity of equations
+module _ where
+
+  open Equations G O
+
+  mutual
+
+    valid-V : ∀ {Γ : Ctx} {X : VType} {v w : Γ ⊢V: X} → (Γ ⊢V v ≡ w) → ∀ η → ⟦ v ⟧-value η ≡ ⟦ w ⟧-value η
+    valid-U : ∀ {Γ : Ctx} {Xᵤ : UType} {m n : Γ ⊢U: Xᵤ} → (Γ ⊢U m ≡ n) → ∀ η → ⟦ m ⟧-user η ≡ ⟦ n ⟧-user η
+    valid-K : ∀ {Γ : Ctx} {Xₖ : KType} {k l : Γ ⊢K: Xₖ} → (Γ ⊢K k ≡ l) → ∀ η → ⟦ k ⟧-kernel η ≡ ⟦ l ⟧-kernel η
+
+    valid-V refl η = Eq.refl
+    valid-V (sym eq) η = Eq.sym (valid-V eq η)
+    valid-V (trans eq₁ eq₂) η = Eq.trans (valid-V eq₁ η) (valid-V eq₂ η)
+    valid-V (prod-cong eq₁ eq₂) η = Eq.cong₂ _,_ (valid-V eq₁ η) (valid-V eq₂ η)
+    valid-V (fun-cong eq) η = fun-ext (λ x → valid-U eq (η , x))
+    valid-V (funK-cong x) η = {!!}
+    valid-V (runner-cong x) η = {!!}
+    valid-V unit-eta η = {!!}
+    valid-V funU-eta η = {!!}
+    valid-V funK-eta η = {!!}
+
+    valid-U refl η = {!!}
+    valid-U (sym eq) η = {!!}
+    valid-U (trans eq eq₁) η = {!!}
+    valid-U (return-cong x) η = {!!}
+    valid-U (·-cong x x₁) η = {!!}
+    valid-U (opᵤ-cong p eq₁ eq₂) η = cong₂ (node _ p) (valid-V eq₁ η) (fun-ext (λ x → valid-U eq₂ (η , x)))
+    valid-U (let-in-cong eq eq₁) η = {!!}
+    valid-U (match-with-cong x eq) η = {!!}
+    valid-U (using-at-run-finally-cong x x₁ eq eq₁) η = {!!}
+    valid-U (kernel-at-finally-cong x eq x₁) η = {!!}
+    valid-U (funU-beta m v) η = {!!}
+    valid-U (let-in-beta-return_ v m) η = {!!}
+    valid-U (let-in-beta-op op p v m n) η = {!!}
+    valid-U (match-with-beta-prod v₁ v₂ m) η = {!!}
+    valid-U (using-run-finally-beta-return r w v n) η = {!!}
+    valid-U (using-run-finally-beta-op R w op v p m n) η = {!!}
+    valid-U (kernel-at-finally-beta-return v w n) η = {!!}
+    valid-U (kernel-at-finally-beta-getenv v k m) η = {!!}
+    valid-U (kernel-at-finally-setenv v w k m) η = {!!}
+    valid-U (kernel-at-finally-beta-op op p v w k m) η = {!!}
+    valid-U (let-in-eta-M _) η = {!!}
+
+    valid-K refl η = {!!}
+    valid-K (sym eq) η = {!!}
+    valid-K (trans eq eq₁) η = {!!}
+    valid-K (return-cong x) η = {!!}
+    valid-K (·-cong x x₁) η = {!!}
+    valid-K (let-in-cong eq eq₁) η = {!!}
+    valid-K (match-with-cong x eq) η = {!!}
+    valid-K (opₖ-cong x eq) η = {!!}
+    valid-K (getenv-cong eq) η = {!!}
+    valid-K (setenv-cong x eq) η = {!!}
+    valid-K (user-with-cong x eq) η = {!!}
+    valid-K (funK-beta k v) η = {!!}
+    valid-K (let-in-beta-return v k) η = {!!}
+    valid-K (let-in-beta-op op p v k l) η = {!!}
+    valid-K (let-in-beta-getenv k l) η = {!!}
+    valid-K (let-in-beta-setenv v k l) η = {!!}
+    valid-K (match-with-beta-prod v w k) η = {!!}
+    valid-K (user-with-beta-return v k) η = {!!}
+    valid-K (user-with-beta-op op p v m k) η = {!!}
+    valid-K (let-in-eta-K _) η = {!!}
+    valid-K (GetSetenv _ v) η = {!!}
+    valid-K (SetGetenv v k) η = {!!}
+    valid-K (SetSetenv v w k) η = {!!}
+    valid-K (GetOpEnv op p v k) η = {!!}
+    valid-K (SetOpEnv op p v _) η = {!!}

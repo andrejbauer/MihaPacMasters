@@ -36,7 +36,7 @@ open Terms G O
 -- - use Xₖ, Yₖ, Zₖ  for kernel types
 
 -- Trees are t, u, ...
--- UComps are M, N, ... 
+-- UComps are M, N, ...
 -- KComps are K, L, ...
 
 -- TODO: look up "Wadler's law" (named after Phil Wadler)
@@ -53,7 +53,7 @@ data Tree  (Σ : Sig) (X : Set) : Set where
   node : ∀ (op : Op) → (p : op ∈ₒ Σ) → (param : ⟦ param op ⟧g) → (t : (res : ⟦ result op ⟧g) → Tree Σ X) → Tree Σ X
 
 aux : ∀{op Σ₁ Σ₂ } → op ∈ₒ Σ₁ → Σ₁ ⊆ₛ Σ₂ → op ∈ₒ Σ₂ -- auxilliary function for include-tree
-aux {op} p q = q op p 
+aux {op} p q = q op p
 
 include-tree : ∀ {Σ₁ Σ₂ X} → Σ₁ ⊆ₛ Σ₂ → Tree Σ₁ X → Tree Σ₂ X
 include-tree p (leaf x) = leaf x
@@ -67,18 +67,13 @@ bind-tree f (node op p param c) = node op p param (λ res → bind-tree f (c res
 map-tree : ∀ {Σ X Y} → (X → Y) → Tree Σ X → Tree Σ Y
 map-tree f t = bind-tree (leaf ∘ f) t
 
--- Denotation of a user computation returning elements of X and performing operations Σ 
+-- Denotation of a user computation returning elements of X and performing operations Σ
 UComp : Sig → Set → Set
-UComp Σ X = Tree Σ X --TODO: Prove that THIS/Tree(X) is a Monad, the UComp will be T, bind is the bind-tree, leaf is the unit η, 
+UComp Σ X = Tree Σ X --TODO: Prove that THIS/Tree(X) is a Monad, the UComp will be T, bind is the bind-tree, leaf is the unit η,
 --when verifying equations keep in mind that you might have to use funext
 
 bind-user : ∀ {Σ X Y} → (X → UComp Σ Y) → UComp Σ X → UComp Σ Y
-bind-user f (leaf x) = f x
-bind-user f (node op p param C) = node op p param (λ res → bind-user f (C res))
-
-bind-user2 : ∀ {Σ Σ' X Y} → (X → UComp Σ' Y) → UComp Σ X → UComp Σ' Y
-bind-user2 f (leaf x) = f x
-bind-user2 f (node op p param C) = node op {! p  !} {!   !} {!   !}
+bind-user = bind-tree
 
 -- Denotation of a kernel computation with state C returning elements of X
 KComp : Sig → Set → Set → Set
@@ -91,16 +86,6 @@ KComp Σ C X = C → Tree Σ (X × C)
 bind-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → KComp Σ C X → KComp Σ C Y
 bind-kernel f K C = bind-tree (λ {(x , C') → f x C'}) (K C)
 
-bind-user-kernel : ∀ {Σ C X Y} → (X → KComp Σ C Y) → (UComp Σ X) → KComp Σ C Y
-bind-user-kernel f M C = bind-tree (λ X → f X C) M
-
---TODO (7. 1. 2025): All of these special binds can just be bind-tree's
-
-
-bind-kernel-user : ∀ {Σ C X Y} → (X → KComp Σ C Y) → (UComp Σ X) → UComp Σ Y
-bind-kernel-user f M = bind-tree {!   !} {!   !}
-
-   
 record Monad {l} : Set (lsuc l) where
   field
     -- carrier (object map) fo the Kleisli triple
@@ -147,8 +132,8 @@ module _ {l} (Σ : Sig) where --TODO: Put this into a separate file
     η         = leaf ;
     _>>=_     = λ M f → bind-user f M ;
     η-left    = λ x f → refl ;
-    η-right   = λ {M → {!   !}} ;
-    >>=-assoc = λ M f g → {!   !} }
+    η-right   = η-right-Tree ;
+    >>=-assoc = >>=-assoc-Tree }
 
 
   KMonad : (C : Set) → Monad {l}
@@ -157,13 +142,13 @@ module _ {l} (Σ : Sig) where --TODO: Put this into a separate file
     η         = λ x c → leaf (x , c) ;
     _>>=_     = λ K f c → bind-kernel f K c ;
     η-left    = λ c f → refl ;
-    η-right   = η-right-Kernel ;   
-    >>=-assoc = {!   !} }     
+    η-right   = η-right-Kernel ;
+    >>=-assoc = >>=-assoc-Kernel }
     where
       η-right-Kernel : {X : Set} (K : KComp Σ C X) → bind-kernel (λ x c → leaf (x , c)) K ≡ K --TODO: rename things as you go so that it makes sense
-      η-right-Kernel K = fun-ext λ c → η-right-Tree (K c) 
+      η-right-Kernel K = fun-ext λ c → η-right-Tree (K c)
 
-      >>=-assoc-Kernel : {X Y Z : Set} (K : KComp Σ C X) (f : X → KComp Σ C Y) (g : Y → KComp Σ C Z) 
+      >>=-assoc-Kernel : {X Y Z : Set} (K : KComp Σ C X) (f : X → KComp Σ C Y) (g : Y → KComp Σ C Z)
         → bind-kernel g (bind-kernel f K) ≡ bind-kernel (λ x → bind-kernel g (f x)) K
       >>=-assoc-Kernel K f g = fun-ext (λ c → >>=-assoc-Tree (K c) (λ { (x , c') → f x c' }) (λ { (y , c') → g y c' }))
 
@@ -171,9 +156,9 @@ module _ {l} (Σ : Sig) where --TODO: Put this into a separate file
 --TODOs for next time (17. 12. 2024)
 --1. Split Denotations.agda into 2 files, one file has all definitions regarding Monads, the other has the ⟦ ⟧ stuff, except the ⟦ ⟧g stuff (which goes with Monads).
 --2. Use consistent fixed variable names. Then keep it consistent forevermore.
---3. Finish the definitions of the ⟦ ⟧-kernel and ⟦ ⟧-user 
+--3. Finish the definitions of the ⟦ ⟧-kernel and ⟦ ⟧-user
 --- ^What is expected^ --
 --3.5. Rewrite the ⟦ ⟧ stuff to use the Monad structure
 --4. getenv, setenv and the equations they use (for the Kernel Monad), algebraic operations, algebraicity equation (for both monads)
 --Optional: Read the literature already given. Most important is that the Runners paper is understood as much as possible, the rest is simply background reading to understand that.
---Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.   
+--Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.
