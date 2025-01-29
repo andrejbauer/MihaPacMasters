@@ -32,8 +32,6 @@ extendₛ σ (there p) =  σ p [ wkᵣ ]ᵥᵣ
 
 wkₛ : ∀ {Γ Γ' X} → Sub Γ Γ' → Sub (Γ ∷ X) Γ'
 wkₛ σ p = σ p [ wkᵣ ]ᵥᵣ
---wkₛ σ here = σ here [ wkᵣ ]ᵥᵣ -- To add another variable to the start, we have to simply say that we will add a new variable at the start
---wkₛ σ (there p) =  σ (obvious p) [ wkᵣ ]ᵥᵣ -- EXPLAIN WHAT wkᵣ ACTUALLY DOES
 
 _∷ₛ_ : ∀ {Γ Γ' X} → Sub Γ Γ' → Γ ⊢V: X → Sub Γ (Γ' ∷ X)
 (σ ∷ₛ v) here = v

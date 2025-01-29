@@ -47,8 +47,8 @@ mutual
     valid-V (funK-cong eq-k) η = fun-ext (λ x → valid-K eq-k (η , x))  --fun-ext (λ x → valid-K refl η) 
     valid-V (runner-cong eq-k) η = fun-ext (λ op → fun-ext (λ p → fun-ext (λ param → valid-K (eq-k op p) (η , param)))) --fun-ext (λ op → fun-ext (λ p → fun-ext (λ param → valid-K refl η)))
     valid-V unit-eta η = refl
-    valid-V funU-eta η = fun-ext (λ x → valid-U refl η)
-    valid-V funK-eta η = fun-ext (λ x → valid-K refl η)
+    valid-V funU-eta η = fun-ext (λ x → valid-U refl η) --Relies on substitution (complete mystery for now)
+    valid-V funK-eta η = fun-ext (λ x → valid-K refl η) --Relies on substitution (complete mystery for now)
 
 
 
@@ -59,27 +59,27 @@ mutual
     valid-U {Γ} {Xᵤ} {m} {n} (·-cong eq-v eq-w) η = cong₂ (λ v-value w-value → v-value w-value) (valid-V eq-v η) (valid-V eq-w η)
     valid-U (opᵤ-cong p eq-v eq-m) η = cong₂ (node _ p) (valid-V eq-v η) (fun-ext (λ res → valid-U eq-m (η , res))) 
     valid-U (let-in-cong eq-m eq-n) η = cong₂ bind-user (fun-ext (λ x → valid-U eq-n (η , x))) (valid-U eq-m η)
+    valid-U (match-with-cong eq-v eq-m) η = cong₂ (λ m η' → m η') (fun-ext (λ η' → valid-U eq-m η')) (cong (λ x → ( η , proj₁ x) , proj₂ x) (valid-V eq-v η))
 
-    --Tezava tu: zdi se mi da je pravilno, ampak Agda ne vidi da (. , .) , . je enako kot . , . , . 
-    valid-U (match-with-cong eq-v eq-m) η = {!   !}
-        --cong (λ {x → {!   !}}) (cong (valid-U {! eq-m  !}) (cong (λ x → ( η , proj₁ x) , proj₂ x) (valid-V eq-v η))) 
-        --cong₂ (λ x x₁ → ⟦ {!   !} ⟧-user {!   !}) (valid-U eq-m ((η , (proj₁ {! eq-v  !}))  , {!   !}))  (cong (λ x → ( η , proj₁ x) , proj₂ x) (valid-V eq-v η))
-        --cong (λ {((eta , fst) , snd) → ⟦ {!  !} ⟧-user ((eta , fst) , snd)}) (cong (λ fv → (η , proj₁ fv) , proj₂ fv) (valid-V eq-v η))
-        --match-validity {! valid-U eq-m ?  !} (valid-V eq-v η) --Similar to the ·-cong
-        --⟦ m₁ ⟧-user ((η , proj₁ (⟦ v₁ ⟧-value η)) , proj₂ (⟦ v₁ ⟧-value η))
-        -- ≡
-        --⟦ m₂ ⟧-user ((η , proj₁ (⟦ v₂ ⟧-value η)) , proj₂ (⟦ v₂ ⟧-value η))
-
-
-    valid-U (using-at-run-finally-cong eq-v eq-w eq-m eq-n) η = cong (λ x → {!  !}) {!   !}
+    valid-U (using-at-run-finally-cong eq-r eq-w eq-m eq-n) η = 
+        cong₂ bind-tree (fun-ext (λ η' → valid-U eq-n ((η , proj₁ η') , proj₂ η') ))  
+            (cong₂ (λ r,m w → apply-runner (proj₁ r,m) (proj₂ r,m) w)  (cong₂ (λ r m → r , m)  (valid-V eq-r η) (valid-U eq-m η)) (valid-V eq-w η))
+        --For whatever reason this works (although with a yellow error): cong₂ bind-tree (fun-ext (λ η' → valid-U eq-n η')) (Eq.cong-app refl valid-K)
+        --IDEA: Split the three arguments for apply-runner such that you can use a combination of cong₂ and cong to prove it
+        --PROBLEM: Does it even work?
+        --(cong₂ (λ x x₁ → apply-runner (proj₁ x) (proj₂ x) x₁) (cong₂ _,_ (valid-V eq-v η) (valid-U {! eq-m  !} {!   !})) {!   !})
         {- cong₂ (λ ostalo eta → ⟦ ostalo ⟧-user eta) 
         (cong Terms.`using {!   !} at {!   !} `run {!   !} finally {!   !}) 
         refl  -}
         --cong₂ bind-tree (fun-ext λ x → {!   !}) {!  !}
-        --⟦ `using v₁ at w₁ `run m₁ finally n₁ ⟧-user η ≡
-        --⟦ `using v₂ at w₂ `run m₂ finally n₂ ⟧-user η
+        {-bind-tree (λ { (x , c') → ⟦ n₁ ⟧-user ((η , x) , c') })
+        (apply-runner (⟦ v₁ ⟧-value η) (⟦ m₁ ⟧-user η) (⟦ w₁ ⟧-value η))
+        ≡
+        bind-tree (λ { (x , c') → ⟦ n₂ ⟧-user ((η , x) , c') })
+        (apply-runner (⟦ v₂ ⟧-value η) (⟦ m₂ ⟧-user η) (⟦ w₂ ⟧-value η))-}
         
-    valid-U (kernel-at-finally-cong eq-v eq-m eq-k) η = cong₂ bind-tree (fun-ext (λ x → valid-U eq-m ((η , proj₁ x) , proj₂ x))) (cong₂ (λ k c → k c ) (valid-K eq-k η) (valid-V eq-v η)) --Similar to the ·-cong
+    valid-U (kernel-at-finally-cong eq-v eq-m eq-k) η = 
+        cong₂ bind-tree (fun-ext (λ x → valid-U eq-m ((η , proj₁ x) , proj₂ x))) (cong₂ (λ k c → k c ) (valid-K eq-k η) (valid-V eq-v η)) --Similar to the ·-cong
         -- This one relies on ·-cong
          
     valid-U (funU-beta m v) η = {!  !} --Relies on substitution (complete mystery for now)
@@ -102,23 +102,18 @@ mutual
     valid-K (return-cong eq-v) η = fun-ext (λ x → cong leaf (cong (λ y → (y , x)) (valid-V eq-v η))) 
     valid-K (·-cong eq-v eq-w) η = cong₂ (λ v-value w-value → v-value w-value) (valid-V eq-v η) (valid-V eq-w η) 
 
-    valid-K (let-in-cong eq-k eq-l) η = fun-ext (λ x → cong₂ (bind-kernel {!   !}) {!   !} {! valid-K eq-k η  !}) --No idea why valid-K eq-k η doesn't work
-        {-bind-tree (λ { (x , C') → ⟦ l₁ ⟧-kernel (η , x) C' })
-      (⟦ k₁ ⟧-kernel η x)
-      ≡
-      bind-tree (λ { (x , C') → ⟦ l₂ ⟧-kernel (η , x) C' })
-      (⟦ k₂ ⟧-kernel η x)-}
-        --fun-ext (λ c → cong₂ (bind-kernel (λ x c' → ⟦ {!   !} ⟧-kernel (η , x) c'))  (valid-K {!  !} {! c  !}) {! valid-K  !}) 
-        --fun-ext (λ c' → cong₂ bind-tree (fun-ext (λ x → {! valid-K ? ?  !})) {!   !}) 
-        --⟦ `let k₁ `in l₁ ⟧-kernel η ≡ ⟦ `let k₂ `in l₂ ⟧-kernel η
-        --fun-ext λ c → (cong₂ bind-tree (fun-ext (λ x → {!  valid-K eq-l (( η , proj₁ x ) , proj₂ x)    !})) {!   !})    --(λ x → cong₂ bind-tree {!   !} {!   !})
-    valid-K (match-with-cong eq-v eq-k) η = {!   !} --exact same structure as with the valid-U match case that is giving me issues
+    valid-K (let-in-cong eq-k eq-l) η = 
+        fun-ext (λ c → cong₂ bind-tree (fun-ext (λ x → cong (λ x₁ → x₁ (proj₂ x)) (valid-K eq-l (η , proj₁ x) )) )  (cong₂ (λ a b → a b) (valid-K eq-k η) refl) )
+    --TODO 29. 01.: Surely there is a better way to solve this than cong₂ (λ a b → a b) ...
+    --LARGER ISSUE: I have no idea what this code does.
+
+    valid-K (match-with-cong eq-v eq-k) η = cong₂ (λ k v → k v) (fun-ext (λ η' → valid-K eq-k η' )) (cong (λ v → (( η , proj₁ v ) , proj₂ v)) (valid-V eq-v η))
     valid-K (opₖ-cong {V} {W} {Σ} {C} {op} {p} {param} eq-v eq-k) η = fun-ext (λ _ → cong₂ (node op p) (valid-V eq-v η) (fun-ext (λ res → cong₂ (λ k≡k' c → k≡k' c) (valid-K eq-k (η , res))  refl ))) 
     --TODO 28. 01. : change the names of these variables to be appropriate to what they represent
     valid-K (getenv-cong eq-k) η = fun-ext (λ c → cong₂ (λ k≡k' c' → k≡k' c') (valid-K eq-k (η , c)) refl)
     --TODO 28. 01. : change the names of these variables to be appropriate to what they represent
     valid-K (setenv-cong eq-v eq-k) η = fun-ext (λ _ → cong₂ (λ k c → k c) (valid-K eq-k η) (valid-V eq-v η)) 
-    valid-K (user-with-cong eq-m eq-k) η = fun-ext (λ c → cong₂ bind-tree (cong₂ (λ x x₁ x₂ → {!     !}) (fun-ext (λ x → valid-K eq-k (η , x) ))  refl) (valid-U eq-m η))  
+    valid-K (user-with-cong eq-m eq-k) η = fun-ext (λ _ → cong₂ bind-tree (cong₂ (λ f c x → f x c) (fun-ext (λ x → valid-K eq-k (η , x) ))  refl) (valid-U eq-m η))  
     --ISSUE: How do I get the ⟦ X ⟧v that is in hole 17 to be used in hole 18? This comes up not only here so it'd be very useful to know.
     --SOLUTION: You use fun-ext to create a dummy variable that is exactly what you sought
          
@@ -139,4 +134,4 @@ mutual
     valid-K (SetSetenv c c' k) η = fun-ext (λ c'' → refl)
     valid-K (GetOpEnv op p param k) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-K (SetOpEnv op p param _) η = {!  !} --Relies on substitution (complete mystery for now)
- 
+      

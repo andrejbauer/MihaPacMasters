@@ -39,8 +39,6 @@ open Terms G O
 -- UComps are M, N, ...
 -- KComps are K, L, ...
 
--- TODO: look up "Wadler's law" (named after Phil Wadler)
-
 -- Denotation of ground types
 ⟦_⟧g : GType → Set
 ⟦ base b ⟧g =  ⟦ b ⟧b

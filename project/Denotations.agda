@@ -38,7 +38,6 @@ open Monads G O
 -- KComps are K, L, ...
 -- Values are V, W, ...
 
--- TODO: look up "Wadler's law" (named after Phil Wadler)
 
 
 
@@ -140,7 +139,7 @@ mutual
   ⟦ opₖ op p v k ⟧-kernel η C =  node op p (⟦ v ⟧-value η) (λ res → ⟦ k ⟧-kernel (η , res) C)
   ⟦ getenv k ⟧-kernel η C = ⟦ k ⟧-kernel (η , C) C
   ⟦ setenv v k ⟧-kernel η _ = ⟦ k ⟧-kernel η (⟦ v ⟧-value η)
-  ⟦ user m `with k ⟧-kernel η C = bind-tree (λ { X → ⟦ k ⟧-kernel (η , X) C}) (⟦ m ⟧-user η)
+  ⟦ user m `with k ⟧-kernel η C = bind-user (λ X → ⟦ k ⟧-kernel (η , X) C) (⟦ m ⟧-user η)
   --⟦ K ⟧-kernel (η , {! ⟦ ? ⟧-user  !}) C
 
 
@@ -155,3 +154,4 @@ mutual
 --Optional: Read the literature already given. Most important is that the Runners paper is understood as much as possible, the rest is simply background reading to understand that.
 --Keep track of things you do not understand. Danel's thesis will be useful for HOW to write your own thesis. The MFPS2013 paper will also be useful.
 
+ 

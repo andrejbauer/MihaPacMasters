@@ -59,7 +59,7 @@ interleaved mutual
   _[_]ᵤᵣ : ∀{Γ Γ' X} → Γ' ⊢U: X → Ren Γ Γ' → Γ ⊢U: X
   _[_]ₖᵣ : ∀{Γ Γ' X} → Γ' ⊢K: X → Ren Γ Γ' → Γ ⊢K: X
 
-  rename-funK : ∀ {Γ Γ' X Xₖ } → Γ ⊢V: X ⟶ₖ Xₖ → Ren Γ' Γ → Γ' ⊢V: X ⟶ₖ Xₖ 
+  rename-funK : ∀ {Γ Γ' X xₖ } → Γ ⊢V: X ⟶ₖ xₖ → Ren Γ' Γ → Γ' ⊢V: X ⟶ₖ xₖ 
   rename-funK (var x) ρ = var (ρ x)
   rename-funK (sub-value V p) ρ = sub-value (V [ ρ ]ᵥᵣ) p
   rename-funK (funK K) ρ = funK (K [ extendᵣ ρ ]ₖᵣ)

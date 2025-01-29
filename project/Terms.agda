@@ -53,9 +53,9 @@ interleaved mutual
          → Γ ⊢V: X ⟶ₖ Xₖ
 
     runner : {Σ Σ' : Sig} {C : KState}
-           → ((op : Op) → (op ∈ₒ Σ) → co-op Γ Σ' C op)
-           ---------------------------------------------
-           → Γ ⊢V: Σ ⇒ Σ' , C
+         → ((op : Op) → (op ∈ₒ Σ) → co-op Γ Σ' C op)
+         ---------------------------------------------
+         → Γ ⊢V: Σ ⇒ Σ' , C
 
   data _⊢U:_ where
 
@@ -120,8 +120,6 @@ interleaved mutual
          ------------------------------------
          → Γ ⊢K: Xₖ'
 
-
-
     return : {X : VType} {Σ : Sig} {C : KState}
       → Γ ⊢V: X
       --------------------------
@@ -144,8 +142,6 @@ interleaved mutual
       → Γ ∷ X ∷ Y ⊢K: Xₖ
       ---------------------
       → Γ ⊢K: Xₖ
-
-    -- TODO: fix!
 
     opₖ : {X : VType} {Σ : Sig} {C : KState}
       → (op : Op)
