@@ -48,6 +48,8 @@ mutual
     valid-V (runner-cong eq-k) η = fun-ext (λ op → fun-ext (λ p → fun-ext (λ param → valid-K (eq-k op p) (η , param)))) --fun-ext (λ op → fun-ext (λ p → fun-ext (λ param → valid-K refl η)))
     valid-V unit-eta η = refl
     valid-V funU-eta η = fun-ext (λ x → valid-U refl η) --Relies on substitution (complete mystery for now)
+    {-⟦ (G Renaming.[ O ]ᵥᵣ) w (λ x₁ → there x₁) ⟧-value (η , x) x
+      ≡ ⟦ w ⟧-value η x-}
     valid-V funK-eta η = fun-ext (λ x → valid-K refl η) --Relies on substitution (complete mystery for now)
 
 
@@ -60,40 +62,24 @@ mutual
     valid-U (opᵤ-cong p eq-v eq-m) η = cong₂ (node _ p) (valid-V eq-v η) (fun-ext (λ res → valid-U eq-m (η , res))) 
     valid-U (let-in-cong eq-m eq-n) η = cong₂ bind-user (fun-ext (λ x → valid-U eq-n (η , x))) (valid-U eq-m η)
     valid-U (match-with-cong eq-v eq-m) η = cong₂ (λ m η' → m η') (fun-ext (λ η' → valid-U eq-m η')) (cong (λ x → ( η , proj₁ x) , proj₂ x) (valid-V eq-v η))
-
     valid-U (using-at-run-finally-cong eq-r eq-w eq-m eq-n) η = 
         cong₂ bind-tree (fun-ext (λ η' → valid-U eq-n ((η , proj₁ η') , proj₂ η') ))  
             (cong₂ (λ r,m w → apply-runner (proj₁ r,m) (proj₂ r,m) w)  (cong₂ (λ r m → r , m)  (valid-V eq-r η) (valid-U eq-m η)) (valid-V eq-w η))
-        --For whatever reason this works (although with a yellow error): cong₂ bind-tree (fun-ext (λ η' → valid-U eq-n η')) (Eq.cong-app refl valid-K)
-        --IDEA: Split the three arguments for apply-runner such that you can use a combination of cong₂ and cong to prove it
-        --PROBLEM: Does it even work?
-        --(cong₂ (λ x x₁ → apply-runner (proj₁ x) (proj₂ x) x₁) (cong₂ _,_ (valid-V eq-v η) (valid-U {! eq-m  !} {!   !})) {!   !})
-        {- cong₂ (λ ostalo eta → ⟦ ostalo ⟧-user eta) 
-        (cong Terms.`using {!   !} at {!   !} `run {!   !} finally {!   !}) 
-        refl  -}
-        --cong₂ bind-tree (fun-ext λ x → {!   !}) {!  !}
-        {-bind-tree (λ { (x , c') → ⟦ n₁ ⟧-user ((η , x) , c') })
-        (apply-runner (⟦ v₁ ⟧-value η) (⟦ m₁ ⟧-user η) (⟦ w₁ ⟧-value η))
-        ≡
-        bind-tree (λ { (x , c') → ⟦ n₂ ⟧-user ((η , x) , c') })
-        (apply-runner (⟦ v₂ ⟧-value η) (⟦ m₂ ⟧-user η) (⟦ w₂ ⟧-value η))-}
-        
     valid-U (kernel-at-finally-cong eq-v eq-m eq-k) η = 
-        cong₂ bind-tree (fun-ext (λ x → valid-U eq-m ((η , proj₁ x) , proj₂ x))) (cong₂ (λ k c → k c ) (valid-K eq-k η) (valid-V eq-v η)) --Similar to the ·-cong
-        -- This one relies on ·-cong
-         
+        cong₂ bind-tree (fun-ext (λ x → valid-U eq-m ((η , proj₁ x) , proj₂ x))) (cong₂ (λ k c → k c ) (valid-K eq-k η) (valid-V eq-v η))
     valid-U (funU-beta m v) η = {!  !} --Relies on substitution (complete mystery for now)
-    valid-U (let-in-beta-return_ v m) η = {!  !} --Relies on substitution (complete mystery for now)
+    valid-U (let-in-beta-return_ v m) η = {!   !} --cong₂ (λ x y → x (η , y)) refl refl --Relies on substitution (complete mystery for now)
     valid-U (let-in-beta-op op p param m n) η = {!   !} --Relies on substitution (complete mystery for now)
     valid-U (match-with-beta-prod v w m) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-U (using-run-finally-beta-return r w v m) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-U (using-run-finally-beta-op R w op param p m n) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-U (kernel-at-finally-beta-return v c n) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-U (kernel-at-finally-beta-getenv c k m) η = {!  !} --Relies on substitution (complete mystery for now)
-    
     valid-U (kernel-at-finally-setenv c c' k m) η = refl --Strange
     valid-U (kernel-at-finally-beta-op op p param c k m) η = {!  !} --Relies on substitution (complete mystery for now)
-    valid-U (let-in-eta-M n) η = Eq.cong-app refl (⟦ n ⟧-user η) 
+    
+    valid-U (let-in-eta-M n) η = {!   !} 
+        --Eq.cong-app refl (⟦ n ⟧-user η) 
         --bind-tree (λ X₁ → leaf X₁) (⟦ n ⟧-user η) ≡ ⟦ n ⟧-user η
 
     valid-K refl η = Eq.refl
@@ -125,7 +111,8 @@ mutual
     valid-K (match-with-beta-prod v w k) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-K (user-with-beta-return v k) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-K (user-with-beta-op op p param m k) η = {!  !} --Relies on substitution (complete mystery for now)
-    valid-K (let-in-eta-K l) η = Eq.cong-app refl (⟦ l ⟧-kernel η _) 
+    valid-K (let-in-eta-K l) η = fun-ext (λ x → cong₂ (λ x₁ x₂ → x₁ x₂) refl refl) 
+        --Eq.cong-app refl (⟦ l ⟧-kernel η _) 
     {-(λ C₁ →
          bind-tree (λ { (x , C') → leaf (x , C') }) (⟦ l ⟧-kernel η C₁))
       ≡ ⟦ l ⟧-kernel η-}
@@ -134,4 +121,17 @@ mutual
     valid-K (SetSetenv c c' k) η = fun-ext (λ c'' → refl)
     valid-K (GetOpEnv op p param k) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-K (SetOpEnv op p param _) η = {!  !} --Relies on substitution (complete mystery for now)
-      
+
+aux2 : ∀ {x} → bind-tree leaf x ≡ x
+aux2 = {!   !}
+
+aux1 : ∀ {y} → (λ c → bind-tree (λ x → leaf x ) (y c)) ≡ y 
+aux1 {y} = {!   !}
+
+auxa : ∀ {x} → (λ c → x c) ≡ x
+auxa = refl
+
+auxb : ∀ {x} → (λ x → leaf x) ≡ id
+auxb = refl
+
+
