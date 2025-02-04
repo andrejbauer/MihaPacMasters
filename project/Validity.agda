@@ -27,6 +27,8 @@ open Terms G O
 open Monads G O
 open Equations G O
 open Denotations G O 
+open import Renaming G O 
+open import Substitution G O
 
 mutual
 -- Naming scheme for the various equalities:
@@ -34,6 +36,59 @@ mutual
 --   Γ ⊢U m ≡ n will be named eq-m, eq-n, ...
 --   Γ ⊢K k ≡ l will be named eq-k, eq-l, ...
 -- This naming scheme will be to quickly show the type of equivalence.
+
+    {- lemma1 : ∀ {v η} {r : Ren}
+        → ⟦ v [ r ] ⟧-value η ≡ ⟦ v ⟧-value ∘ ⟦ r ⟧-ren 
+    lemma1 = ? -}
+
+        --[[ t [ r ] ]]-term = [[ t ]]-term o [[ r ]]-ren
+
+{-     valid-S : ∀ {Γ : Ctx} {σ : Ren} {v w : Γ ⊢V: X} → (Γ ⊢V v ≡ w) → ∀ η → ⟦ v ⟧-value η ≡ ⟦ w ⟧-value η -}
+    {- σ : Sub Γ Γ'
+    --Potrebujemo: ⟦ σ ⟧-sub : ⟦ Γ ⟧-ctx → ⟦ Γ' ⟧-ctx  
+    m : Γ' ⊢U: X
+    η : ⟦ Γ ⟧-ctx
+    ⟦ m ⟧-user (⟦ σ ⟧-sub η) ≡ ⟦ m [ σ ]ᵤ ⟧-user η -}
+
+    ⟦_⟧-sub : ∀ {Γ Γ'} → Sub Γ Γ' → ⟦ Γ ⟧-ctx → ⟦ Γ' ⟧-ctx  
+    ⟦_⟧-sub {Γ' = []} σ η = tt
+    ⟦_⟧-sub {Γ' = Γ' ∷ X} σ η = (⟦ σ ∘ there ⟧-sub η) , ⟦ σ here ⟧-value η
+
+    ⟦_⟧-ren : ∀ {Γ Γ'} → Ren Γ Γ' → ⟦ Γ ⟧-ctx → ⟦ Γ' ⟧-ctx
+    ⟦_⟧-ren {Γ' = []} ρ η = tt
+    ⟦_⟧-ren {Γ' = Γ' ∷ X} ρ η = ⟦ ρ ∘ there ⟧-ren η , lookup (ρ here) η
+
+    sub-there : ∀ { Γ : Ctx } { X : VType} (η : ⟦ Γ ⟧-ctx) (v : ⟦ X ⟧v) 
+        → ⟦ (λ x → var (there {X = _} {Y = X} x)) ⟧-sub (η , v) ≡ η
+    sub-there {[]} η v = refl
+    sub-there {Γ ∷ X} (η , _) v = {!   !}
+
+    sub-ren : ∀ { Γ Γ' Γ'' : Ctx } (σ : Sub Γ Γ') (ρ : Ren Γ' Γ'') (η : ⟦ Γ ⟧-ctx)
+        → ⟦ σ ₛ∘ᵣ ρ ⟧-sub η ≡ ⟦ ρ ⟧-ren (⟦ σ ⟧-sub η) 
+    sub-ren {Γ'' = []} σ ρ η = refl
+    sub-ren {Γ'' = Γ'' ∷ x} σ ρ η = {!   !}
+    
+    sub-var : ∀ { Γ } {η : ⟦ Γ ⟧-ctx} 
+        → ⟦ var ⟧-sub η ≡ η
+    sub-var = {!   !}
+  {-   sub-var {[]} = refl
+       sub-var {Γ ∷ X} {η , v} = cong₂ _,_ {!   !} refl -}
+        --(Eq.trans (sub-ren var there (η , v)) (Eq.trans (cong ⟦ there ⟧-ren sub-var) {!  !}))
+
+    
+
+    -- ⟦_⟧-ren TODO 4. 2. 2025 : ∀ 
+
+    sub-U : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (m : Γ' ⊢U: X)
+        → ⟦ m [ σ ]ᵤ ⟧-user η ≡ ⟦ m ⟧-user (⟦ σ ⟧-sub η) --TODO 4. 2. 2025: Flip this equality so that you don't need to write Eq.sym
+    sub-U σ η (sub-user m x) = {!   !}
+    sub-U σ η (return x) = {!   !}
+    sub-U σ η (x · x₁) = {!   !}
+    sub-U σ η (opᵤ op x x₁ m) = {!   !}
+    sub-U σ η (`let m `in m₁) = {!   !}
+    sub-U σ η (match x `with m) = {!   !}
+    sub-U σ η (`using x at x₁ `run m finally m₁) = {!   !}
+    sub-U σ η (kernel x at x₁ finally m) = {!   !}
 
     valid-V : ∀ {Γ : Ctx} {X : VType} {v w : Γ ⊢V: X} → (Γ ⊢V v ≡ w) → ∀ η → ⟦ v ⟧-value η ≡ ⟦ w ⟧-value η
     valid-U : ∀ {Γ : Ctx} {Xᵤ : UType} {m n : Γ ⊢U: Xᵤ} → (Γ ⊢U m ≡ n) → ∀ η → ⟦ m ⟧-user η ≡ ⟦ n ⟧-user η
@@ -47,10 +102,11 @@ mutual
     valid-V (funK-cong eq-k) η = fun-ext (λ x → valid-K eq-k (η , x))  --fun-ext (λ x → valid-K refl η) 
     valid-V (runner-cong eq-k) η = fun-ext (λ op → fun-ext (λ p → fun-ext (λ param → valid-K (eq-k op p) (η , param)))) --fun-ext (λ op → fun-ext (λ p → fun-ext (λ param → valid-K refl η)))
     valid-V unit-eta η = refl
-    valid-V funU-eta η = fun-ext (λ x → valid-U refl η) --Relies on substitution (complete mystery for now)
+    valid-V funU-eta η = {!   !} --fun-ext (λ x → valid-U refl η) --Relies on substitution (complete mystery for now)
     {-⟦ (G Renaming.[ O ]ᵥᵣ) w (λ x₁ → there x₁) ⟧-value (η , x) x
       ≡ ⟦ w ⟧-value η x-}
-    valid-V funK-eta η = fun-ext (λ x → valid-K refl η) --Relies on substitution (complete mystery for now)
+    valid-V funK-eta η = {!   !} --fun-ext (λ x → valid-K refl η) --Relies on substitution (complete mystery for now)
+
 
 
 
@@ -67,8 +123,9 @@ mutual
             (cong₂ (λ r,m w → apply-runner (proj₁ r,m) (proj₂ r,m) w)  (cong₂ (λ r m → r , m)  (valid-V eq-r η) (valid-U eq-m η)) (valid-V eq-w η))
     valid-U (kernel-at-finally-cong eq-v eq-m eq-k) η = 
         cong₂ bind-tree (fun-ext (λ x → valid-U eq-m ((η , proj₁ x) , proj₂ x))) (cong₂ (λ k c → k c ) (valid-K eq-k η) (valid-V eq-v η))
-    valid-U (funU-beta m v) η = {!  !} --Relies on substitution (complete mystery for now)
-    valid-U (let-in-beta-return_ v m) η = {!   !} --cong₂ (λ x y → x (η , y)) refl refl --Relies on substitution (complete mystery for now)
+    valid-U (funU-beta m v) η = Eq.sym (Eq.trans (sub-U (var ∷ₛ v) η m) (cong ⟦ m ⟧-user (cong₂ _,_ sub-var refl)))  --Relies on substitution (complete mystery for now)
+
+    valid-U (let-in-beta-return_ v m) η = Eq.sym (Eq.trans (sub-U (var ∷ₛ v) η m) (cong ⟦ m ⟧-user (cong₂ _,_ sub-var refl)))  --Relies on substitution (complete mystery for now)
     valid-U (let-in-beta-op op p param m n) η = {!   !} --Relies on substitution (complete mystery for now)
     valid-U (match-with-beta-prod v w m) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-U (using-run-finally-beta-return r w v m) η = {!  !} --Relies on substitution (complete mystery for now)
@@ -134,4 +191,5 @@ auxa = refl
 auxb : ∀ {x} → (λ x → leaf x) ≡ id
 auxb = refl
 
-
+ 
+ 

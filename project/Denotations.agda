@@ -75,7 +75,7 @@ mutual --TODO: This should go into a different module/file. Essentially putting 
 ⟦ Γ ∷ X ⟧-ctx = ⟦ Γ ⟧-ctx × ⟦ X ⟧v
 
 -- Lookup a variable in a runtime environment
-lookup : ∀ {Γ t} (x : t ∈ Γ) → ⟦ Γ ⟧-ctx → ⟦ t ⟧v
+lookup : ∀ {Γ X} (x : X ∈ Γ) → ⟦ Γ ⟧-ctx → ⟦ X ⟧v
 lookup here η = proj₂ η
 lookup (there p) η = lookup p (proj₁ η)
 

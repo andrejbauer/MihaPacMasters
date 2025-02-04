@@ -37,6 +37,10 @@ _∷ₛ_ : ∀ {Γ Γ' X} → Sub Γ Γ' → Γ ⊢V: X → Sub Γ (Γ' ∷ X)
 (σ ∷ₛ v) here = v
 (σ ∷ₛ v) (there p) = σ p
 
+--Composition of Substition and Renaming
+_ₛ∘ᵣ_ : ∀ {Γ Γ' Γ''} → Sub Γ Γ' → Ren Γ' Γ'' → Sub Γ Γ''
+σ ₛ∘ᵣ ρ = λ x → σ (ρ x)
+
 
 -- Action of substitutions
 
