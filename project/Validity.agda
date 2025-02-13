@@ -79,10 +79,13 @@ mutual
 
     -- ⟦_⟧-ren TODO 4. 2. 2025 : ∀ 
 
+    --Naredi še sub-V, sub-K, uporabi mutual
+
+
     sub-U : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (m : Γ' ⊢U: X)
-        → ⟦ m [ σ ]ᵤ ⟧-user η ≡ ⟦ m ⟧-user (⟦ σ ⟧-sub η) --TODO 4. 2. 2025: Flip this equality so that you don't need to write Eq.sym
-    sub-U σ η (sub-user m x) = {!   !}
-    sub-U σ η (return x) = {!   !}
+        → ⟦ m ⟧-user (⟦ σ ⟧-sub η) ≡ ⟦ m [ σ ]ᵤ ⟧-user η --TODO 4. 2. 2025: Flip this equality so that you don't need to write Eq.sym
+    sub-U σ η (sub-user m x) = {!   !} -- cong (coerceᵤ x) (sub-U σ η m)
+    sub-U σ η (return x) = {!   !} -- cong leaf {! sub-U   !}
     sub-U σ η (x · x₁) = {!   !}
     sub-U σ η (opᵤ op x x₁ m) = {!   !}
     sub-U σ η (`let m `in m₁) = {!   !}
@@ -123,11 +126,23 @@ mutual
             (cong₂ (λ r,m w → apply-runner (proj₁ r,m) (proj₂ r,m) w)  (cong₂ (λ r m → r , m)  (valid-V eq-r η) (valid-U eq-m η)) (valid-V eq-w η))
     valid-U (kernel-at-finally-cong eq-v eq-m eq-k) η = 
         cong₂ bind-tree (fun-ext (λ x → valid-U eq-m ((η , proj₁ x) , proj₂ x))) (cong₂ (λ k c → k c ) (valid-K eq-k η) (valid-V eq-v η))
-    valid-U (funU-beta m v) η = Eq.sym (Eq.trans (sub-U (var ∷ₛ v) η m) (cong ⟦ m ⟧-user (cong₂ _,_ sub-var refl)))  --Relies on substitution (complete mystery for now)
+    valid-U (funU-beta m v) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ {! sub-var  !} refl))  (sub-U (var ∷ₛ v) η m)
+        --⟦ m ⟧-user (η , ⟦ v ⟧-value η) ≡ ⟦ m [ var ∷ₛ v ]ᵤ ⟧-user η
+        --Eq.sym (Eq.trans ((sub-U (var ∷ₛ v) η m)) (cong ⟦ m ⟧-user (cong₂ _,_ sub-var refl)))  --Relies on substitution (complete mystery for now)
 
-    valid-U (let-in-beta-return_ v m) η = Eq.sym (Eq.trans (sub-U (var ∷ₛ v) η m) (cong ⟦ m ⟧-user (cong₂ _,_ sub-var refl)))  --Relies on substitution (complete mystery for now)
-    valid-U (let-in-beta-op op p param m n) η = {!   !} --Relies on substitution (complete mystery for now)
-    valid-U (match-with-beta-prod v w m) η = {!  !} --Relies on substitution (complete mystery for now)
+    valid-U (let-in-beta-return_ v m) η = {!   !}
+        --Eq.sym (Eq.trans (sub-U (var ∷ₛ v) η m) (cong ⟦ m ⟧-user (cong₂ _,_ sub-var refl)))  --Relies on substitution (complete mystery for now)
+    valid-U (let-in-beta-op op p param m n) η = cong (node op p (⟦ param ⟧-value η)) (fun-ext (λ res → cong₂ bind-tree (fun-ext (λ X₁ → {!   !})) refl)) --Relies on substitution (complete mystery for now)
+    {-⟦ n ⟧-user (η , X₁)
+      ≡
+      ⟦ n [ extendₛ (λ p₁ → var (there p₁)) ]ᵤ ⟧-user ((η , res) , X₁))-}
+    {-node op p (⟦ param ⟧-value η)
+      (λ res →
+         bind-tree (λ X₁ → ⟦ n ⟧-user (η , X₁)) (⟦ m ⟧-user (η , res)))-}
+    valid-U (match-with-beta-prod v w m) η = {!   !} --Relies on substitution (complete mystery for now)
+    {-⟦ m ⟧-user ((η , ⟦ v ⟧-value η) , ⟦ w ⟧-value η) ≡
+      ⟦ m [ (var ∷ₛ v) ∷ₛ w ]ᵤ ⟧-user η
+    -}
     valid-U (using-run-finally-beta-return r w v m) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-U (using-run-finally-beta-op R w op param p m n) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-U (kernel-at-finally-beta-return v c n) η = {!  !} --Relies on substitution (complete mystery for now)
@@ -192,4 +207,4 @@ auxb : ∀ {x} → (λ x → leaf x) ≡ id
 auxb = refl
 
  
- 
+   
