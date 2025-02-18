@@ -30,6 +30,9 @@ open Denotations G O
 open import Renaming G O 
 open import Substitution G O
 
+{-Tezave:
+Kako delati karkoli z "extend sigma"-}
+
 mutual
 -- Naming scheme for the various equalities:
 --   Γ ⊢V v ≡ w will be named eq-v, eq-w, ...
@@ -51,26 +54,20 @@ mutual
 
     sub-to-ren : ∀ {Γ Γ'} → (ρ : Ren Γ Γ') → (η : ⟦ Γ ⟧-ctx) → ⟦ to-sub ρ ⟧-sub η ≡ ⟦ ρ ⟧-ren η
     sub-to-ren ρ η = {!   !}
-        --start (⟦ to-sub ρ ⟧-sub η ≡⟨ {!   !} ⟩ {!   !} ≡⟨⟩ {!   !}) 
 
     ren-env : ∀ {Γ Γ' X} {ρ : Ren Γ Γ'} {η : ⟦ Γ ⟧-ctx} → (x : X ∈ Γ') → lookup x (⟦ ρ ⟧-ren η) ≡ lookup (ρ x) η
     ren-env = {!   !}
 
     lookup-ext : ∀ {Γ} {η η' : ⟦ Γ ⟧-ctx} → (∀ {X} (x : X ∈ Γ) → lookup x η ≡ lookup x η') → η ≡ η'
-    lookup-ext = λ x → {!   !}
+    lookup-ext eq = {!   !}
 
     sub-var : ∀ { Γ } {η : ⟦ Γ ⟧-ctx} →  η ≡ ⟦ var ⟧-sub η
-    sub-var {Γ} {η} = lookup-ext (λ x → (Eq.sym {!   !}))  
+    sub-var {Γ} {η} = lookup-ext (λ x → ren-env {!   !})
 
     sub-var' : ∀ { η } → η ≡ ⟦ (λ x → var x) ⟧-sub η
     sub-var' {η} = Eq.trans sub-var {!   !}
 
 
-    {- lemma1 : ∀ {v η} {r : Ren}
-        → ⟦ v [ r ] ⟧-value η ≡ ⟦ v ⟧-value ∘ ⟦ r ⟧-ren 
-    lemma1 = ? -}
-
-        --[[ t [ r ] ]]-term = [[ t ]]-term o [[ r ]]-ren
 
 {-     valid-S : ∀ {Γ : Ctx} {σ : Ren} {v w : Γ ⊢V: X} → (Γ ⊢V v ≡ w) → ∀ η → ⟦ v ⟧-value η ≡ ⟦ w ⟧-value η -}
     {- σ : Sub Γ Γ'
@@ -95,12 +92,6 @@ mutual
   {-   sub-var {[]} = refl
        sub-var {Γ ∷ X} {η , v} = cong₂ _,_ {!   !} refl -}
         --(Eq.trans (sub-ren var there (η , v)) (Eq.trans (cong ⟦ there ⟧-ren sub-var) {!  !}))
-
-    
-
-    -- ⟦_⟧-ren TODO 4. 2. 2025 : ∀ 
-
-    --Naredi še sub-V, sub-K, uporabi mutual
 
 
     sub-V : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (v : Γ' ⊢V: X)
@@ -168,11 +159,15 @@ mutual
             (cong₂ (λ r,m w → apply-runner (proj₁ r,m) (proj₂ r,m) w)  (cong₂ (λ r m → r , m)  (valid-V eq-r η) (valid-U eq-m η)) (valid-V eq-w η))
     valid-U (kernel-at-finally-cong eq-v eq-m eq-k) η = 
         cong₂ bind-tree (fun-ext (λ x → valid-U eq-m ((η , proj₁ x) , proj₂ x))) (cong₂ (λ k c → k c ) (valid-K eq-k η) (valid-V eq-v η))
+
+
     valid-U (funU-beta m v) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ sub-var refl)) (sub-U (var ∷ₛ v) η m) --Relies on substitution (complete mystery for now)
 
 
 
     valid-U (let-in-beta-return_ v m) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ sub-var refl)) (sub-U (var ∷ₛ v) η m) --Relies on substitution (complete mystery for now)
+
+
     valid-U (let-in-beta-op op p param m n) η = cong (node op p (⟦ param ⟧-value η)) 
         (fun-ext 
         (λ res → cong₂ bind-tree (fun-ext (λ x₁ → Eq.trans (cong ⟦ n ⟧-user (cong₂ _,_ {!   !} refl)) (sub-U (extendₛ (λ p₁ → var (there p₁))) ((η , res) , x₁) n))) refl))
@@ -181,17 +176,17 @@ mutual
 
     valid-U (match-with-beta-prod v w m) η = Eq.trans {!   !} (sub-U ((var ∷ₛ v) ∷ₛ w) η m) --Relies on substitution (complete mystery for now)
         --ALMOST COMPLETED
+
+
     valid-U (using-run-finally-beta-return r w v m) η = Eq.trans {!   !} (sub-U ((var ∷ₛ v) ∷ₛ w) η m) --Relies on substitution (complete mystery for now)
     {-
     ⟦ m ⟧-user ((η , ⟦ v ⟧-value η) , ⟦ w ⟧-value η) ≡
       ⟦ m [ (var ∷ₛ v) ∷ₛ w ]ᵤ ⟧-user η
-
+      This repeated between the previous two examples
     ⟦ m ⟧-user ((η , ⟦ v ⟧-value η) , ⟦ w ⟧-value η) ≡
       ⟦ m [ (var ∷ₛ v) ∷ₛ w ]ᵤ ⟧-user η
-
-
-
     -}
+
     valid-U (using-run-finally-beta-op R w op param p m n) η = {! cong₂ bind-tree ? (cong₂ bind-tree ? (Eq.trans ? (sub-U )   !} --Relies on substitution (complete mystery for now)
     valid-U (kernel-at-finally-beta-return v c n) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-U (kernel-at-finally-beta-getenv c k m) η = {!  !} --Relies on substitution (complete mystery for now)
@@ -236,17 +231,4 @@ mutual
     valid-K (GetOpEnv op p param k) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-K (SetOpEnv op p param _) η = {!  !} --Relies on substitution (complete mystery for now)
 
-aux2 : ∀ {x} → bind-tree leaf x ≡ x
-aux2 = {!   !}
-
-aux1 : ∀ {y} → (λ c → bind-tree (λ x → leaf x ) (y c)) ≡ y 
-aux1 {y} = {!   !}
- 
-auxa : ∀ {x} → (λ c → x c) ≡ x
-auxa = refl
-
-auxb : ∀ {x} → (λ x → leaf x) ≡ id
-auxb = refl
-
- 
      
