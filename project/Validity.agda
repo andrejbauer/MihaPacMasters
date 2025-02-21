@@ -49,59 +49,67 @@ mutual
     ⟦_⟧-ren {Γ' = Γ' ∷ X} ρ η = ⟦ ρ ∘ there ⟧-ren η , lookup (ρ here) η
 
 
-    to-sub : ∀ {Γ Γ'} → Ren Γ Γ' → Sub Γ Γ'
-    to-sub ρ p = var (ρ p) 
+    to-sub : ∀ {Γ Γ'} 
+        → Ren Γ Γ' → Sub Γ Γ'
+    to-sub ρ x = var (ρ x) 
 
-    sub-to-ren : ∀ {Γ Γ'} → (ρ : Ren Γ Γ') → (η : ⟦ Γ ⟧-ctx) → ⟦ to-sub ρ ⟧-sub η ≡ ⟦ ρ ⟧-ren η
-    sub-to-ren ρ η = {!   !}
+    sub-to-ren : ∀ {Γ Γ'} → (ρ : Ren Γ Γ') → (η : ⟦ Γ ⟧-ctx) 
+        → ⟦ to-sub ρ ⟧-sub η ≡ ⟦ ρ ⟧-ren η
+    sub-to-ren {Γ} {[]} ρ η = refl
+    sub-to-ren {Γ} {Γ' ∷ X} ρ η = cong₂ _,_ (sub-to-ren (ρ ∘ there) η) refl
 
-    ren-env : ∀ {Γ Γ' X} {ρ : Ren Γ Γ'} {η : ⟦ Γ ⟧-ctx} → (x : X ∈ Γ') → lookup x (⟦ ρ ⟧-ren η) ≡ lookup (ρ x) η
-    ren-env = {!   !}
+    ren-env : ∀ {Γ Γ' X} {ρ : Ren Γ Γ'} {η : ⟦ Γ ⟧-ctx} → (x : X ∈ Γ') 
+        → lookup x (⟦ ρ ⟧-ren η) ≡ lookup (ρ x) η
+    ren-env {Γ} {Γ'} {X} {ρ} {η} here = refl
+    ren-env {Γ} {Γ'} {X} {ρ} {η} (there x) = ren-env {ρ = ρ ∘ there} x
 
-    lookup-ext : ∀ {Γ} {η η' : ⟦ Γ ⟧-ctx} → (∀ {X} (x : X ∈ Γ) → lookup x η ≡ lookup x η') → η ≡ η'
-    lookup-ext eq = {!   !}
+    lookup-ext : ∀ {Γ} {η η' : ⟦ Γ ⟧-ctx} → (∀ {X} (x : X ∈ Γ) 
+        → lookup x η ≡ lookup x η') → η ≡ η'
+    lookup-ext {[]} {η} {η'} eq = refl
+    lookup-ext {Γ ∷ X} {η , v} {η' , v'} eq = cong₂ _,_ (lookup-ext (eq ∘ there))  (eq here)
+    --Maybe a lemma for cong₂ _,_ or maybe it's in the standard library
 
-    sub-var : ∀ { Γ } {η : ⟦ Γ ⟧-ctx} →  η ≡ ⟦ var ⟧-sub η
-    sub-var {Γ} {η} = lookup-ext (λ x → ren-env {!   !})
+    sub-var : ∀ { Γ } {η : ⟦ Γ ⟧-ctx} 
+        → η ≡ ⟦ var ⟧-sub η
+    sub-var {Γ} {η} = Eq.trans (lookup-ext (λ x → Eq.sym (ren-env {ρ = idᵣ} x))) (Eq.sym (sub-to-ren idᵣ η))
 
-    sub-var' : ∀ { η } → η ≡ ⟦ (λ x → var x) ⟧-sub η
-    sub-var' {η} = Eq.trans sub-var {!   !}
+    sub-double : ∀ { Γ Γ' X Xᵤ  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (m : (Γ' ∷ X) ⊢U: Xᵤ) (X' : ⟦ X ⟧v) 
+        → ⟦ σ ⟧-sub η ≡ ⟦ (λ x → σ x [ wkᵣ ]ᵥᵣ) ⟧-sub (η , X')
+    sub-double {Γ} {Contexts.[]} {X} {Xᵤ} σ η m X' = refl
+    sub-double {Γ} {Γ' Contexts.∷ x} {X} {Xᵤ} σ η m X' = cong₂ _,_ {! (sub-double ? η ? X') !} {! cong₂ _,_  !}
 
+    sub-there : ∀ { Γ Γ' _ } (σ : Sub Γ (Γ' ∷ _)) (η : ⟦ Γ ⟧-ctx) 
+        → ⟦ σ here ⟧-value η ≡ ⟦ σ here [ (λ x → (there x)) ]ᵥᵣ ⟧-value (η , _)
+    sub-there {Γ} {Γ'} {x} σ η = {! αmma  !}
 
+    sub-weakening : ∀ { Γ Γ' g } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) 
+        → ⟦ σ ⟧-sub η ≡ ⟦ (λ x → σ x [ wkᵣ ]ᵥᵣ)  ⟧-sub (η , g)
+    sub-weakening {Γ} {[]} {g} σ η = refl
+    sub-weakening {Γ} {Γ' ∷ x} {g} σ η = cong₂ _,_ (sub-weakening {Γ} {Γ'} (λ x → σ (there x)) η) {!  !}
 
-{-     valid-S : ∀ {Γ : Ctx} {σ : Ren} {v w : Γ ⊢V: X} → (Γ ⊢V v ≡ w) → ∀ η → ⟦ v ⟧-value η ≡ ⟦ w ⟧-value η -}
-    {- σ : Sub Γ Γ'
-    --Potrebujemo: ⟦ σ ⟧-sub : ⟦ Γ ⟧-ctx → ⟦ Γ' ⟧-ctx  
-    m : Γ' ⊢U: X
-    η : ⟦ Γ ⟧-ctx
-    ⟦ m ⟧-user (⟦ σ ⟧-sub η) ≡ ⟦ m [ σ ]ᵤ ⟧-user η -}
-
-
-
-    sub-there : ∀ { Γ : Ctx } { X : VType} (η : ⟦ Γ ⟧-ctx) (v : ⟦ X ⟧v) 
-        → ⟦ (λ x → var (there {X = _} {Y = X} x)) ⟧-sub (η , v) ≡ η
-    sub-there {[]} η v = refl
-    sub-there {Γ ∷ X} (η , _) v = {!   !}
-
-    sub-ren : ∀ { Γ Γ' Γ'' : Ctx } (σ : Sub Γ Γ') (ρ : Ren Γ' Γ'') (η : ⟦ Γ ⟧-ctx)
-        → ⟦ σ ₛ∘ᵣ ρ ⟧-sub η ≡ ⟦ ρ ⟧-ren (⟦ σ ⟧-sub η) 
-    sub-ren {Γ'' = []} σ ρ η = refl
-    sub-ren {Γ'' = Γ'' ∷ x} σ ρ η = {!   !}
-    
-
-  {-   sub-var {[]} = refl
-       sub-var {Γ ∷ X} {η , v} = cong₂ _,_ {!   !} refl -}
-        --(Eq.trans (sub-ren var there (η , v)) (Eq.trans (cong ⟦ there ⟧-ren sub-var) {!  !}))
-
+    sub-weakening' : ∀ { Γ Γ' g v} (σ : Sub Γ (Γ' ∷ v)) (η : ⟦ Γ ⟧-ctx) 
+        → ⟦ σ here ⟧-value η ≡ ⟦ σ here [ wkᵣ ]ᵥᵣ ⟧-value (η , g)
+    sub-weakening' {Γ} {Γ'} {g} {v} σ η = {! sub-weakening ? ? !}
 
     sub-V : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (v : Γ' ⊢V: X)
         → ⟦ v ⟧-value (⟦ σ ⟧-sub η) ≡ ⟦ v [ σ ]ᵥ ⟧-value η
-    sub-V σ η (var p) = {!   !}
-    sub-V σ η (sub-value v p) = cong (coerceᵥ p) ((sub-V σ η v))
+    sub-V {Γ' = Γ' ∷ X} σ η (var here) = refl
+    sub-V {Γ' = Γ' ∷ X} σ η (var (there x)) = sub-V {Γ' = Γ'} (σ ∘ there) η (var x)
+    sub-V σ η (sub-value v x) = cong (coerceᵥ x) ((sub-V σ η v))
     sub-V σ η ⟨⟩ = refl
     sub-V σ η ⟨ v , w ⟩ = cong₂ _,_ (sub-V σ η v) (sub-V σ η w)
-    sub-V σ η (funU m) = fun-ext (λ x → {! sub-U ? ? m  !}) 
-    sub-V σ η (funK k) = {!   !}
+
+
+    sub-V {Γ = Γ} {Γ' = Γ'} σ η (funU {X} m) = fun-ext (λ X' → Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (sub-double σ η m X') refl)) (sub-U (extendₛ σ) (η , X') m))
+    --sub-V {Γ} {Γ' = []} σ η (Terms.funU {X} m) = fun-ext (λ X' → Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (Eq.trans refl refl) refl)) (sub-U (extendₛ σ) (η , X') m))
+    --sub-V {Γ} {Γ' = Γ' ∷ x} σ η (Terms.funU {X} m) = fun-ext (λ X' → Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (cong₂ _,_ {!   !} {!   !}) refl)) (sub-U (extendₛ σ) (η , X') m))
+    --sub-V {Γ = Γ ∷ x} {Γ' = Γ'} σ η (funU {X} m) = fun-ext (λ X' → Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (Eq.trans {!   !} {!   !}) refl)) (sub-U (extendₛ σ) (η , X') m))
+
+
+
+
+    
+    sub-V σ η (funK k) = fun-ext (λ X → {! sub-K (extendₛ σ) (η , X) k  !}) 
     sub-V σ η (runner r) = {!   !}
 
     sub-U : ∀ { Γ Γ' Xᵤ  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (m : Γ' ⊢U: Xᵤ)
@@ -110,25 +118,65 @@ mutual
     sub-U σ η (return v) = cong leaf (sub-V σ η v) 
     sub-U σ η (v · w) = cong₂ (λ z → z) (sub-V σ η v) (sub-V σ η w) --ISSUE: How is (λ z → z) accepted?
     sub-U σ η (opᵤ op p par m) = cong₂ (node op p) (sub-V σ η par) (fun-ext (λ res → {! sub-U   !}))
-    sub-U σ η (`let m `in n) = {! cong₂ bind-tree ? (sub-U ? η m)  !}
-    sub-U σ η (match v `with m) = {!   !}
+    sub-U σ η (`let m `in n) = cong₂ bind-tree (fun-ext (λ X → Eq.trans (cong ⟦ n ⟧-user (cong₂ _,_ ((sub-double σ η n X)) refl))  (sub-U (extendₛ σ) (η , X) n) )) (sub-U σ η m)
+    sub-U σ η (match v `with m) = Eq.trans (cong ⟦ m ⟧-user {!   !}) 
+        (sub-U (extendₛ (extendₛ σ)) ((η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)) , proj₂ (⟦ v [ σ ]ᵥ ⟧-value η)) m)
     sub-U σ η (`using r at c `run m finally n) = {! cong₂  bind-tree ? ?   !}
     sub-U σ η (kernel k at c finally m) = {!   !}
 
     sub-K : ∀ { Γ Γ' Xₖ  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (k : Γ' ⊢K: Xₖ)
         → (⟦ k ⟧-kernel (⟦ σ ⟧-sub η)) ≡ (⟦ k [ σ ]ₖ ⟧-kernel η) 
     sub-K σ η (sub-kernel k p) = cong (coerceₖ p) (sub-K σ η k) 
-    sub-K σ η (return v) = fun-ext (λ c → cong leaf {! sub-V ? (η , c) v  !})  
-    sub-K σ η (v · w) = cong₂ {!   !} (sub-V σ η v) (sub-V σ η w)
-    sub-K σ η (`let k `in l) = fun-ext (λ c → {!   !}) 
-    sub-K σ η (match v `with k) = {!   !}
-    sub-K σ η (opₖ op p par k) = {!   !}
-    sub-K σ η (getenv k) = {!   !}
-    sub-K σ η (setenv c k) = {!   !}
-    sub-K σ η (user m `with k) = {!   !}
+    sub-K σ η (return v) = fun-ext (λ C → cong leaf (cong₂ _,_ (sub-V σ η v) refl))
+    sub-K σ η (v · w) = cong₂ (λ x y → x y) (sub-V σ η v) (sub-V σ η w)
+    sub-K σ η (`let k `in l) = fun-ext (λ c → cong₂ bind-tree {! ((cong₂ (λ x C' → x C') ? refl))  !} (cong₂ (λ x y → x y) (sub-K σ η k) refl)) 
+    --(cong₂ (λ x y → x y) {x = ?} {u = c} (fun-ext ?) refl)
+    --⟦ `let k `in l ⟧-kernel (⟦ σ ⟧-sub η) c ≡
+    --⟦ `let k `in l [ σ ]ₖ ⟧-kernel η c
+
+    --(cong ⟦ k ⟧-kernel (cong₂ _,_ (cong₂ _,_ (Eq.trans (sub-weakening σ η) (sub-weakening (λ x → σ x [ there ]ᵥᵣ) (η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)))) {! cong (λ x → proj₁ x)   !}) {!   !})) 
+    sub-K σ η (match v `with k) = Eq.trans 
+        (cong ⟦ k ⟧-kernel 
+            (cong₂ _,_ 
+                (cong₂ _,_ 
+                    (Eq.trans 
+                        {! (sub-weakening σ η)  !} 
+                        {! (sub-weakening (λ x → σ x [ (λ x₁ → there x₁) ]ᵥᵣ) (η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)))  !} )  
+                    {! cong (λ x → proj₁ x)   !}) (cong proj₂ (sub-V σ η v)) )) 
+                (sub-K (extendₛ (extendₛ σ)) ((η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)) , proj₂ (⟦ v [ σ ]ᵥ ⟧-value η)) k)
+    sub-K σ η (opₖ op p par k) = fun-ext 
+        (λ C → cong₂ (node op p) 
+            (sub-V σ η par) 
+            (fun-ext 
+                (λ res → cong₂ (λ k C → k C) {x = ⟦ k ⟧-kernel (⟦ σ ⟧-sub η , res)} {y = ⟦ k [ extendₛ σ ]ₖ ⟧-kernel (η , res)} 
+                    (Eq.trans 
+                        (cong ⟦ k ⟧-kernel (cong₂ _,_ {! (sub-weakening σ η)  !} refl))  
+                        (sub-K (extendₛ σ) (η , res) k)) 
+                    refl)))  
+    sub-K σ η (getenv k) = fun-ext 
+        (λ C → cong₂ (λ a b → a b) {x = ⟦ k ⟧-kernel (⟦ σ ⟧-sub η , C)} {y = ⟦ k [ extendₛ σ ]ₖ ⟧-kernel (η , C)} {u = C} {v = C} 
+            (Eq.trans 
+                (cong ⟦ k ⟧-kernel (cong₂ _,_ {! (sub-weakening σ η)  !} refl))  
+                (sub-K (extendₛ σ) (η , C) k)) 
+            refl) 
+    sub-K σ η (setenv c k) = fun-ext (λ x → {! cong₂ (λ a b → a b) {x = ⟦ setenv c k ⟧-kernel} {y = ?} {u = (⟦ σ ⟧-sub η)} {v = (⟦ c [ σ ]ᵥ ⟧-value η)}  
+        ? 
+        ?  !})
+    sub-K σ η (user m `with k) = fun-ext (λ C → 
+        cong₂ bind-tree 
+            (fun-ext (λ X → 
+                cong₂ (λ a b → a b) {x = ⟦ k ⟧-kernel (⟦ σ ⟧-sub η , X)} {y = ⟦ k [ extendₛ σ ]ₖ ⟧-kernel (η , X)} 
+                    (Eq.trans 
+                        (cong ⟦ k ⟧-kernel 
+                            (cong₂ _,_ 
+                                (sub-weakening σ η)
+                                refl))
+                        (sub-K (extendₛ σ) (η , X) k)) 
+                    refl)) 
+            (sub-U σ η m)) 
 
 
-    valid-V : ∀ {Γ : Ctx} {X : VType} {v w : Γ ⊢V: X} → (Γ ⊢V v ≡ w) → ∀ η → ⟦ v ⟧-value η ≡ ⟦ w ⟧-value η
+    {- valid-V : ∀ {Γ : Ctx} {X : VType} {v w : Γ ⊢V: X} → (Γ ⊢V v ≡ w) → ∀ η → ⟦ v ⟧-value η ≡ ⟦ w ⟧-value η
     valid-U : ∀ {Γ : Ctx} {Xᵤ : UType} {m n : Γ ⊢U: Xᵤ} → (Γ ⊢U m ≡ n) → ∀ η → ⟦ m ⟧-user η ≡ ⟦ n ⟧-user η
     valid-K : ∀ {Γ : Ctx} {Xₖ : KType} {k l : Γ ⊢K: Xₖ} → (Γ ⊢K k ≡ l) → ∀ η → ⟦ k ⟧-kernel η ≡ ⟦ l ⟧-kernel η
 
@@ -174,11 +222,12 @@ mutual
         --cong (node op p (⟦ param ⟧-value η)) (fun-ext (λ res → cong₂ bind-tree (fun-ext (λ X₁ → {!   !})) refl)) --Relies on substitution (complete mystery for now)
         
 
-    valid-U (match-with-beta-prod v w m) η = Eq.trans {!   !} (sub-U ((var ∷ₛ v) ∷ₛ w) η m) --Relies on substitution (complete mystery for now)
+    valid-U (match-with-beta-prod v w m) η = Eq.trans {!    !} (sub-U ((var ∷ₛ v) ∷ₛ w) η m) --Relies on substitution (complete mystery for now)
         --ALMOST COMPLETED
 
 
-    valid-U (using-run-finally-beta-return r w v m) η = Eq.trans {!   !} (sub-U ((var ∷ₛ v) ∷ₛ w) η m) --Relies on substitution (complete mystery for now)
+    valid-U (using-run-finally-beta-return r w v m) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (cong₂ _,_ sub-var refl) refl))
+        (sub-U ((var ∷ₛ v) ∷ₛ w) η m) --Relies on substitution (complete mystery for now)
     {-
     ⟦ m ⟧-user ((η , ⟦ v ⟧-value η) , ⟦ w ⟧-value η) ≡
       ⟦ m [ (var ∷ₛ v) ∷ₛ w ]ᵤ ⟧-user η
@@ -188,9 +237,9 @@ mutual
     -}
 
     valid-U (using-run-finally-beta-op R w op param p m n) η = {! cong₂ bind-tree ? (cong₂ bind-tree ? (Eq.trans ? (sub-U )   !} --Relies on substitution (complete mystery for now)
-    valid-U (kernel-at-finally-beta-return v c n) η = {!  !} --Relies on substitution (complete mystery for now)
-    valid-U (kernel-at-finally-beta-getenv c k m) η = {!  !} --Relies on substitution (complete mystery for now)
-    valid-U (kernel-at-finally-setenv c c' k m) η = refl --Strange
+    valid-U (kernel-at-finally-beta-return v c n) η = Eq.trans (cong ⟦ n ⟧-user {!   !}) (sub-U ((var ∷ₛ v) ∷ₛ c) η n) --Relies on substitution (complete mystery for now)
+    valid-U (kernel-at-finally-beta-getenv c k m) η = {! cong (bind-tree _) (sub-K )  !} --Relies on substitution (complete mystery for now)
+    valid-U (kernel-at-finally-setenv c c' k m) η = {!   !} --refl --Strange
     valid-U (kernel-at-finally-beta-op op p param c k m) η = {!  !} --Relies on substitution (complete mystery for now)
     
     valid-U (let-in-eta-M n) η = {!   !} 
@@ -230,5 +279,5 @@ mutual
     valid-K (SetSetenv c c' k) η = fun-ext (λ c'' → refl)
     valid-K (GetOpEnv op p param k) η = {!  !} --Relies on substitution (complete mystery for now)
     valid-K (SetOpEnv op p param _) η = {!  !} --Relies on substitution (complete mystery for now)
-
-     
+           
+      -}        

@@ -103,17 +103,17 @@ mutual
 --  sub-coop : ∀ { } →
 
   ⟦_⟧-value : ∀ {Γ X} → (Γ ⊢V: X) → ⟦ Γ ⟧-ctx → ⟦ X ⟧v
-  ⟦ var p ⟧-value η = lookup p η
-  ⟦ sub-value v p ⟧-value η = coerceᵥ p (⟦ v ⟧-value η)
+  ⟦ var x ⟧-value η = lookup x η
+  ⟦ sub-value v x ⟧-value η = coerceᵥ x (⟦ v ⟧-value η)
   ⟦ ⟨⟩ ⟧-value η = tt
   ⟦ ⟨ v , w ⟩ ⟧-value η = (⟦ v ⟧-value η) , (⟦ w ⟧-value η)
   ⟦ funU m ⟧-value η = λ X → ⟦ m ⟧-user (η , X)
   ⟦ funK k ⟧-value η = λ X → ⟦ k ⟧-kernel (η , X)
-  ⟦ runner r ⟧-value η = λ op p param → ⟦ (r op p) ⟧-kernel (η , param) --Removed C from the ends of this
+  ⟦ runner r ⟧-value η = λ op x param → ⟦ (r op x) ⟧-kernel (η , param) --Removed C from the ends of this
 
   apply-runner : ∀ {Σ Σ' C X} → Runner Σ Σ' C → UComp Σ X → KComp Σ' C X
   apply-runner R (leaf x) c = leaf (x , c)
-  apply-runner R (node op p param κ) = bind-kernel (apply-runner R ∘ κ) (R op p param)
+  apply-runner R (node op x param κ) = bind-kernel (apply-runner R ∘ κ) (R op x param)
 
   kernel-to-user : ∀ {Σ X Y C} → KComp Σ C X → C → (X × C → UComp Σ Y) → UComp Σ Y
   kernel-to-user k c m = bind-user m (k c)
