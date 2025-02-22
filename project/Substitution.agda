@@ -26,18 +26,22 @@ idₛ = var
 --       (1) σ : Sub Γ Γ' is transformed to σ' : Sub (Γ ∷ X) Γ'
 --       (2) given τ : Sub Δ Δ' and Δ ⊢ v : X, we get ⟨τ, v⟩ : Sub Δ (Δ' ∷ X)
 
+--Composition of Renaming and Substitution
+_ᵣ∘ₛ_ : ∀ {Γ Γ' Γ''} → Ren Γ Γ' → Sub Γ' Γ'' → Sub Γ Γ''
+ρ ᵣ∘ₛ σ = λ x → σ x [ ρ ]ᵥᵣ
+
 extendₛ : ∀ {Γ Γ' X} → Sub Γ Γ' → Sub (Γ ∷ X) (Γ' ∷ X)
 extendₛ σ here = var here
 extendₛ σ (there p) =  σ p [ wkᵣ ]ᵥᵣ
 
 wkₛ : ∀ {Γ Γ' X} → Sub Γ Γ' → Sub (Γ ∷ X) Γ'
-wkₛ σ p = σ p [ wkᵣ ]ᵥᵣ
+wkₛ σ = (wkᵣ ᵣ∘ₛ σ)
 
 _∷ₛ_ : ∀ {Γ Γ' X} → Sub Γ Γ' → Γ ⊢V: X → Sub Γ (Γ' ∷ X)
 (σ ∷ₛ v) here = v
 (σ ∷ₛ v) (there p) = σ p
 
---Composition of Substition and Renaming
+--Composition of Substitution and Renaming
 _ₛ∘ᵣ_ : ∀ {Γ Γ' Γ''} → Sub Γ Γ' → Ren Γ' Γ'' → Sub Γ Γ''
 σ ₛ∘ᵣ ρ = λ x → σ (ρ x)
 
