@@ -25,7 +25,7 @@ idᵣ x = x
 -- composition of renamings
 
 _∘ᵣ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → Ren Γ Γ' → Ren Γ Γ''
-(ρ ∘ᵣ ρ') p = ρ' (ρ p)
+(ρ ∘ᵣ ρ') x = ρ' (ρ x)
 
 -- weakening renaming
 

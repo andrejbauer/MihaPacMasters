@@ -1,3 +1,5 @@
+--{-# OPTIONS --allow-unsolved-metas #-}
+
 open import Data.Unit
 open import Data.Product
 import Relation.Binary.PropositionalEquality as Eq
@@ -46,8 +48,27 @@ mutual
     valid-V (funK-cong eq-k) η = fun-ext (λ x → valid-K eq-k (η , x))  --fun-ext (λ x → valid-K refl η) 
     valid-V (runner-cong eq-k) η = fun-ext (λ op → fun-ext (λ p → fun-ext (λ param → valid-K (eq-k op p) (η , param)))) --fun-ext (λ op → fun-ext (λ p → fun-ext (λ param → valid-K refl η)))
     valid-V unit-eta η = refl
-    valid-V {w = w} funU-eta η = {!   !}  --Relies on substitution (complete mystery for now)
-    valid-V funK-eta η = {!   !} --fun-ext (λ x → valid-K refl η) --Relies on substitution (complete mystery for now)
+    valid-V {w = w} funU-eta η = 
+        Eq.trans 
+            (fun-ext (λ x 
+                -- ⟦ w [ (λ x₁ → there x₁) ]ᵥᵣ ⟧-value (η , x) x ≡ _j_133 x
+                → cong₂ (λ a b → a b) {x = ⟦ w [ (λ x₁ → there x₁) ]ᵥᵣ ⟧-value (η , x)} {u = x}
+                    {!   !} 
+                    refl)) 
+            (fun-ext (λ x 
+                -- ⟦ w ⟧-value η
+                → cong₂ (λ a b → a b) {y = ⟦ w ⟧-value η} {u = x} 
+                    {!   !} 
+                    refl ))   --Relies on substitution (complete mystery for now)
+    valid-V {w = w} funK-eta η = 
+        Eq.trans 
+            (fun-ext (λ X 
+                → cong₂ (λ a b → a b) {x = ⟦ w [ (λ x₁ → there x₁) ]ᵥᵣ ⟧-value (η , X)} 
+                    {!   !} 
+                    refl))
+            {!   !} 
+            
+            --fun-ext (λ x → valid-K refl η) --Relies on substitution (complete mystery for now)
 
 
 

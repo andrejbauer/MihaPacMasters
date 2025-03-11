@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas #-}
+--{-# OPTIONS --allow-unsolved-metas #-}
 
 open import Data.Unit
 open import Data.Product
@@ -83,22 +83,58 @@ mutual
     aux-there {Γ} {[]} {g} {v} ρ η = cong₂ _,_ refl refl
     aux-there {Γ} {Γ' ∷ X} {g} {v} ρ η = cong₂ _,_ (aux-there {g = {!   !}} {v = X} (there ∘ᵣ ρ) η) refl
 
-    aux-there' : ∀ { Γ Γ' } {g : ⟦ {!   !} ⟧b} {v : VType} (σ : Sub Γ (Γ' ∷ v)) (η : ⟦ Γ ⟧-ctx) 
-        → {! ⟦ σ ⟧-sub η !} ≡ ⟦ there ᵣ∘ₛ σ ⟧-sub (η , g) 
-        --there : {X Y : VType} {Γ : Ctx} → X ∈ Γ → X ∈ (Γ ∷ Y)
-    aux-there' {Γ} {Contexts.[]} {g} {v} σ η = cong₂ _,_ refl {!   !}
-    aux-there' {Γ} {Γ' Contexts.∷ x} {g} {v} σ η = {!   !}
+    aux-there' : ∀ { Γ Γ' } (σ : Sub Γ Γ')  (η : ⟦ {!   !} ⟧-ctx) --(η' : ⟦ Γ ⟧-ctx)
+        → ⟦ σ ⟧-sub (⟦ wkᵣ ⟧-ren η) ≡ ⟦ wkᵣ ᵣ∘ₛ σ ⟧-sub η
+    aux-there' {Γ} {Γ'} σ η = aux-thera wkᵣ σ η  
 
-    aux-there'' : ∀ { Γ Γ' } {g : ⟦ {!   !} ⟧b} {v : VType} (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) 
-        → ⟦ σ ⟧-sub η ≡ ⟦ there ᵣ∘ₛ σ ⟧-sub (η , g) 
-        --there : {X Y : VType} {Γ : Ctx} → X ∈ Γ → X ∈ (Γ ∷ Y)
-    aux-there'' {Γ} {Contexts.[]} {g} {v} σ η = refl
-    aux-there'' {Γ} {Γ' Contexts.∷ x} {g} {v} σ η = cong₂ _,_ {!   !} (sub-there σ η) 
+    --⟦ σ ⟧-sub η ≡ ⟦ (λ x → σ x [ wkᵣ ]ᵥᵣ) ⟧-sub (η , res)
+    aux-there'' : ∀ { Γ Γ' res} (σ : Sub Γ Γ')  (η : ⟦ {!   !} ⟧-ctx) --(η' : ⟦ Γ ⟧-ctx)
+        → ⟦ σ ⟧-sub η ≡ ⟦ (λ x → σ x [ wkᵣ ]ᵥᵣ) ⟧-sub (η , res)
+    aux-there'' {Γ} {Γ'} σ η = 
+        Eq.trans 
+            (cong₂ ⟦_⟧-sub 
+                {!   !} 
+                {!   !}) 
+            {!   !}
 
-    sub-there : ∀ { Γ Γ' g v } (σ : Sub Γ (Γ' ∷ v)) (η : ⟦ Γ ⟧-ctx) 
-        --⟦ σ here ⟧-value η ≡ ⟦ ((λ x₁ → Renaming.there x₁) ᵣ∘ₛ σ) here ⟧-value (η , g)
-        → ⟦ σ here ⟧-value η ≡ ⟦ (there ᵣ∘ₛ σ) here ⟧-value (η , g)
-    sub-there {Γ} {Γ'} σ η = {!   !}
+    help : ∀ {Γ} (η : ⟦ Γ ⟧-ctx)  
+        → η ≡ ⟦ {! wkᵣ  !} ⟧-ren {!   !}
+    help = {!   !}
+
+    aux-thera : ∀ { Γ Γ' Γ'' } (ρ : Ren Γ Γ') (σ : Sub Γ' Γ'')  (η : ⟦ Γ ⟧-ctx) --(η' : ⟦ Γ ⟧-ctx)
+        → ⟦ σ ⟧-sub (⟦ ρ ⟧-ren η) ≡ ⟦ ρ ᵣ∘ₛ σ ⟧-sub η
+    aux-thera {Γ} {Γ'} {Contexts.[]} ρ σ η = refl
+    aux-thera {Γ} {Γ'} {Γ'' Contexts.∷ x} ρ σ η = cong₂ _,_ 
+        (aux-thera ρ ((λ x₁ → σ (there x₁))) η)
+        (sub-there (σ here) ρ η) 
+
+    sub-there : ∀ { Γ Γ' Γ'' v} (V : Γ' ⊢V: v) (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
+        → ⟦ V ⟧-value (⟦ ρ ⟧-ren η) ≡ ⟦ V [ ρ ]ᵥᵣ ⟧-value η
+    sub-there {Γ} {Γ'} {Γ''} {v} (var x) ρ η = {!   !}
+    sub-there {Γ} {Γ'} {Γ''} {v} (sub-value V x) ρ η = cong (coerceᵥ x) (sub-there V ρ η) 
+    sub-there {Γ} {Γ'} {Γ''} {v} ⟨⟩ ρ η = refl
+    sub-there {Γ} {Γ'} {Γ''} {v} ⟨ V , W ⟩ ρ η = cong₂ _,_ (sub-there V ρ η) (sub-there W ρ η) 
+    sub-there {Γ} {Γ'} {Γ''} {v} (funU x) ρ η = fun-ext (λ X 
+        → cong₂ (λ a b → a b) {x =  ⟦ funU x ⟧-value (⟦ ρ ⟧-ren η)} {y = ⟦ funU x [ ρ ]ᵥᵣ ⟧-value η} 
+        (fun-ext (λ Y 
+            → {!   !}))  
+        refl) 
+    sub-there {Γ} {Γ'} {Γ''} {v} (funK x) ρ η = {!   !}
+    sub-there {Γ} {Γ'} {Γ''} {v} (runner x) ρ η = {!   !}
+
+    abc : ∀ { Γ Γ' Γ'' v} (x : v ∈ Γ') (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
+        → ⟦ var x ⟧-value (⟦ ρ ⟧-ren η) ≡ ⟦ var x [ ρ ]ᵥᵣ ⟧-value η
+    abc Contexts.here ρ η = refl
+    abc (Contexts.there x) ρ η = {!   !}
+
+    -- ρ ᵣ∘ₛ σ = λ x → σ x [ ρ ]ᵥᵣ
+{-    sub-there : ∀ { Γ Γ' Γ'' v} (ρ : Ren Γ Γ') (σ : Sub Γ' (Γ'' ∷ v)) (η : ⟦ Γ ⟧-ctx)
+        → ⟦ σ here ⟧-value (⟦ ρ ⟧-ren η) ≡ ⟦ (ρ ᵣ∘ₛ σ) here ⟧-value η
+    sub-there {Γ} {Γ'} {Γ''} {v} ρ σ η = {!   !}-}
+
+    sub-there' : ∀ { Γ Γ' Γ''} {X : VType} (ρ : Ren Γ Γ') (V : Γ' ⊢V: X)  (η : ⟦ Γ ⟧-ctx) --(η' : ⟦ Γ ⟧-ctx)
+        → ⟦ V ⟧-value (⟦ ρ ⟧-ren η) ≡ ⟦ {! ρ   !} ⟧-value η
+    sub-there' {Γ} {Γ'} {Γ''} ρ v η = {!   !}
 
 --
 
@@ -196,5 +232,5 @@ mutual
                         (sub-K (extendₛ σ) (η , X) k)) 
                     refl)) 
             (sub-U σ η m)) 
-    
-       
+         
+              
