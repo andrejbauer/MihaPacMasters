@@ -301,7 +301,7 @@ mutual
     sub-wk-lemma2 : ∀ {Γ} (η : ⟦ Γ ⟧-ctx)
         → η ≡ ⟦ idᵣ ⟧-ren η
     sub-wk-lemma2 {Contexts.[]} η = refl
-    sub-wk-lemma2 {Γ Contexts.∷ x} η = cong₂ _,_ {! sub-wk-lemma1 {v = proj₂ η} idᵣ (proj₁ η)   !} refl
+    sub-wk-lemma2 {Γ Contexts.∷ x} η = cong₂ _,_ {!  !} refl
 
 
     sub-V : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (v : Γ' ⊢V: X)
@@ -358,13 +358,20 @@ mutual
         (fun-ext (λ X 
             → Eq.trans 
                 (cong ⟦ n ⟧-user (cong₂ _,_ 
-                                    {!   !}
+                                    (sub-wk σ η)
                                     refl))  
                 (sub-U (extendₛ σ) (η , X) n) )) 
         (sub-U σ η m)
-    sub-U σ η (match v `with m) = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ 
+    sub-U σ η (match v `with m) = Eq.trans 
+        (cong ⟦ m ⟧-user (cong₂ _,_ 
             (cong₂ _,_ 
-                {!   !} 
+                (begin 
+                ⟦ σ ⟧-sub η 
+                ≡⟨ sub-wk σ η ⟩ 
+                ⟦ (λ x → σ x [ there ]ᵥᵣ) ⟧-sub (η , _) 
+                ≡⟨ sub-wk (there ᵣ∘ₛ σ) (η , _) ⟩ 
+                ⟦ (λ x → (there ᵣ∘ₛ σ) x [ there ]ᵥᵣ) ⟧-sub ((η , _ ), _) 
+                ∎)
                 (cong proj₁ (sub-V σ η v)))   
             (cong proj₂ (sub-V σ η v)))) 
         (sub-U (extendₛ (extendₛ σ)) ((η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)) , proj₂ (⟦ v [ σ ]ᵥ ⟧-value η)) m)
@@ -373,14 +380,34 @@ mutual
         {y = (λ { (x , c') → ⟦ n [ extendₛ (extendₛ σ) ]ᵤ ⟧-user ((η , x) , c')})}
         {u = (apply-runner (⟦ r ⟧-value (⟦ σ ⟧-sub η)) (⟦ m ⟧-user (⟦ σ ⟧-sub η)) (⟦ c ⟧-value (⟦ σ ⟧-sub η)))}
         {v = (apply-runner (⟦ r [ σ ]ᵥ ⟧-value η) (⟦ m [ σ ]ᵤ ⟧-user η) (⟦ c [ σ ]ᵥ ⟧-value η))}
-            (fun-ext (λ (x , c) → {!   !})) 
+            (fun-ext (λ (x , c') →
+                begin 
+                ⟦ n ⟧-user ((⟦ σ ⟧-sub η , x) , c') 
+                ≡⟨ sub-U (extendₛ (extendₛ σ)) {!   !} (`using {!   !} at {! c  !} `run {!   !} finally {!   !}) ⟩ 
+                {!   !} 
+                ≡⟨ {!   !} ⟩
+                {!   !}
+                ))
             {!   !}
     sub-U σ η (kernel k at c finally m) = cong₂ bind-tree
         {x = (λ { (X , C) → ⟦ m ⟧-user ((⟦ σ ⟧-sub η , X) , C) })}
         {y = (λ { (X , C) → ⟦ m [ extendₛ (extendₛ σ) ]ᵤ ⟧-user ((η , X) , C) })}
         {u = (⟦ k ⟧-kernel (⟦ σ ⟧-sub η) (⟦ c ⟧-value (⟦ σ ⟧-sub η)))}
         {v = (⟦ k [ σ ]ₖ ⟧-kernel η (⟦ c [ σ ]ᵥ ⟧-value η))}
-            (fun-ext (λ (X , C) → {!   !})) 
+            (fun-ext (λ (X , C) → Eq.trans 
+                (cong ⟦ m ⟧-user (cong₂ _,_ 
+                    (cong₂ _,_ 
+                        (begin 
+                        (⟦ σ ⟧-sub η 
+                        ≡⟨ sub-wk {X = {!   !}} σ η ⟩ 
+                        ⟦ (λ x → σ x [ there ]ᵥᵣ) ⟧-sub (η , X) 
+                        ≡⟨ sub-wk (there ᵣ∘ₛ σ) (η , X) ⟩ 
+                        ⟦ (λ x → (there ᵣ∘ₛ σ) x [ there ]ᵥᵣ) ⟧-sub ((η , X) , C)
+                        ∎
+                        ))
+                        refl)
+                    refl)) 
+                (sub-U (extendₛ (extendₛ σ)) (( η , X) , C) m  ))) 
             (cong₂ (λ a b → a b) 
                 {x = ⟦ k ⟧-kernel (⟦ σ ⟧-sub η)}
                 {y = ⟦ k [ σ ]ₖ ⟧-kernel η}
@@ -395,12 +422,12 @@ mutual
     sub-K σ η (return v) = fun-ext (λ C → cong leaf (cong₂ _,_ (sub-V σ η v) refl))
     sub-K σ η (v · w) = cong₂ (λ x y → x y) (sub-V σ η v) (sub-V σ η w)
     sub-K σ η (`let k `in l) = fun-ext (λ c → cong₂ bind-tree 
-        (fun-ext (λ (x , C') → cong₂ (λ a b → a b) 
-            {x = ⟦ l ⟧-kernel (⟦ σ ⟧-sub η , x)}
-            {y = ⟦ l [ extendₛ σ ]ₖ ⟧-kernel (η , x)}
+        (fun-ext (λ (X , C') → cong₂ (λ a b → a b) 
+            {x = ⟦ l ⟧-kernel (⟦ σ ⟧-sub η , X)}
+            {y = ⟦ l [ extendₛ σ ]ₖ ⟧-kernel (η , X)}
             {u = C'}
             {v = C'}
-                {!   !}
+                (sub-K (extendₛ σ) (η , X) {! l  !})
                 refl)) 
         (cong₂ (λ x y → x y) 
             (sub-K σ η k) 
@@ -410,10 +437,14 @@ mutual
         (cong ⟦ k ⟧-kernel 
             (cong₂ _,_ 
                 (cong₂ _,_
-                    {!   !} 
-                    --(Eq.trans 
-                        --{! (sub-weakening σ η)  !} 
-                        --{! (sub-weakening (λ x → σ x [ (λ x₁ → there x₁) ]ᵥᵣ) (η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)))  !} )  
+                    (begin 
+                    ⟦ σ ⟧-sub η 
+                    ≡⟨ sub-wk σ η ⟩ 
+                    ⟦ (λ x → σ x [ there ]ᵥᵣ) ⟧-sub (η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η))
+                    ≡⟨ sub-wk (there ᵣ∘ₛ σ) (η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)) ⟩ 
+                    ⟦ (λ x → (σ x [ (λ x₁ → there x₁) ]ᵥᵣ) [ (λ x₁ → there x₁) ]ᵥᵣ) ⟧-sub
+                        ((η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)) , proj₂ (⟦ v [ σ ]ᵥ ⟧-value η)) 
+                    ∎) 
                     (cong proj₁ (sub-V σ η v))) (cong proj₂ (sub-V σ η v)) )) 
                 (sub-K (extendₛ (extendₛ σ)) ((η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)) , proj₂ (⟦ v [ σ ]ᵥ ⟧-value η)) k)
     sub-K σ η (opₖ op p par k) = fun-ext 
@@ -422,13 +453,13 @@ mutual
             (fun-ext 
                 (λ res → cong₂ (λ k C → k C) {x = ⟦ k ⟧-kernel (⟦ σ ⟧-sub η , res)} {y = ⟦ k [ extendₛ σ ]ₖ ⟧-kernel (η , res)} 
                     (Eq.trans 
-                        (cong ⟦ k ⟧-kernel (cong₂ _,_ {! (sub-weakening σ η)  !} refl))  
+                        (cong ⟦ k ⟧-kernel (cong₂ _,_ (sub-wk σ η) refl))  
                         (sub-K (extendₛ σ) (η , res) k)) 
                     refl)))  
     sub-K σ η (getenv k) = fun-ext 
         (λ C → cong₂ (λ a b → a b) {x = ⟦ k ⟧-kernel (⟦ σ ⟧-sub η , C)} {y = ⟦ k [ extendₛ σ ]ₖ ⟧-kernel (η , C)} {u = C} {v = C} 
             (Eq.trans 
-                (cong ⟦ k ⟧-kernel (cong₂ _,_ {! (sub-weakening σ η)  !} refl))  
+                (cong ⟦ k ⟧-kernel (cong₂ _,_ (sub-wk σ η) refl))  
                 (sub-K (extendₛ σ) (η , C) k)) 
             refl) 
     sub-K σ η (setenv c k) = fun-ext (λ x → {! cong₂ (λ a b → a b) {x = ⟦ setenv c k ⟧-kernel} {y = ?} {u = (⟦ σ ⟧-sub η)} {v = (⟦ c [ σ ]ᵥ ⟧-value η)}  
@@ -441,10 +472,10 @@ mutual
                     (Eq.trans 
                         (cong ⟦ k ⟧-kernel 
                             (cong₂ _,_ 
-                                {!   !} --(sub-weakening σ η)
+                                (sub-wk σ η) --(sub-weakening σ η)
                                 refl))
                         (sub-K (extendₛ σ) (η , X) k))
                     refl)) 
             (sub-U σ η m)) 
                       
-                      
+                       
