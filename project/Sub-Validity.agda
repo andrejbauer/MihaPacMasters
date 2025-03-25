@@ -111,21 +111,21 @@ mutual
     sub-ren {Γ} {Γ'} {Contexts.[]} ρ σ η = refl
     sub-ren {Γ} {Γ'} {Γ'' Contexts.∷ x} ρ σ η = cong₂ _,_ 
         (sub-ren ρ ((λ x₁ → σ (there x₁))) η)
-        {!  ρ ᵣ∘ₛ σ   !} --(sub-there (σ here) ρ η) 
-
+        (sub-ren-value (σ here) ρ η) 
+        
     --sub-ren-value
     --sub-ren-user
     --sub-ren-kernel
     sub-ren-value : ∀ { Γ Γ' X} (V : Γ' ⊢V: X) (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
         → ⟦ V ⟧-value (⟦ ρ ⟧-ren η) ≡ ⟦ V [ ρ ]ᵥᵣ ⟧-value η
-    sub-ren-value {Γ} {Γ'} (var x) ρ η = abc x ρ η
+    sub-ren-value {Γ} {Γ'} (var x) ρ η = lookup-ren x ρ η
     sub-ren-value {Γ} {Γ'} (sub-value V x) ρ η = cong (coerceᵥ x) (sub-ren-value V ρ η) 
     sub-ren-value {Γ} {Γ'} ⟨⟩ ρ η = refl
     sub-ren-value {Γ} {Γ'} ⟨ V , W ⟩ ρ η = cong₂ _,_ (sub-ren-value V ρ η) (sub-ren-value W ρ η) 
     sub-ren-value {Γ} {Γ'} (funU x) ρ η = fun-ext (λ X 
         → cong₂ (λ a b → a b) {x =  ⟦ funU x ⟧-value (⟦ ρ ⟧-ren η)} {y = ⟦ funU x [ ρ ]ᵥᵣ ⟧-value η} 
             (fun-ext (λ Y 
-                → {!   !}))  
+                → {! sub-ren-user x ? ?   !}))  
             refl)
     sub-ren-value {Γ} {Γ'} (funK x) ρ η = 
         begin 
@@ -137,22 +137,52 @@ mutual
         ∎
     sub-ren-value {Γ} {Γ'} (runner x) ρ η = {!   !}
 
+    {- AN ISSUE: TODO 18. 3. 2025
+        ⟦ M ⟧-user (⟦ ρ ⟧-ren η , X) ≡ ⟦ M [ extendᵣ ρ ]ᵤᵣ ⟧-user (η , X)
+        also
+        ⟦ k ⟧-kernel (⟦ σ ⟧-sub η , X) ≡ ⟦ k [ extendₛ σ ]ₖ ⟧-kernel (η , X)
+        also
+        ⟦ σ ⟧-sub η ≡  ⟦ (λ x → σ x [ (λ x₁ → there x₁) ]ᵥᵣ) ⟧-sub (η , X)
+
+        Metoda, da se preide iz prvih dveh v tretjo je
+                    (Eq.trans 
+                        (cong ⟦ k ⟧-kernel 
+                            (cong₂ _,_ 
+                                {!   !} --(sub-weakening σ η)
+                                refl))
+                        (sub-K (extendₛ σ) (η , X) k))
+
+    -}
+
+
     sub-ren-user : ∀ { Γ Γ' Xᵤ} (M : Γ' ⊢U: Xᵤ) (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
         → ⟦ M ⟧-user (⟦ ρ ⟧-ren η) ≡ ⟦ M [ ρ ]ᵤᵣ ⟧-user η
-    sub-ren-user {Γ} {Γ'} {Xᵤ} (sub-user M p) ρ η = {!   !}
+    sub-ren-user {Γ} {Γ'} {Xᵤ} (sub-user M p) ρ η = cong (coerceᵤ p) (sub-ren-user M ρ η) 
     sub-ren-user {Γ} {Γ'} {Xᵤ} (return V) ρ η = cong leaf (sub-ren-value V ρ η)
-    sub-ren-user {Γ} {Γ'} {Xᵤ} (V · W) ρ η = {!   !}
-    sub-ren-user {Γ} {Γ'} {Xᵤ} (opᵤ op x par M) ρ η = {!   !}
-    sub-ren-user {Γ} {Γ'} {Xᵤ} (`let M `in N) ρ η = {!   !}
-    sub-ren-user {Γ} {Γ'} {Xᵤ} (match V `with M) ρ η = {!   !}
-    sub-ren-user {Γ} {Γ'} {Xᵤ} (`using R at C `run M finally N) ρ η = {!   !}
-    sub-ren-user {Γ} {Γ'} {Xᵤ} (kernel K at C finally M) ρ η = {!   !}
+    sub-ren-user {Γ} {Γ'} {Xᵤ} (V · W) ρ η = cong₂ (λ a b → a b) (sub-ren-value V ρ η) (sub-ren-value W ρ η) 
+    sub-ren-user {Γ} {Γ'} {Xᵤ} (opᵤ op x par M) ρ η = cong₂ (node op x) 
+        (sub-ren-value par ρ η) 
+        (fun-ext (λ res → {!   !})) 
+    sub-ren-user {Γ} {Γ'} {Xᵤ} (`let M `in N) ρ η = cong₂ bind-tree (fun-ext (λ X → {!   !})) (sub-ren-user M ρ η)
+    sub-ren-user {Γ} {Γ'} {Xᵤ} (match V `with M) ρ η = {!    !}
+    sub-ren-user {Γ} {Γ'} {Xᵤ} (`using R at C `run M finally N) ρ η = {! cong₂ bind-tree   !}
+    sub-ren-user {Γ} {Γ'} {Xᵤ} (kernel K at C finally M) ρ η = {! cong₂ bind-tree ? ?  !}
 
     sub-ren-kernel : ∀ { Γ Γ' Xₖ} (K : Γ' ⊢K: Xₖ) (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
         → ⟦ K ⟧-kernel (⟦ ρ ⟧-ren η) ≡ ⟦ K [ ρ ]ₖᵣ ⟧-kernel η
-    sub-ren-kernel {Γ} {Γ'} {Xₖ} (sub-kernel K p) ρ η = {!   !}
+    sub-ren-kernel {Γ} {Γ'} {Xₖ} (sub-kernel K p) ρ η = cong (coerceₖ p) (sub-ren-kernel K ρ η)
     sub-ren-kernel {Γ} {Γ'} {Xₖ} (return V) ρ η = fun-ext (λ C → cong leaf (cong₂ _,_ (sub-ren-value V ρ η) refl))  
-    sub-ren-kernel {Γ} {Γ'} {Xₖ} (V · W) ρ η = {!    !}
+    sub-ren-kernel {Γ} {Γ'} {Xₖ} (var x · W) ρ η = cong₂ (λ a b → a b) 
+        {x = lookup x (⟦ ρ ⟧-ren η)}{y = lookup (ρ x) η} 
+        {u = ⟦ W ⟧-value (⟦ ρ ⟧-ren η)}{v = ⟦ W [ ρ ]ᵥᵣ ⟧-value η} 
+        (lookup-ren x ρ η) 
+        (sub-ren-value W ρ η) 
+    sub-ren-kernel {Γ} {Γ'} {Xₖ} (sub-value V x · W) ρ η = cong₂ (λ a b → a b) 
+        {x = coerceᵥ x (⟦ V ⟧-value (⟦ ρ ⟧-ren η))}{y = coerceᵥ x (⟦ V [ ρ ]ᵥᵣ ⟧-value η)}
+        {u = ⟦ W ⟧-value (⟦ ρ ⟧-ren η)} {v = ⟦ W [ ρ ]ᵥᵣ ⟧-value η} 
+        (cong (coerceᵥ x) (sub-ren-value V ρ η)) 
+        (sub-ren-value W ρ η) 
+    sub-ren-kernel {Γ} {Γ'} {Xₖ} (funK K · W) ρ η = {!    !}
     sub-ren-kernel {Γ} {Γ'} {Xₖ} (`let K `in L) ρ η = {!   !}
     sub-ren-kernel {Γ} {Γ'} {Xₖ} (match V `with K) ρ η = {!   !}
     sub-ren-kernel {Γ} {Γ'} {Xₖ} (opₖ op x par K) ρ η = {!   !}
@@ -161,11 +191,30 @@ mutual
     sub-ren-kernel {Γ} {Γ'} {Xₖ} (user M `with K) ρ η = {!   !}
 
     --lookup-ren
-    abc : ∀ { Γ Γ' v} (x : v ∈ Γ') (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
+    lookup-ren : ∀ { Γ Γ' v} (x : v ∈ Γ') (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
         → lookup x (⟦ ρ ⟧-ren η) ≡ lookup (ρ x) η
-    abc here ρ η = refl
-    abc (there x) ρ η = abc x (λ x → ρ (there x)) η
-    --TODO 11. 3. - RENAME THESE TO SENSIBLE NAMES
+    lookup-ren here ρ η = refl
+    lookup-ren (there x) ρ η = lookup-ren x (λ x → ρ (there x)) η
+    
+    sub-weakening : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx)
+        → ⟦ σ ⟧-sub η ≡ ⟦ σ ⟧-sub (⟦ wkᵣ ⟧-ren (η , X))
+    sub-weakening {Γ} {[]} {X} σ η = refl 
+    sub-weakening {Γ} {Γ' ∷ x} {X} σ η = cong₂ _,_ (sub-weakening (λ x → σ (there x)) η) {!   !} --(cong ⟦ σ here ⟧-value {!   !}) 
+
+    little-lemma : ∀ { Γ v } (η : ⟦ Γ ⟧-ctx)
+        → η ≡ ⟦ wkᵣ ⟧-ren (η , v)
+    little-lemma {[]} η = refl 
+    little-lemma {Γ ∷ x} η = cong₂ _,_ (Eq.trans (little-lemma (η .proj₁)) {!   !}) refl 
+    -- This is for solving sub-weakening somehow
+    little-lemma' : ∀ { Γ Γ' v } (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
+        → ⟦ ρ ⟧-ren η ≡ ⟦ ρ ∘ᵣ wkᵣ ⟧-ren (η , v) 
+    little-lemma' {Γ} {Contexts.[]} {v} ρ η = refl 
+    little-lemma' {Γ} {Γ' Contexts.∷ x} {v} ρ η = cong₂ _,_ {! little-lemma' (ρ ∘ᵣ wkᵣ) ?  !} refl 
+
+    {-sub-weakening : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx)
+        → ⟦ σ ⟧-sub (⟦ wkᵣ ⟧-ren (η , X)) ≡ ⟦ wkᵣ ᵣ∘ₛ σ ⟧-sub (η , X)
+    sub-weakening {Γ} {Γ'} {X} σ η = {!   !}-}
+
     -- Eq.trans right hand side use induction hypothesis then continue on like that.
     -- lookup x (⟦ ρ ∘ wkᵣ ⟧ ≡ 
 
@@ -181,6 +230,140 @@ mutual
 
 --
 
+    sub-wk : ∀ { Γ Γ' } {V : VType} (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (v : ⟦ V ⟧v)
+        → ⟦ σ ⟧-sub η ≡ ⟦ (λ x → σ x [ (λ y → there y) ]ᵥᵣ) ⟧-sub (η , v)
+    sub-wk {Γ} {[]} {V} σ η v = refl
+    sub-wk {Γ} {Γ' ∷ X} {V} σ η v = cong₂ _,_ 
+        (sub-wk (λ x₁ → σ (there x₁)) η v) 
+        {! sub-V (λ {X} z → var (there z)) (η , v) (σ here)  !}
+
+{-THIS IS IT THIS IS WHAT I WANTED TO DO HURRAH-}
+    tast : ∀ {Γ Γ' v} (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx) 
+        → (⟦ (λ {X} x → var (there (ρ x))) ⟧-sub (η , v)) ≡ ⟦ ρ ᵣ∘ₛ idₛ ⟧-sub η 
+    tast {Γ} {[]} {v} ρ η = refl 
+    tast {Γ} {Γ' ∷ X} {v} ρ η = cong₂ _,_ 
+        (tast (there ∘ᵣ ρ) η) 
+        refl 
+
+    test' : ∀ {Γ v } (η : ⟦ Γ ⟧-ctx) 
+        → (⟦ (λ z → var (there z)) ⟧-sub (η , v)) ≡ η 
+    test' {[]} {v} η = refl
+    test' {Γ ∷ X} {v} η = cong₂ _,_ 
+        (Eq.trans (tast there η) (test' (proj₁ η)))  
+        refl 
+
+    trust : ∀ {Γ Γ' v} (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx) 
+        → (⟦ (λ {X} x → (there (ρ x))) ⟧-ren (η , v)) ≡ ⟦ ρ ⟧-ren η 
+    trust {Γ} {Contexts.[]} {v} ρ η = refl 
+    trust {Γ} {Γ' Contexts.∷ x} {v} ρ η = cong₂ _,_ 
+        (trust ( there ∘ᵣ ρ) η) 
+        refl
+
+    trist : ∀ {Γ} (η : ⟦ Γ ⟧-ctx) 
+        → ⟦ idᵣ ⟧-ren η ≡ η
+    trist {Contexts.[]} η = refl 
+    trist {Γ Contexts.∷ x} η = cong₂ _,_ 
+        (Eq.trans 
+            (trust (λ {X} z → z) (η .proj₁)) 
+            (trist (η .proj₁)))  
+        refl 
+
+    trest : ∀ {Γ Γ' X} (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx)
+        → ⟦ σ ⟧-sub η ≡  ⟦ (λ x → σ x [ (λ x₁ → there x₁) ]ᵥᵣ) ⟧-sub (η , X)
+    trest {Γ} {Contexts.[]} {X} σ η = refl
+    trest {Γ} {Γ' Contexts.∷ X'} {X} σ η = cong₂ _,_ 
+        (trest (σ ₛ∘ᵣ there) η) 
+        (Eq.trans 
+            (cong ⟦ σ here ⟧-value 
+                (Eq.sym (Eq.trans 
+                    (trust idᵣ η) 
+                    (trist η) ))) 
+            (sub-ren-value {Γ = Γ ∷ _} {Γ' = Γ} {X = X'} (σ here) there (η , X)))
+
+
+{-
+    test : ∀ {Γ v } (ρ : Ren (Γ ∷ _) Γ) (η : ⟦ Γ ⟧-ctx) 
+        → (⟦ (λ z → var (ρ z)) ⟧-sub (η , v)) ≡ η 
+    test {Contexts.[]} {v} ρ η = refl 
+    test {Γ Contexts.∷ X} {v} ρ η = cong₂ _,_
+        {x = ⟦ (λ x → var (ρ (there x))) ⟧-sub (η , v)}
+        {y = proj₁ η}
+        {u = lookup (ρ here) (η , v)}
+        {v = proj₂ η}
+            {!   !}
+            (lookup-ren {!  ρ ( ?)    !} (wkᵣ ∘ᵣ ρ) (η , v)) 
+        
+        {-cong₂ _,_
+        {x = ⟦ (λ x → var (ρ (there x))) ⟧-sub (η , v)}
+        {y = proj₁ η}
+        {u = lookup (ρ here) (η , v)}
+        {v = proj₂ η}
+            (cong proj₁ (test ρ η)) 
+            (cong proj₂ (test (λ x → there x) η))         -}
+
+    test' : ∀ {Γ v } (η : ⟦ Γ ⟧-ctx) 
+        → (⟦ (λ z → var (there z)) ⟧-sub (η , v)) ≡ η 
+    test' {Contexts.[]} {v} η = refl
+    test' {Γ Contexts.∷ x} {v} η = cong₂ _,_ 
+        {!   !}
+        refl 
+-}
+--(test (there ∘ᵣ ρ) ?)
+{- Test: katera substitucija bi omogocila to? Tu je, edini problem, je da je prevec partikularna ta funkcija, in se hitro pride v there (there( there... zanko
+   Torej jo je treba posplositi.
+    test : ∀ {Γ v } (η : ⟦ Γ ⟧-ctx) 
+        → (⟦ (λ {X} z → var (there z)) ⟧-sub (η , v)) ≡ η 
+    test {Contexts.[]} {v} η = refl 
+    test {Γ Contexts.∷ x} {v} η = cong₂ _,_ {! test (proj₁ η , v)  !} refl 
+-}
+
+{- On how to get to an even simpler thing to prove, which may in fact be too simple to prove.
+
+This would prove ⟦ σ here ⟧-value η ≡ ⟦ σ here [ there ]ᵥᵣ ⟧-value (η , v) if I could manage to prove "tautology"
+
+        (Eq.trans 
+            (cong ⟦ σ here ⟧-value (Eq.trans 
+                {!   !} 
+                {!   !}))  --THIS IS WHY I AM PROVING TAUTOLOGY  
+            (sub-ren-value (σ here) there (η , v)))
+
+    tautology : ∀{Γ Γ' v w} (ρ : Ren (Γ ∷ _) Γ) (ρ' : Ren Γ Γ) (η : ⟦ Γ ⟧-ctx)
+        → ⟦ ρ' ⟧-ren η ≡ ⟦ ρ ⟧-ren (η , v)
+    tautology {Contexts.[]} {v} ρ ρ' η = refl
+    tautology {Γ Contexts.∷ x} {v} ρ ρ' η = cong₂ _,_ {! tautology (λ x → ρ (there x)) ? η  !} {!   !} 
+
+    tautology' : ∀{Γ Γ' v w} (ρ : Ren Γ Γ') (ρ' : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
+        → ⟦ ρ' ⟧-ren η ≡ ⟦ ρ ⟧-ren {! η , ?  !}
+    tautology' = {!   !}
+-}
+
+{- HERE I AM IGNORING THIS SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+SO IT LOADS FASTER
+
+
     sub-V : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (v : Γ' ⊢V: X)
         → ⟦ v ⟧-value (⟦ σ ⟧-sub η) ≡ ⟦ v [ σ ]ᵥ ⟧-value η
     sub-V {Γ' = Γ' ∷ X} σ η (var here) = refl
@@ -192,7 +375,15 @@ mutual
 
     sub-V {Γ = Γ} {Γ' = Γ'} σ η (funU {X} m) = fun-ext (λ X' 
         → Eq.trans 
-            (cong ⟦ m ⟧-user (cong₂ _,_ {!   !} refl))
+            (cong ⟦ m ⟧-user (cong₂ _,_ 
+                (begin 
+                ⟦ σ ⟧-sub η 
+                ≡⟨ {! Eq.sym (sub-ren ? σ η)  !} ⟩ 
+                ⟦ {!   !} ⟧-sub (η , X')
+                ≡⟨ {! ⟦ wkᵣ ⟧-ren (η , X')  !} ⟩
+                {!   !})
+                    --⟦ (λ x → σ x [ (λ x₁ → there x₁) ]ᵥᵣ) ⟧-sub (η , X')
+                refl))
             (sub-U (extendₛ σ) (η , X') m))
     --sub-V {Γ} {Γ' = []} σ η (Terms.funU {X} m) = fun-ext (λ X' → Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (Eq.trans refl refl) refl)) (sub-U (extendₛ σ) (η , X') m))
     --sub-V {Γ} {Γ' = Γ' ∷ x} σ η (Terms.funU {X} m) = fun-ext (λ X' → Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (cong₂ _,_ {!   !} {!   !}) refl)) (sub-U (extendₛ σ) (η , X') m))
@@ -202,8 +393,12 @@ mutual
 
     --POTENTIAL TODO 11. 3.: use begin_ syntactic sugar to make the proofs prettier. 
 
-    sub-V σ η (funK k) = fun-ext (λ X → {! sub-K (extendₛ σ) (η , X) k  !}) 
+    sub-V σ η (funK k) = fun-ext (λ X → {! cong₂ (λ a b → a b) ? refl  !}) 
     sub-V σ η (runner r) = {!   !}
+    
+    --⟦ σ ⟧-sub η ≡  ⟦ (λ x → σ x [ (λ x₁ → there x₁) ]ᵥᵣ) ⟧-sub (η , X)
+
+
 
     sub-U : ∀ { Γ Γ' Xᵤ  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (m : Γ' ⊢U: Xᵤ)
         → ⟦ m ⟧-user (⟦ σ ⟧-sub η) ≡ ⟦ m [ σ ]ᵤ ⟧-user η
@@ -219,22 +414,50 @@ mutual
                                     refl))  
                 (sub-U (extendₛ σ) (η , X) n) )) 
         (sub-U σ η m)
-    sub-U σ η (match v `with m) = Eq.trans (cong ⟦ m ⟧-user {!   !}) 
+    sub-U σ η (match v `with m) = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ 
+            (cong₂ _,_ 
+                {!   !} 
+                (cong proj₁ (sub-V σ η v)))   
+            (cong proj₂ (sub-V σ η v)))) 
         (sub-U (extendₛ (extendₛ σ)) ((η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)) , proj₂ (⟦ v [ σ ]ᵥ ⟧-value η)) m)
-    sub-U σ η (`using r at c `run m finally n) = {! cong₂  bind-tree ? ?   !}
-    sub-U σ η (kernel k at c finally m) = {! begin  !}
+    sub-U σ η (`using r at c `run m finally n) = cong₂ bind-tree 
+        {x = (λ { (x , c') → ⟦ n ⟧-user ((⟦ σ ⟧-sub η , x) , c') })}
+        {y = (λ { (x , c') → ⟦ n [ extendₛ (extendₛ σ) ]ᵤ ⟧-user ((η , x) , c')})}
+        {u = (apply-runner (⟦ r ⟧-value (⟦ σ ⟧-sub η)) (⟦ m ⟧-user (⟦ σ ⟧-sub η)) (⟦ c ⟧-value (⟦ σ ⟧-sub η)))}
+        {v = (apply-runner (⟦ r [ σ ]ᵥ ⟧-value η) (⟦ m [ σ ]ᵤ ⟧-user η) (⟦ c [ σ ]ᵥ ⟧-value η))}
+            (fun-ext (λ (x , c) → {!   !})) 
+            {!   !}
+    sub-U σ η (kernel k at c finally m) = cong₂ bind-tree
+        {x = (λ { (X , C) → ⟦ m ⟧-user ((⟦ σ ⟧-sub η , X) , C) })}
+        {y = (λ { (X , C) → ⟦ m [ extendₛ (extendₛ σ) ]ᵤ ⟧-user ((η , X) , C) })}
+        {u = (⟦ k ⟧-kernel (⟦ σ ⟧-sub η) (⟦ c ⟧-value (⟦ σ ⟧-sub η)))}
+        {v = (⟦ k [ σ ]ₖ ⟧-kernel η (⟦ c [ σ ]ᵥ ⟧-value η))}
+            (fun-ext (λ (X , C) → {!   !})) 
+            (cong₂ (λ a b → a b) 
+                {x = ⟦ k ⟧-kernel (⟦ σ ⟧-sub η)}
+                {y = ⟦ k [ σ ]ₖ ⟧-kernel η}
+                {u = (⟦ c ⟧-value (⟦ σ ⟧-sub η))}
+                {v = (⟦ c [ σ ]ᵥ ⟧-value η)}
+                    (sub-K σ η k) 
+                    (sub-V σ η c))
 
     sub-K : ∀ { Γ Γ' Xₖ  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (k : Γ' ⊢K: Xₖ)
         → (⟦ k ⟧-kernel (⟦ σ ⟧-sub η)) ≡ (⟦ k [ σ ]ₖ ⟧-kernel η) 
     sub-K σ η (sub-kernel k p) = cong (coerceₖ p) (sub-K σ η k) 
     sub-K σ η (return v) = fun-ext (λ C → cong leaf (cong₂ _,_ (sub-V σ η v) refl))
     sub-K σ η (v · w) = cong₂ (λ x y → x y) (sub-V σ η v) (sub-V σ η w)
-    sub-K σ η (`let k `in l) = fun-ext (λ c → cong₂ bind-tree {! ((cong₂ (λ x C' → x C') ? refl))  !} (cong₂ (λ x y → x y) (sub-K σ η k) refl)) 
-    --(cong₂ (λ x y → x y) {x = ?} {u = c} (fun-ext ?) refl)
-    --⟦ `let k `in l ⟧-kernel (⟦ σ ⟧-sub η) c ≡
-    --⟦ `let k `in l [ σ ]ₖ ⟧-kernel η c
+    sub-K σ η (`let k `in l) = fun-ext (λ c → cong₂ bind-tree 
+        (fun-ext (λ (x , C') → cong₂ (λ a b → a b) 
+            {x = ⟦ l ⟧-kernel (⟦ σ ⟧-sub η , x)}
+            {y = ⟦ l [ extendₛ σ ]ₖ ⟧-kernel (η , x)}
+            {u = C'}
+            {v = C'}
+                {!   !}
+                refl)) 
+        (cong₂ (λ x y → x y) 
+            (sub-K σ η k) 
+            refl)) 
 
-    --(cong ⟦ k ⟧-kernel (cong₂ _,_ (cong₂ _,_ (Eq.trans (sub-weakening σ η) (sub-weakening (λ x → σ x [ there ]ᵥᵣ) (η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)))) {! cong (λ x → proj₁ x)   !}) {!   !})) 
     sub-K σ η (match v `with k) = Eq.trans 
         (cong ⟦ k ⟧-kernel 
             (cong₂ _,_ 
@@ -243,7 +466,7 @@ mutual
                     --(Eq.trans 
                         --{! (sub-weakening σ η)  !} 
                         --{! (sub-weakening (λ x → σ x [ (λ x₁ → there x₁) ]ᵥᵣ) (η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)))  !} )  
-                    {! cong (λ x → proj₁ x)   !}) (cong proj₂ (sub-V σ η v)) )) 
+                    (cong proj₁ (sub-V σ η v))) (cong proj₂ (sub-V σ η v)) )) 
                 (sub-K (extendₛ (extendₛ σ)) ((η , proj₁ (⟦ v [ σ ]ᵥ ⟧-value η)) , proj₂ (⟦ v [ σ ]ᵥ ⟧-value η)) k)
     sub-K σ η (opₖ op p par k) = fun-ext 
         (λ C → cong₂ (node op p) 
@@ -272,8 +495,8 @@ mutual
                             (cong₂ _,_ 
                                 {!   !} --(sub-weakening σ η)
                                 refl))
-                        (sub-K (extendₛ σ) (η , X) k)) 
+                        (sub-K (extendₛ σ) (η , X) k))
                     refl)) 
             (sub-U σ η m)) 
-          
-              
+                      
+                   -}  
