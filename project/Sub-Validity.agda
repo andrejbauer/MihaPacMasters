@@ -211,19 +211,8 @@ mutual
     little-lemma' {Γ} {Contexts.[]} {v} ρ η = refl 
     little-lemma' {Γ} {Γ' Contexts.∷ x} {v} ρ η = cong₂ _,_ {! little-lemma' (ρ ∘ᵣ wkᵣ) ?  !} refl 
 
-    {-sub-weakening : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx)
-        → ⟦ σ ⟧-sub (⟦ wkᵣ ⟧-ren (η , X)) ≡ ⟦ wkᵣ ᵣ∘ₛ σ ⟧-sub (η , X)
-    sub-weakening {Γ} {Γ'} {X} σ η = {!   !}-}
 
-    -- Eq.trans right hand side use induction hypothesis then continue on like that.
-    -- lookup x (⟦ ρ ∘ wkᵣ ⟧ ≡ 
-
-
-    -- ρ ᵣ∘ₛ σ = λ x → σ x [ ρ ]ᵥᵣ
-{-    sub-there : ∀ { Γ Γ' Γ'' v} (ρ : Ren Γ Γ') (σ : Sub Γ' (Γ'' ∷ v)) (η : ⟦ Γ ⟧-ctx)
-        → ⟦ σ here ⟧-value (⟦ ρ ⟧-ren η) ≡ ⟦ (ρ ᵣ∘ₛ σ) here ⟧-value η
-    sub-there {Γ} {Γ'} {Γ''} {v} ρ σ η = {!   !}-}
-
+{- JUST DEAL WITH THIS LATER 
     sub-there' : ∀ { Γ Γ' Γ''} {X : VType} (ρ : Ren Γ Γ') (V : Γ' ⊢V: X)  (η : ⟦ Γ ⟧-ctx) --(η' : ⟦ Γ ⟧-ctx)
         → ⟦ V ⟧-value (⟦ ρ ⟧-ren η) ≡ ⟦ {! ρ   !} ⟧-value η
     sub-there' {Γ} {Γ'} {Γ''} ρ v η = {!   !}
@@ -237,7 +226,6 @@ mutual
         (sub-wk (λ x₁ → σ (there x₁)) η v) 
         {! sub-V (λ {X} z → var (there z)) (η , v) (σ here)  !}
 
-{-THIS IS IT THIS IS WHAT I WANTED TO DO HURRAH-}
     tast : ∀ {Γ Γ' v} (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx) 
         → (⟦ (λ {X} x → var (there (ρ x))) ⟧-sub (η , v)) ≡ ⟦ ρ ᵣ∘ₛ idₛ ⟧-sub η 
     tast {Γ} {[]} {v} ρ η = refl 
@@ -280,88 +268,40 @@ mutual
                     (trist η) ))) 
             (sub-ren-value {Γ = Γ ∷ _} {Γ' = Γ} {X = X'} (σ here) there (η , X)))
 
-
-{-
-    test : ∀ {Γ v } (ρ : Ren (Γ ∷ _) Γ) (η : ⟦ Γ ⟧-ctx) 
-        → (⟦ (λ z → var (ρ z)) ⟧-sub (η , v)) ≡ η 
-    test {Contexts.[]} {v} ρ η = refl 
-    test {Γ Contexts.∷ X} {v} ρ η = cong₂ _,_
-        {x = ⟦ (λ x → var (ρ (there x))) ⟧-sub (η , v)}
-        {y = proj₁ η}
-        {u = lookup (ρ here) (η , v)}
-        {v = proj₂ η}
-            {!   !}
-            (lookup-ren {!  ρ ( ?)    !} (wkᵣ ∘ᵣ ρ) (η , v)) 
-        
-        {-cong₂ _,_
-        {x = ⟦ (λ x → var (ρ (there x))) ⟧-sub (η , v)}
-        {y = proj₁ η}
-        {u = lookup (ρ here) (η , v)}
-        {v = proj₂ η}
-            (cong proj₁ (test ρ η)) 
-            (cong proj₂ (test (λ x → there x) η))         -}
-
-    test' : ∀ {Γ v } (η : ⟦ Γ ⟧-ctx) 
-        → (⟦ (λ z → var (there z)) ⟧-sub (η , v)) ≡ η 
-    test' {Contexts.[]} {v} η = refl
-    test' {Γ Contexts.∷ x} {v} η = cong₂ _,_ 
-        {!   !}
-        refl 
 -}
---(test (there ∘ᵣ ρ) ?)
-{- Test: katera substitucija bi omogocila to? Tu je, edini problem, je da je prevec partikularna ta funkcija, in se hitro pride v there (there( there... zanko
-   Torej jo je treba posplositi.
-    test : ∀ {Γ v } (η : ⟦ Γ ⟧-ctx) 
-        → (⟦ (λ {X} z → var (there z)) ⟧-sub (η , v)) ≡ η 
-    test {Contexts.[]} {v} η = refl 
-    test {Γ Contexts.∷ x} {v} η = cong₂ _,_ {! test (proj₁ η , v)  !} refl 
--}
+    sub-wk : ∀ {Γ Γ' X} (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx)
+        → ⟦ σ ⟧-sub η ≡ ⟦ (λ x → σ x [ (λ y → there y) ]ᵥᵣ) ⟧-sub (η , X)
+    sub-wk {Γ} {[]} σ η = refl
+    sub-wk {Γ} {Γ' ∷ X'} σ η = cong₂ _,_ 
+        (sub-wk (σ ₛ∘ᵣ there) η)
+        (begin 
+        ⟦ σ here ⟧-value η 
+        ≡⟨ cong ⟦ σ here ⟧-value (Eq.trans {! sub-wk-lemma2 idᵣ η  !} (sub-wk-lemma1 idᵣ η)) ⟩ 
+        ⟦ σ here ⟧-value {!   !}
+        ≡⟨ sub-ren-value (σ here) there (η , _) ⟩ 
+        refl)
 
-{- On how to get to an even simpler thing to prove, which may in fact be too simple to prove.
+    sub-wk-lemma1 : ∀ {Γ Γ' v} (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx) 
+        → ⟦ ρ ⟧-ren η ≡ ⟦ ρ ∘ᵣ there ⟧-ren (η , v)
+    sub-wk-lemma1 {Γ} {Contexts.[]} {v} ρ η = refl
+    sub-wk-lemma1 {Γ} {Γ' Contexts.∷ x} {v} ρ η = cong₂ _,_ 
+        (sub-wk-lemma1 (there ∘ᵣ ρ) η) 
+        refl
 
-This would prove ⟦ σ here ⟧-value η ≡ ⟦ σ here [ there ]ᵥᵣ ⟧-value (η , v) if I could manage to prove "tautology"
+    sub-wk-lemma1' : ∀ {Γ v} (η : ⟦ Γ ⟧-ctx) 
+        → η ≡ ⟦ there ⟧-ren (η , v)
+    sub-wk-lemma1' {Contexts.[]} {v} η = refl
+    sub-wk-lemma1' {Γ Contexts.∷ x} {v} η = cong₂ _,_ {! sub-wk-lemma1 idᵣ (proj₁ η)  !} refl    
 
-        (Eq.trans 
-            (cong ⟦ σ here ⟧-value (Eq.trans 
-                {!   !} 
-                {!   !}))  --THIS IS WHY I AM PROVING TAUTOLOGY  
-            (sub-ren-value (σ here) there (η , v)))
+{-    sub-wk-lemma2 : ∀ {Γ Γ' } (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
+        → ⟦ ρ ⟧-ren η ≡ ⟦ idᵣ ∘ᵣ ρ ⟧-ren η
+    sub-wk-lemma2 {Γ} {Contexts.[]} ρ η = refl
+    sub-wk-lemma2 {Γ} {Γ' Contexts.∷ x} ρ η = cong₂ _,_ (sub-wk-lemma2 (λ x₁ → ρ (there x₁)) η) refl -}
 
-    tautology : ∀{Γ Γ' v w} (ρ : Ren (Γ ∷ _) Γ) (ρ' : Ren Γ Γ) (η : ⟦ Γ ⟧-ctx)
-        → ⟦ ρ' ⟧-ren η ≡ ⟦ ρ ⟧-ren (η , v)
-    tautology {Contexts.[]} {v} ρ ρ' η = refl
-    tautology {Γ Contexts.∷ x} {v} ρ ρ' η = cong₂ _,_ {! tautology (λ x → ρ (there x)) ? η  !} {!   !} 
-
-    tautology' : ∀{Γ Γ' v w} (ρ : Ren Γ Γ') (ρ' : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
-        → ⟦ ρ' ⟧-ren η ≡ ⟦ ρ ⟧-ren {! η , ?  !}
-    tautology' = {!   !}
--}
-
-{- HERE I AM IGNORING THIS SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
-SO IT LOADS FASTER
+    sub-wk-lemma2 : ∀ {Γ} (η : ⟦ Γ ⟧-ctx)
+        → η ≡ ⟦ idᵣ ⟧-ren η
+    sub-wk-lemma2 {Contexts.[]} η = refl
+    sub-wk-lemma2 {Γ Contexts.∷ x} η = cong₂ _,_ {! sub-wk-lemma1 {v = proj₂ η} idᵣ (proj₁ η)   !} refl
 
 
     sub-V : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (v : Γ' ⊢V: X)
@@ -371,20 +311,29 @@ SO IT LOADS FASTER
     sub-V σ η (sub-value v x) = cong (coerceᵥ x) ((sub-V σ η v))
     sub-V σ η ⟨⟩ = refl
     sub-V σ η ⟨ v , w ⟩ = cong₂ _,_ (sub-V σ η v) (sub-V σ η w)
-
-
     sub-V {Γ = Γ} {Γ' = Γ'} σ η (funU {X} m) = fun-ext (λ X' 
         → Eq.trans 
             (cong ⟦ m ⟧-user (cong₂ _,_ 
-                (begin 
+                {!   !} 
+                refl))
+            (sub-U (extendₛ σ) (η , X') m))
+
+    
+    sub-V σ η (funK k) = {!   !} --fun-ext (λ X → {! cong₂ (λ a b → a b) ? refl  !}) 
+    sub-V σ η (runner r) = {!   !}
+        {-fun-ext (λ X' 
+        → Eq.trans 
+            (cong ⟦ m ⟧-user (cong₂ _,_ 
+                {!   !}
+                {-(begin 
                 ⟦ σ ⟧-sub η 
                 ≡⟨ {! Eq.sym (sub-ren ? σ η)  !} ⟩ 
                 ⟦ {!   !} ⟧-sub (η , X')
                 ≡⟨ {! ⟦ wkᵣ ⟧-ren (η , X')  !} ⟩
-                {!   !})
+                {!   !})-}
                     --⟦ (λ x → σ x [ (λ x₁ → there x₁) ]ᵥᵣ) ⟧-sub (η , X')
                 refl))
-            (sub-U (extendₛ σ) (η , X') m))
+            (sub-U (extendₛ σ) (η , X') m)) -}
     --sub-V {Γ} {Γ' = []} σ η (Terms.funU {X} m) = fun-ext (λ X' → Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (Eq.trans refl refl) refl)) (sub-U (extendₛ σ) (η , X') m))
     --sub-V {Γ} {Γ' = Γ' ∷ x} σ η (Terms.funU {X} m) = fun-ext (λ X' → Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (cong₂ _,_ {!   !} {!   !}) refl)) (sub-U (extendₛ σ) (η , X') m))
     --sub-V {Γ = Γ ∷ x} {Γ' = Γ'} σ η (funU {X} m) = fun-ext (λ X' → Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (Eq.trans {!   !} {!   !}) refl)) (sub-U (extendₛ σ) (η , X') m))
@@ -393,8 +342,7 @@ SO IT LOADS FASTER
 
     --POTENTIAL TODO 11. 3.: use begin_ syntactic sugar to make the proofs prettier. 
 
-    sub-V σ η (funK k) = fun-ext (λ X → {! cong₂ (λ a b → a b) ? refl  !}) 
-    sub-V σ η (runner r) = {!   !}
+
     
     --⟦ σ ⟧-sub η ≡  ⟦ (λ x → σ x [ (λ x₁ → there x₁) ]ᵥᵣ) ⟧-sub (η , X)
 
@@ -499,4 +447,4 @@ SO IT LOADS FASTER
                     refl)) 
             (sub-U σ η m)) 
                       
-                   -}  
+                      
