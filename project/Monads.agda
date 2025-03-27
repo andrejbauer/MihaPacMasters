@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 open import Data.Unit
 open import Data.Product
 --open import Relation.Binary.PropositionalEquality

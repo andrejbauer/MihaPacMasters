@@ -64,7 +64,7 @@ mutual
                 (cong ⟦ w ⟧-value (Eq.trans
                     (ren-id-lemma η)
                     (ren-wk idᵣ η)))
-                (sub-ren-value w wkᵣ (η , x))))
+                (ren-value w wkᵣ (η , x))))
             refl)
     valid-V {w = w} funK-eta η = fun-ext (λ X → 
         cong₂ (λ a b → a b) 
@@ -74,7 +74,7 @@ mutual
                 (cong ⟦ w ⟧-value (Eq.trans
                     (ren-id-lemma η)
                     (ren-wk idᵣ η)))
-                (sub-ren-value w wkᵣ (η , X))))
+                (ren-value w wkᵣ (η , X))))
             refl)
 
 
