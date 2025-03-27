@@ -1,4 +1,4 @@
---{-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 
 open import Data.Unit
 open import Data.Product
@@ -34,6 +34,31 @@ open import Substitution G O
 
 {-Tezave:
 Kako delati karkoli z "extend sigma"-}
+
+ren-coop-lemma : ∀ { Γ Γ' Σ C op} (ρ : Ren Γ Γ') (coop : co-op Γ' Σ C op)
+    → coop [ extendᵣ ρ ]ₖᵣ ≡ rename-coop coop ρ
+ren-coop-lemma ρ (sub-kernel coop x) = refl
+ren-coop-lemma ρ (return x) = refl
+ren-coop-lemma ρ (x · x₁) = refl
+ren-coop-lemma ρ (`let coop `in coop₁) = refl
+ren-coop-lemma ρ (match x `with coop) = refl
+ren-coop-lemma ρ (opₖ op₁ x x₁ coop) = refl
+ren-coop-lemma ρ (getenv coop) = refl
+ren-coop-lemma ρ (setenv x coop) = refl
+ren-coop-lemma ρ (user x `with coop) = refl
+
+sub-coop-lemma : ∀ { Γ Γ' Σ C op } (σ : Sub Γ Γ') (coop : co-op Γ' Σ C op)
+    → coop [ extendₛ σ ]ₖ  ≡ sub-coop coop σ
+sub-coop-lemma σ (sub-kernel coop x) = refl
+sub-coop-lemma σ (return x) = refl
+sub-coop-lemma σ (x · x₁) = refl
+sub-coop-lemma σ (`let coop `in coop₁) = refl
+sub-coop-lemma σ (match x `with coop) = refl
+sub-coop-lemma σ (opₖ op x x₁ coop) = refl
+sub-coop-lemma σ (getenv coop) = refl
+sub-coop-lemma σ (setenv x coop) = refl
+sub-coop-lemma σ (user x `with coop) = refl
+
 
 mutual
 -- Naming scheme for the various equalities:
@@ -128,21 +153,11 @@ mutual
                 (cong ⟦_⟧-kernel 
                     {x = x op x' [ extendᵣ ρ ]ₖᵣ} 
                     {y = rename-coop (x op x') ρ} 
-                    (little-lemma ρ (x op x')))
+                    (ren-coop-lemma ρ (x op x')))
                 refl ⟩ 
         refl)))
 
-    little-lemma : ∀ { Γ Γ' Σ C op} (ρ : Ren Γ Γ') (coop : co-op Γ' Σ C op)
-        → coop [ extendᵣ ρ ]ₖᵣ ≡ rename-coop coop ρ
-    little-lemma ρ (sub-kernel coop x) = refl
-    little-lemma ρ (return x) = refl
-    little-lemma ρ (x · x₁) = refl
-    little-lemma ρ (`let coop `in coop₁) = refl
-    little-lemma ρ (match x `with coop) = refl
-    little-lemma ρ (opₖ op₁ x x₁ coop) = refl
-    little-lemma ρ (getenv coop) = refl
-    little-lemma ρ (setenv x coop) = refl
-    little-lemma ρ (user x `with coop) = refl
+
 
 {-(λ op x₁ param₁ → ⟦ x op x₁ ⟧-kernel (⟦ ρ ⟧-ren η , param₁))
       ≡
@@ -272,8 +287,6 @@ mutual
         ⟦ K ⟧-kernel (⟦ extendᵣ ρ ⟧-ren (η , ⟦ W [ ρ ]ᵥᵣ ⟧-value η)) 
         ≡⟨ sub-ren-kernel K (extendᵣ ρ) (η , ⟦ W [ ρ ]ᵥᵣ ⟧-value η) ⟩ 
         refl)
-{-⟦ K ⟧-kernel (⟦ ρ ⟧-ren η , ⟦ W ⟧-value (⟦ ρ ⟧-ren η)) ≡
-      ⟦ K [ extendᵣ ρ ]ₖᵣ ⟧-kernel (η , ⟦ W [ ρ ]ᵥᵣ ⟧-value η)-}
     sub-ren-kernel {Γ} {Γ'} {Xₖ} (`let K `in L) ρ η = fun-ext (λ C → cong₂ bind-tree
         {x = (λ { (x , C') → ⟦ L ⟧-kernel (⟦ ρ ⟧-ren η , x) C' })}
         {y = (λ { (x , C') → ⟦ L [ extendᵣ ρ ]ₖᵣ ⟧-kernel (η , x) C' })}
@@ -285,7 +298,7 @@ mutual
             ≡⟨ cong (λ a → ⟦ L ⟧-kernel a C') (cong₂ _,_ 
                 (ren-wk ρ η) 
                 refl) ⟩ 
-            ⟦ L ⟧-kernel (⟦ extendᵣ ρ ⟧-ren (η , x')) C' 
+            ⟦ L ⟧-kernel (⟦ extendᵣ {X = {!   !}} ρ ⟧-ren (η , x')) C' 
             ≡⟨ cong₂ (λ a b → a b) 
                 (sub-ren-kernel L (extendᵣ ρ) (η , x')) 
                 refl ⟩ 
@@ -293,8 +306,6 @@ mutual
             ≡⟨ refl ⟩ 
             refl 
             ))
-{- ⟦ L ⟧-kernel (⟦ ρ ⟧-ren η , x') C' ≡
-      ⟦ L [ extendᵣ ρ ]ₖᵣ ⟧-kernel (η , x') C' -}
         (cong₂ (λ a b → a b) (sub-ren-kernel K ρ η) refl))
     sub-ren-kernel {Γ} {Γ'} {Xₖ} (match V `with K) ρ η = 
         begin 
@@ -312,7 +323,9 @@ mutual
                     (ren-wk (ρ ∘ᵣ there) (η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)))) 
                 refl) 
             refl) ⟩
-        ⟦ K ⟧-kernel (⟦ extendᵣ (extendᵣ ρ) ⟧-ren ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)))  
+        ⟦ K ⟧-kernel (⟦ extendᵣ {X = {!   !}} 
+            (extendᵣ {X = {!   !}} ρ) ⟧-ren 
+            ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)))  
         ≡⟨ sub-ren-kernel K (extendᵣ (extendᵣ ρ)) ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) ⟩ 
         ⟦ K [ extendᵣ (extendᵣ ρ) ]ₖᵣ ⟧-kernel ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) 
         ≡⟨ refl ⟩ 
@@ -379,7 +392,7 @@ mutual
         (sub-wk (σ ₛ∘ᵣ there) η)
         (begin 
         ⟦ σ here ⟧-value η 
-        ≡⟨ cong ⟦ σ here ⟧-value (Eq.trans (sub-wk-lemma2 η) (ren-wk idᵣ η)) ⟩ 
+        ≡⟨ cong ⟦ σ here ⟧-value (Eq.trans (ren-id-lemma η) (ren-wk idᵣ η)) ⟩ 
         ⟦ σ here ⟧-value (⟦ there ⟧-ren (η , v))
         ≡⟨ sub-ren-value (σ here) there (η , _) ⟩ 
         refl)
@@ -391,16 +404,28 @@ mutual
         (ren-wk (there ∘ᵣ ρ) η) 
         refl  
 
-    sub-wk-lemma2 : ∀ {Γ} (η : ⟦ Γ ⟧-ctx)
+    ren-id-lemma : ∀ {Γ} (η : ⟦ Γ ⟧-ctx)
         → η ≡ ⟦ idᵣ ⟧-ren η
-    sub-wk-lemma2 {Contexts.[]} η = refl
-    sub-wk-lemma2 {Γ Contexts.∷ X} (η , v) = cong (_, v) 
+    ren-id-lemma {Contexts.[]} η = refl
+    ren-id-lemma {Γ Contexts.∷ X} (η , v) = cong (_, v) 
         (begin 
         η 
-        ≡⟨ sub-wk-lemma2 η ⟩ 
+        ≡⟨ ren-id-lemma η ⟩ 
         ⟦ idᵣ ⟧-ren η 
         ≡⟨ ren-wk idᵣ η ⟩ 
         ⟦ there {Y = X} ⟧-ren (η , v) 
+        ∎)
+    
+    sub-id-lemma : ∀ { Γ } (η : ⟦ Γ ⟧-ctx)
+        → η ≡ ⟦ (λ x → var x) ⟧-sub η
+    sub-id-lemma {Contexts.[]} η = refl
+    sub-id-lemma {Γ Contexts.∷ X} (η , v) = cong (_, v) 
+        (begin 
+        η 
+        ≡⟨ sub-id-lemma η ⟩ 
+        ⟦ idₛ ⟧-sub η 
+        ≡⟨ sub-wk idₛ η ⟩ 
+        ⟦ (λ x → var (there x)) ⟧-sub (η , v) 
         ∎)
 
     sub-wk-lemma3 : ∀ {Γ Γ' X} {v : ⟦ X ⟧v} (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx) 
@@ -433,33 +458,18 @@ mutual
         begin 
         ⟦ r op x ⟧-kernel (⟦ σ ⟧-sub η , param) 
         ≡⟨ cong ⟦ r op x ⟧-kernel (cong₂ _,_ (sub-wk σ η) refl) ⟩ 
-        ⟦ r op x ⟧-kernel (⟦ extendₛ σ ⟧-sub (η , param)) 
+        ⟦ r op x ⟧-kernel (⟦ extendₛ {X = {!   !}} σ ⟧-sub (η , param)) 
         ≡⟨ sub-K (extendₛ σ) (η , param) (r op x) ⟩ 
         ⟦ r op x [ extendₛ σ ]ₖ ⟧-kernel (η , param)
-        ≡⟨ cong (λ a → ⟦ a ⟧-kernel (η , param)) {y = sub-coop (r op x) σ} (little-lemma2 σ (r op x)) ⟩ 
+        ≡⟨ cong (λ a → ⟦ a ⟧-kernel (η , param)) {y = sub-coop (r op x) σ} (sub-coop-lemma σ (r op x)) ⟩ 
         ⟦ sub-coop (r op x) σ ⟧-kernel (η , param)
         ≡⟨ refl ⟩
         refl
         )))
 
-    little-lemma2 : ∀ { Γ Γ' Σ C op } (σ : Sub Γ Γ') (coop : co-op Γ' Σ C op)
-        → coop [ extendₛ σ ]ₖ  ≡ sub-coop coop σ
-    little-lemma2 σ (sub-kernel coop x) = refl
-    little-lemma2 σ (return x) = refl
-    little-lemma2 σ (x · x₁) = refl
-    little-lemma2 σ (`let coop `in coop₁) = refl
-    little-lemma2 σ (match x `with coop) = refl
-    little-lemma2 σ (opₖ op x x₁ coop) = refl
-    little-lemma2 σ (getenv coop) = refl
-    little-lemma2 σ (setenv x coop) = refl
-    little-lemma2 σ (user x `with coop) = refl
+
 
     --POTENTIAL TODO 11. 3.: use begin_ syntactic sugar to make the proofs prettier. 
-
-
-    
-    --⟦ σ ⟧-sub η ≡  ⟦ (λ x → σ x [ (λ x₁ → there x₁) ]ᵥᵣ) ⟧-sub (η , X)
-
 
 
     sub-U : ∀ { Γ Γ' Xᵤ  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (m : Γ' ⊢U: Xᵤ)
@@ -515,8 +525,6 @@ mutual
                 ≡⟨ refl ⟩ 
                 refl
                 ))
-{-⟦ n ⟧-user ((⟦ σ ⟧-sub η , x) , c') ≡
-      ⟦ n [ extendₛ (extendₛ σ) ]ᵤ ⟧-user ((η , x) , c')-}
             (cong₂ (λ a b → a b)
                 {x = apply-runner (⟦ r ⟧-value (⟦ σ ⟧-sub η)) (⟦ m ⟧-user (⟦ σ ⟧-sub η))}
                 {y = apply-runner (⟦ r [ σ ]ᵥ ⟧-value η) (⟦ m [ σ ]ᵤ ⟧-user η)}
@@ -575,7 +583,6 @@ mutual
         (cong₂ (λ x y → x y) 
             (sub-K σ η k) 
             refl)) 
-
     sub-K σ η (match v `with k) = Eq.trans 
         (cong ⟦ k ⟧-kernel 
             (cong₂ _,_ 
@@ -616,11 +623,7 @@ mutual
                 {y = ⟦ k [ σ ]ₖ ⟧-kernel η}
                 (sub-K σ η k)
                 refl))
-            (sub-V σ η c)
-    
-    {-{! cong₂ (λ a b → a b) {x = ⟦ setenv c k ⟧-kernel} {y = ?} {u = (⟦ σ ⟧-sub η)} {v = (⟦ c [ σ ]ᵥ ⟧-value η)}  
-        ? 
-        ?  !}-})
+            (sub-V σ η c))
     sub-K σ η (user m `with k) = fun-ext (λ C → 
         cong₂ bind-tree 
             (fun-ext (λ X → 
