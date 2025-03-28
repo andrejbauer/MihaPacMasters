@@ -18,6 +18,7 @@ import Monads
 import Equations
 import Denotations
 import Sub-Validity
+import Ren-Validity
 
 module Validity (G : GTypes) (O : Ops G) where
 
@@ -33,6 +34,7 @@ open Denotations G O
 open import Renaming G O 
 open import Substitution G O
 open Sub-Validity G O
+open Ren-Validity G O
  
 tree-id-lemma : ∀ {X Σ} (t : Tree Σ ⟦ X ⟧v)
     → bind-tree leaf t ≡ t
@@ -103,8 +105,8 @@ mutual
                 {u = (⟦ m ⟧-user (η , res))}
                 {v = (⟦ m ⟧-user (η , res))}
                 (fun-ext (λ X₁ → Eq.trans
-                        (cong ⟦ n ⟧-user (cong (_, X₁)
-                            (begin 
+                    (cong ⟦ n ⟧-user (cong (_, X₁) 
+                        (begin 
                             η 
                             ≡⟨ sub-id-lemma η ⟩ 
                             ⟦ var ⟧-sub η 
@@ -114,10 +116,11 @@ mutual
                             (⟦ (λ x → var (wkᵣ (there x))) ⟧-sub ((η , res) , X₁)) 
                             ≡⟨⟩ 
                             refl
-                            )
-                        (sub-U (extendₛ (λ x₁ → var (there x₁))) ((η , res) , X₁) n))) 
+                            )))
+                    (sub-U (extendₛ (λ x₁ → var (there x₁))) ((η , res) , X₁) n)))
                 refl
-            ))
+                   
+            )) 
     valid-U (match-with-beta-prod v w m) η = Eq.trans 
         (cong ⟦ m ⟧-user (cong (_, ⟦ w ⟧-value η) (cong (_, ⟦ v ⟧-value η) (sub-id-lemma η)))) 
         (sub-U ((var ∷ₛ v) ∷ₛ w) η m)

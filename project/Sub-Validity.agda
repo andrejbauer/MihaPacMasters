@@ -115,7 +115,7 @@ mutual
     sub-V : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (v : Γ' ⊢V: X)
         → ⟦ v ⟧-value (⟦ σ ⟧-sub η) ≡ ⟦ v [ σ ]ᵥ ⟧-value η
     sub-V {Γ' = Γ' ∷ X} σ η (var here) = refl
-    sub-V {Γ' = Γ' ∷ X} σ η (var (there x)) = sub-V {Γ' = Γ'} (σ ∘ there) η (var x)
+    sub-V {Γ' = Γ' ∷ X} σ η (var (there x)) = sub-V {Γ' = Γ'} (σ ∘ (there {Y = X})) η (var x)
     sub-V σ η (sub-value v x) = cong (coerceᵥ x) ((sub-V σ η v))
     sub-V σ η ⟨⟩ = refl
     sub-V σ η ⟨ v , w ⟩ = cong₂ _,_ (sub-V σ η v) (sub-V σ η w)
@@ -138,7 +138,9 @@ mutual
         begin 
         ⟦ r op x ⟧-kernel (⟦ σ ⟧-sub η , param) 
         ≡⟨ cong ⟦ r op x ⟧-kernel (cong₂ _,_ (sub-wk σ η) refl) ⟩ 
-        ⟦ r op x ⟧-kernel (⟦ extendₛ {X = {!   !}} σ ⟧-sub (η , param)) 
+        ⟦ r op x ⟧-kernel (⟦ (λ x₁ → σ x₁ [ there ]ᵥᵣ) ⟧-sub (η , param) , param)
+        ≡⟨ refl ⟩
+        ⟦ r op x ⟧-kernel (⟦ extendₛ σ ⟧-sub (η , param)) 
         ≡⟨ sub-K (extendₛ σ) (η , param) (r op x) ⟩ 
         ⟦ r op x [ extendₛ σ ]ₖ ⟧-kernel (η , param)
         ≡⟨ cong (λ a → ⟦ a ⟧-kernel (η , param)) {y = sub-coop (r op x) σ} (sub-coop-lemma σ (r op x)) ⟩ 

@@ -158,7 +158,7 @@ mutual
                     (ren-wk (ρ ∘ᵣ there) (η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)))) 
                 refl) 
             refl) ⟩
-        ⟦ M ⟧-user (⟦ extendᵣ {X = {! _ !}} (extendᵣ {X = {!   !}} ρ) ⟧-ren ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)))
+        ⟦ M ⟧-user (⟦ extendᵣ (extendᵣ ρ) ⟧-ren ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)))
         ≡⟨ ren-user M (extendᵣ (extendᵣ ρ)) ((η , (proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η))) , (proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η))) ⟩ 
         refl)
     ren-user {Γ} {Γ'} {Xᵤ} (`using R at C `run M finally N) ρ η = cong₂ bind-tree
