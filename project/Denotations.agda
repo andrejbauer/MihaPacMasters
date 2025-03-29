@@ -68,6 +68,7 @@ mutual --TODO: This should go into a different module/file. Essentially putting 
   ⟦ X ↯ Σ , C ⟧k = KComp Σ ⟦ C ⟧g ⟦ X ⟧v
 
 -- Denotation of contexts are runtime environments
+
 ⟦_⟧-ctx : Ctx → Set
 ⟦ [] ⟧-ctx = ⊤
 ⟦ Γ ∷ X ⟧-ctx = ⟦ Γ ⟧-ctx × ⟦ X ⟧v

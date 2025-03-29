@@ -134,17 +134,17 @@ mutual
                 refl))
             (sub-K (extendₛ σ) (η , X) k)) 
             --sub-K (extendₛ σ) (η , param) (r op x)
-    sub-V σ η (runner r) = fun-ext (λ op → fun-ext (λ x → fun-ext (λ param → 
+    sub-V {Γ} {Γ'} {Σ ⇒ Σ' , C'} σ η (runner {Σ} {Σ'} {C'} r) = fun-ext (λ op → fun-ext (λ x → fun-ext (λ par → 
         begin 
-        ⟦ r op x ⟧-kernel (⟦ σ ⟧-sub η , param) 
+        ⟦ r op x ⟧-kernel (⟦ σ ⟧-sub η , par) 
         ≡⟨ cong ⟦ r op x ⟧-kernel (cong₂ _,_ (sub-wk σ η) refl) ⟩ 
-        ⟦ r op x ⟧-kernel (⟦ (λ x₁ → σ x₁ [ there ]ᵥᵣ) ⟧-sub (η , param) , param)
+        ⟦ r op x ⟧-kernel (⟦ (λ x₁ → σ x₁ [ there ]ᵥᵣ) ⟧-sub (η , par) , par)
         ≡⟨ refl ⟩
-        ⟦ r op x ⟧-kernel (⟦ extendₛ σ ⟧-sub (η , param)) 
-        ≡⟨ sub-K (extendₛ σ) (η , param) (r op x) ⟩ 
-        ⟦ r op x [ extendₛ σ ]ₖ ⟧-kernel (η , param)
-        ≡⟨ cong (λ a → ⟦ a ⟧-kernel (η , param)) {y = sub-coop (r op x) σ} (sub-coop-lemma σ (r op x)) ⟩ 
-        ⟦ sub-coop (r op x) σ ⟧-kernel (η , param)
+        ⟦ r op x ⟧-kernel (⟦ extendₛ {X = gnd (param op)} σ ⟧-sub (η , par)) 
+        ≡⟨ sub-K (extendₛ σ) (η , par) (r op x) ⟩ 
+        ⟦ r op x [ extendₛ σ ]ₖ ⟧-kernel (η , par)
+        ≡⟨ cong (λ a → ⟦ a ⟧-kernel (η , par)) {y = sub-coop (r op x) σ} (sub-coop-lemma σ (r op x)) ⟩ 
+        ⟦ sub-coop (r op x) σ ⟧-kernel (η , par)
         ≡⟨ refl ⟩
         refl
         )))
@@ -218,7 +218,7 @@ mutual
                     (sub-V σ η r)
                     (sub-U σ η m))
                 (sub-V σ η c))
-    sub-U σ η (kernel k at c finally m) = cong₂ bind-tree
+    sub-U {Γ} {Γ'} {X' ! Σ} σ η (kernel k at c finally m) = cong₂ bind-tree
         {x = (λ { (X , C) → ⟦ m ⟧-user ((⟦ σ ⟧-sub η , X) , C) })}
         {y = (λ { (X , C) → ⟦ m [ extendₛ (extendₛ σ) ]ᵤ ⟧-user ((η , X) , C) })}
         {u = (⟦ k ⟧-kernel (⟦ σ ⟧-sub η) (⟦ c ⟧-value (⟦ σ ⟧-sub η)))}
@@ -228,7 +228,7 @@ mutual
                     (cong₂ _,_ 
                         (begin 
                         (⟦ σ ⟧-sub η 
-                        ≡⟨ sub-wk {X = {!   !}} σ η ⟩ 
+                        ≡⟨ sub-wk σ η ⟩ 
                         ⟦ (λ x → σ x [ there ]ᵥᵣ) ⟧-sub (η , X) 
                         ≡⟨ sub-wk (there ᵣ∘ₛ σ) (η , X) ⟩ 
                         ⟦ (λ x → (there ᵣ∘ₛ σ) x [ there ]ᵥᵣ) ⟧-sub ((η , X) , C)
