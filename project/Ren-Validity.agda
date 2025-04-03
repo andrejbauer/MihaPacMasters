@@ -31,7 +31,7 @@ open import Renaming G O
 open import Substitution G O
 
 ren-coop-lemma : ∀ { Γ Γ' Σ C op} (ρ : Ren Γ Γ') (coop : co-op Γ' Σ C op)
-    → coop [ extendᵣ ρ ]ₖᵣ ≡ rename-coop coop ρ
+    → coop [ extdᵣ ρ ]ₖᵣ ≡ rename-coop coop ρ
 ren-coop-lemma ρ (sub-kernel coop x) = refl
 ren-coop-lemma ρ (return x) = refl
 ren-coop-lemma ρ (x · x₁) = refl
@@ -91,14 +91,14 @@ mutual
                     (cong ⟦ x ⟧-user (cong₂ _,_ 
                         (ren-wk {v = Y} ρ η)
                         refl))
-                    (ren-user x (extendᵣ ρ) (η , Y))))  
+                    (ren-user x (extdᵣ ρ) (η , Y))))  
             refl)
     ren-value {Γ} {Γ'} (funK x) ρ η = fun-ext (λ X → 
         Eq.trans 
             (cong ⟦ x ⟧-kernel (cong₂ _,_ 
                 (ren-wk {v = X} ρ η)
                 refl)) 
-            (ren-kernel x (extendᵣ ρ) (η , X)))
+            (ren-kernel x (extdᵣ ρ) (η , X)))
     ren-value {Γ} {Γ'} {Σ ⇒ Σ' , C} (runner {Σ} {Σ'} {C} x) ρ η = fun-ext (λ op → fun-ext (λ x' → fun-ext (λ par → 
         begin 
         ⟦ x op x' ⟧-kernel (⟦ ρ ⟧-ren η , par) 
@@ -106,15 +106,15 @@ mutual
             (ren-wk ρ η)
             refl) ⟩ 
         ⟦ x op x' ⟧-kernel (⟦ extdᵣ {Γ'} {Γ} {X = gnd (param op)} ρ ⟧-ren (η , par)) 
-        ≡⟨ (ren-kernel (x op x') (extendᵣ ρ) (η , par)) ⟩ 
-        ⟦ x op x' [ extendᵣ ρ ]ₖᵣ ⟧-kernel (η , par) 
+        ≡⟨ (ren-kernel (x op x') (extdᵣ ρ) (η , par)) ⟩ 
+        ⟦ x op x' [ extdᵣ ρ ]ₖᵣ ⟧-kernel (η , par) 
         ≡⟨ cong₂ (λ a b → a b) 
-                {x = ⟦ x op x' [ extendᵣ ρ ]ₖᵣ ⟧-kernel}
+                {x = ⟦ x op x' [ extdᵣ ρ ]ₖᵣ ⟧-kernel}
                 {y = ⟦ rename-coop (x op x') ρ ⟧-kernel}
                 {u = η , par}
                 {v = η , par}
                 (cong ⟦_⟧-kernel 
-                    {x = x op x' [ extendᵣ ρ ]ₖᵣ} 
+                    {x = x op x' [ extdᵣ ρ ]ₖᵣ} 
                     {y = rename-coop (x op x') ρ} 
                     (ren-coop-lemma ρ (x op x')))
                 refl ⟩ 
@@ -131,13 +131,13 @@ mutual
                 (cong ⟦ M ⟧-user (cong₂ _,_
                     (ren-wk {v = res} ρ η)
                     refl))
-                (ren-user M (extendᵣ ρ) (η , res)))) 
+                (ren-user M (extdᵣ ρ) (η , res)))) 
     ren-user {Γ} {Γ'} {Xᵤ} (`let M `in N) ρ η = cong₂ bind-tree 
         (fun-ext (λ X → Eq.trans
             (cong ⟦ N ⟧-user (cong₂ _,_
                 (ren-wk {v = X} ρ η)
                 refl))
-            (ren-user N (extendᵣ ρ) (η , X)))) 
+            (ren-user N (extdᵣ ρ) (η , X)))) 
         (ren-user M ρ η)
     ren-user {Γ} {Γ'} {X ! Σ} (match_`with {X'} {Y'} {X ! Σ} V M) ρ η = 
         begin 
@@ -160,11 +160,11 @@ mutual
             refl) ⟩
         ⟦ M ⟧-user (⟦ extdᵣ {X = Y'} (extdᵣ {Γ'} {Γ} {X'} ρ) ⟧-ren 
             ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)))
-        ≡⟨ ren-user M (extendᵣ (extendᵣ ρ)) ((η , (proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η))) , (proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η))) ⟩ 
+        ≡⟨ ren-user M (extdᵣ (extdᵣ ρ)) ((η , (proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η))) , (proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η))) ⟩ 
         refl)
     ren-user {Γ} {Γ'} {Xᵤ} (`using_at_`run_finally {Σ} {Σ'} {C'} {X'} {Y'} R C M N) ρ η = cong₂ bind-tree
         {x = (λ { (x , c') → ⟦ N ⟧-user ((⟦ ρ ⟧-ren η , x) , c') })}
-        {y = λ { (x , c') → ⟦ N [ extendᵣ (extendᵣ ρ) ]ᵤᵣ ⟧-user ((η , x) , c')}}
+        {y = λ { (x , c') → ⟦ N [ extdᵣ (extdᵣ ρ) ]ᵤᵣ ⟧-user ((η , x) , c')}}
         {u = (apply-runner (⟦ R ⟧-value (⟦ ρ ⟧-ren η)) (⟦ M ⟧-user (⟦ ρ ⟧-ren η)) (⟦ C ⟧-value (⟦ ρ ⟧-ren η)))}
         {v = (apply-runner (⟦ R [ ρ ]ᵥᵣ ⟧-value η) (⟦ M [ ρ ]ᵤᵣ ⟧-user η) (⟦ C [ ρ ]ᵥᵣ ⟧-value η))}
         (fun-ext (λ {(x , c') → 
@@ -178,7 +178,7 @@ mutual
                         refl) 
                     refl) ⟩ 
                 ⟦ N ⟧-user (⟦ extdᵣ {X = gnd C'} (extdᵣ {X = X'} ρ) ⟧-ren ((η , x) , c'))
-                ≡⟨ ren-user N (extendᵣ (extendᵣ ρ)) ((η , x) , c') ⟩ 
+                ≡⟨ ren-user N (extdᵣ (extdᵣ ρ)) ((η , x) , c') ⟩ 
                 refl)}))
         (begin 
             apply-runner (⟦ R ⟧-value (⟦ ρ ⟧-ren η)) (⟦ M ⟧-user (⟦ ρ ⟧-ren η)) (⟦ C ⟧-value (⟦ ρ ⟧-ren η)) 
@@ -196,7 +196,7 @@ mutual
 
     ren-user {Γ} {Γ'} {Xᵤ} (kernel_at_finally {X'} {Y'} {Σ'} {C'} K C M) ρ η = cong₂ bind-tree 
         {x = (λ { (X , C) → ⟦ M ⟧-user ((⟦ ρ ⟧-ren η , X) , C) })}
-        {y = (λ { (X , C) → ⟦ M [ extendᵣ (extendᵣ ρ) ]ᵤᵣ ⟧-user ((η , X) , C)})}
+        {y = (λ { (X , C) → ⟦ M [ extdᵣ (extdᵣ ρ) ]ᵤᵣ ⟧-user ((η , X) , C)})}
         {u = (⟦ K ⟧-kernel (⟦ ρ ⟧-ren η) (⟦ C ⟧-value (⟦ ρ ⟧-ren η)))}
         {v = (⟦ K [ ρ ]ₖᵣ ⟧-kernel η (⟦ C [ ρ ]ᵥᵣ ⟧-value η))}
         (fun-ext (λ (X , C) → 
@@ -210,7 +210,7 @@ mutual
                     refl) 
                 refl) ⟩ 
             ⟦ M ⟧-user (⟦ extdᵣ {X = gnd C'} (extdᵣ {X = X'} ρ) ⟧-ren ((η , X) , C)) 
-            ≡⟨ ren-user M (extendᵣ (extendᵣ ρ)) ((η , X) , C) ⟩ 
+            ≡⟨ ren-user M (extdᵣ (extdᵣ ρ)) ((η , X) , C) ⟩ 
             refl 
         ))
         (cong₂ (λ a b → a b) 
@@ -241,11 +241,11 @@ mutual
         ⟦ K ⟧-kernel (⟦ extdᵣ {X = X'} ρ ⟧-ren (η , ⟦ W [ ρ ]ᵥᵣ ⟧-value η))
         ≡⟨ refl ⟩ 
         ⟦ K ⟧-kernel (⟦ extdᵣ {X = X'} ρ ⟧-ren (η , ⟦ W [ ρ ]ᵥᵣ ⟧-value η)) 
-        ≡⟨ ren-kernel K (extendᵣ ρ) (η , ⟦ W [ ρ ]ᵥᵣ ⟧-value η) ⟩ 
+        ≡⟨ ren-kernel K (extdᵣ ρ) (η , ⟦ W [ ρ ]ᵥᵣ ⟧-value η) ⟩ 
         refl)
     ren-kernel {Γ} {Γ'} {Xₖ} (`let_`in {X'} {Y'} K L) ρ η = fun-ext (λ C → cong₂ bind-tree
         {x = (λ { (x , C') → ⟦ L ⟧-kernel (⟦ ρ ⟧-ren η , x) C' })}
-        {y = (λ { (x , C') → ⟦ L [ extendᵣ ρ ]ₖᵣ ⟧-kernel (η , x) C' })}
+        {y = (λ { (x , C') → ⟦ L [ extdᵣ ρ ]ₖᵣ ⟧-kernel (η , x) C' })}
         {u = (⟦ K ⟧-kernel (⟦ ρ ⟧-ren η) C)}
         {v = (⟦ K [ ρ ]ₖᵣ ⟧-kernel η C)}
         (fun-ext (λ (x' , C') → 
@@ -256,9 +256,9 @@ mutual
                 refl) ⟩ 
             ⟦ L ⟧-kernel (⟦ extdᵣ {X = X'} ρ ⟧-ren (η , x')) C' 
             ≡⟨ cong₂ (λ a b → a b) 
-                (ren-kernel L (extendᵣ ρ) (η , x')) 
+                (ren-kernel L (extdᵣ ρ) (η , x')) 
                 refl ⟩ 
-            (⟦ L [ extendᵣ ρ ]ₖᵣ ⟧-kernel (η , x') C') 
+            (⟦ L [ extdᵣ ρ ]ₖᵣ ⟧-kernel (η , x') C') 
             ≡⟨ refl ⟩ 
             refl 
             ))
@@ -282,14 +282,14 @@ mutual
         ⟦ K ⟧-kernel (⟦ extdᵣ {X = Y'} 
             (extdᵣ {X = X'} ρ) ⟧-ren 
             ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)))  
-        ≡⟨ ren-kernel K (extendᵣ (extendᵣ ρ)) ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) ⟩ 
-        ⟦ K [ extendᵣ (extendᵣ ρ) ]ₖᵣ ⟧-kernel ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) 
+        ≡⟨ ren-kernel K (extdᵣ (extdᵣ ρ)) ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) ⟩ 
+        ⟦ K [ extdᵣ (extdᵣ ρ) ]ₖᵣ ⟧-kernel ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) , proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) 
         ≡⟨ refl ⟩ 
         refl)
 {- ⟦ K ⟧-kernel
       ((⟦ ρ ⟧-ren η , proj₁ (⟦ V ⟧-value (⟦ ρ ⟧-ren η))) ,
        proj₂ (⟦ V ⟧-value (⟦ ρ ⟧-ren η)))  ≡ 
-    ⟦ K [ extendᵣ (extendᵣ ρ) ]ₖᵣ ⟧-kernel
+    ⟦ K [ extdᵣ (extdᵣ ρ) ]ₖᵣ ⟧-kernel
       ((η , proj₁ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) ,
        proj₂ (⟦ V [ ρ ]ᵥᵣ ⟧-value η)) -}
     ren-kernel {Γ} {Γ'} {Xₖ} (opₖ op x par K) ρ η = fun-ext (λ C → 
@@ -297,22 +297,22 @@ mutual
             (ren-value par ρ η) 
             (fun-ext (λ res → cong₂ (λ a b → a b)
                 {x = ⟦ K ⟧-kernel (⟦ ρ ⟧-ren η , res)}
-                {y = ⟦ K [ extendᵣ ρ ]ₖᵣ ⟧-kernel (η , res)}
+                {y = ⟦ K [ extdᵣ ρ ]ₖᵣ ⟧-kernel (η , res)}
                 (Eq.trans 
                     (cong ⟦ K ⟧-kernel (cong₂ _,_
                         (ren-wk ρ η)
                         refl)) 
-                    (ren-kernel K (extendᵣ ρ) (η , res))) 
+                    (ren-kernel K (extdᵣ ρ) (η , res))) 
                 refl)))
     ren-kernel {Γ} {Γ'} {Xₖ} (getenv K) ρ η = fun-ext (λ C → 
         cong₂ (λ a b → a b) 
             {x = ⟦ K ⟧-kernel (⟦ ρ ⟧-ren η , C)}
-            {y = ⟦ K [ extendᵣ ρ ]ₖᵣ ⟧-kernel (η , C)}
+            {y = ⟦ K [ extdᵣ ρ ]ₖᵣ ⟧-kernel (η , C)}
             (Eq.trans 
                 (cong ⟦ K ⟧-kernel (cong₂ _,_ 
                     (ren-wk ρ η)
                     refl))
-                (ren-kernel K (extendᵣ ρ) (η , C))) 
+                (ren-kernel K (extdᵣ ρ) (η , C))) 
             refl)
     ren-kernel {Γ} {Γ'} {Xₖ} (setenv V K) ρ η = fun-ext (λ _ → 
         cong₂ (λ a b → a b) 
@@ -326,12 +326,12 @@ mutual
             {v = (⟦ M [ ρ ]ᵤᵣ ⟧-user η)}
             (fun-ext λ X' → cong₂ (λ a b → a b)
                 {x = ⟦ K ⟧-kernel (⟦ ρ ⟧-ren η , X')}
-                {y = ⟦ K [ extendᵣ ρ ]ₖᵣ ⟧-kernel (η , X')}
+                {y = ⟦ K [ extdᵣ ρ ]ₖᵣ ⟧-kernel (η , X')}
                 (Eq.trans
                     (cong ⟦ K ⟧-kernel (cong₂ _,_
                         (ren-wk ρ η)
                         refl))
-                    (ren-kernel K (extendᵣ ρ) (η , X')))
+                    (ren-kernel K (extdᵣ ρ) (η , X')))
                 refl)
             (ren-user M ρ η))
 

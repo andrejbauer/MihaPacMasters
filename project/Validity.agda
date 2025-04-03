@@ -43,37 +43,12 @@ tree-id {X} {Σ} (leaf x) = refl
 tree-id {X} {Σ} (node op p param t) = cong (node op p param) 
     (fun-ext (λ res → tree-id {X = X} {Σ = Σ} (t res)))
 
-helpful : ∀ {Γ op Σ C } (param₁ : {!   !}) (η : ⟦ Γ ⟧-ctx) (coop : co-op Γ Σ C op)
-    → ⟦ coop ⟧-kernel (η , param₁) ≡
-      ⟦ rename-coop {Γ} {Γ} {Σ} {C} {op} coop (λ x → x) ⟧-kernel (η , param₁)
-helpful par η (sub-kernel coop x) = {!   !}
-helpful {[]} par η (return v) = {!   !}
-helpful {Γ ∷ X} par η (return v) = {!   !} {- fun-ext (λ C' → cong leaf (cong (_, C') (cong (λ a → ⟦ a ⟧-value (η , par))
-    {x = x}
-    {y = x [ extendᵣ (λ x₁ → x₁) ]ᵥᵣ}
-    {! α  !}
-    ))) -}
-helpful par η (x · x₁) = {!   !}
-helpful par η (`let coop `in coop₁) = {!   !}
-helpful par η (match x `with coop) = {!   !}
-helpful par η (opₖ op x x₁ coop) = {!   !}
-helpful par η (getenv coop) = {!   !}
-helpful par η (setenv x coop) = {!   !}
-helpful par η (user x `with coop) = {!   !}
 
-helpful2 : ∀ {Γ v X} (v : Γ ∷ v ⊢V: X) 
-    → v ≡ v [ extendᵣ idᵣ ]ᵥᵣ
-helpful2 {Γ} v = {!   !}
-
-{- --{Γ} {X ! Σ} (using-run-finally-beta-op {Σ'} {Σ} {C} {X'} {Y'} R w op param p m n) η
-helpful : ∀ {Γ : Ctx} {C : GType} {Σ' : Sig} {X X' R p n C' x} {Xᵤ : UType} {m n : Γ ⊢U: Xᵤ} → (Γ ⊢U m ≡ n) → (η : ⟦ Γ ⟧-ctx)
-    → (w : Γ ⊢V: gnd C) (op : Op) (param : Γ ⊢V: gnd (param op)) 
-    →  (m : Γ ∷ gnd (result op) ⊢U: X' ! Σ') 
-    → (x' : ⟦ result op ⟧g) (C'' : ⟦ C ⟧g)
-    → (apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁)) (⟦ m ⟧-user (η , x)) C')
-    ≡ apply-runner (λ op₁ x param₁ → ⟦ rename-coop (R op₁ x) (λ x₁ → there (there x₁)) ⟧-kernel
-        (((η , x') , C'') , param₁)) (⟦ m [ there ]ᵤᵣ ⟧-user ((η , x') , C'')) C''
-helpful x η w op param₁ m x' C'' = {!   !} -}
+bind-tree-assoc : {Σ : Sig} {X Y Z : Set} (c : Tree Σ X) (f : X → Tree Σ Y)
+    (g : Y → Tree Σ Z) →
+    bind-tree g (bind-tree f c) ≡ bind-tree (λ x → bind-tree g (f x)) c
+bind-tree-assoc (leaf x) f g = refl
+bind-tree-assoc (node op p param c) f g = cong (node op p param) (fun-ext (λ res → bind-tree-assoc (c res) f g))
 
 mutual
 
@@ -157,9 +132,9 @@ mutual
         (sub-U ((var ∷ₛ v) ∷ₛ w) η m)
     valid-U (using-run-finally-beta-return r w v m) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (cong₂ _,_ sub-var refl) refl))
         (sub-U ((var ∷ₛ v) ∷ₛ w) η m)
-    valid-U {Γ} {X ! Σ} (using-run-finally-beta-op {Σ'} {Σ} {C} {X'} {Y'} R w op param p m n) η = 
+    valid-U {Γ} {X ! Σ} (using-run-finally-beta-op {Σ'} {Σ} {C} {X'} {X} R w op param' p m n) η = 
         begin 
-        ⟦ `using runner R at w `run opᵤ op p param m finally n ⟧-user η
+        ⟦ `using runner R at w `run opᵤ op p param' m finally n ⟧-user η
         ≡⟨ refl ⟩ 
         bind-tree (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') })
           (bind-tree
@@ -167,187 +142,187 @@ mutual
                   → apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
                     (⟦ m ⟧-user (η , x)) C'
               })
-           (⟦ R op p ⟧-kernel (η , ⟦ param ⟧-value η) (⟦ w ⟧-value η)))
-        ≡⟨ {! cong  !} {- >>=-assoc-Tree Σ 
-        (⟦ R op p ⟧-kernel (η , ⟦ param ⟧-value η) (⟦ w ⟧-value η)) (λ { (x , C')
-                 → apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
-                   (⟦ m ⟧-user (η , x)) C'
-             }) (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') }) -} ⟩
+           (⟦ R op p ⟧-kernel (η , ⟦ param' ⟧-value η) (⟦ w ⟧-value η)))
+        ≡⟨ bind-tree-assoc 
+            (⟦ R op p ⟧-kernel (η , ⟦ param' ⟧-value η) (⟦ w ⟧-value η)) 
+            (λ { (x , C')
+              → apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
+                (⟦ m ⟧-user (η , x)) C'})
+            (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') }) ⟩
         bind-tree
-          (λ A →
+          (λ (res , C₁) →
              bind-tree (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') })
              (apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
-              (⟦ m ⟧-user (η , A .proj₁))
-              (A .proj₂)))
-          (⟦ R op p ⟧-kernel (η , ⟦ param ⟧-value η) (⟦ w ⟧-value η)) {- bind-tree
-          (λ (res , C₁) →
-             bind-tree {Σ} {Data.Product.Σ ⟦ X' ⟧v (λ _ → ⟦ gnd C ⟧v)} {⟦ X ⟧v} 
-                (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') })
-                (apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁)) (⟦ m ⟧-user (η , res)) C₁)
-             {- ((λ { (x , C')
-                     → apply-runner 
-                    (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
-                       (⟦ m ⟧-user (η , x)) C'
-                 })
-              x) -})
-          (⟦ R op p ⟧-kernel (η , ⟦ param ⟧-value η) (⟦ w ⟧-value η)) -}
-          ≡⟨ cong₂ bind-tree
-            {x = (λ (res , C₁) → bind-tree 
-                (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') })
-                (apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁)) (⟦ m ⟧-user (η , res)) C₁))}
-            {u = (⟦ R op p ⟧-kernel (η , ⟦ param ⟧-value η) (⟦ w ⟧-value η))}
-            {v = (⟦ R op p [ var ∷ₛ param ]ₖ ⟧-kernel η (⟦ w ⟧-value η))}
-            (fun-ext (λ (res , C₁) → 
-                cong₂ bind-tree
-                    {x = (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') })}
-                    {u = (apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
-                        (⟦ m ⟧-user (η , res)) C₁)}
-                    {v = (apply-runner
-                        (λ op₁ x param₁ →
-                            ⟦ rename-coop (R op₁ x) (λ x₁ → there (there x₁)) ⟧-kernel
-                            (((η , res) , C₁) , param₁))
-                        (⟦ m [ there ]ᵤᵣ ⟧-user ((η , res) , C₁)) C₁)}
-                    {!   !}
-                    (cong₂ (λ a b → apply-runner a b C₁)
-                        {x = (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))}
-                        {u = (⟦ m ⟧-user (η , res))}
-                        {v = (⟦ m [ there ]ᵤᵣ ⟧-user ((η , res) , C₁))}
-                        (fun-ext (λ op₁ → fun-ext (λ x₁ → fun-ext (λ param₁ → 
-                            --⟦ R op₁ x₁ ⟧-kernel (η , param₁) 
-                            begin 
-                            ⟦ R op₁ x₁ ⟧-kernel (η , param₁)
-                            ≡⟨ {!   !}  ⟩ 
-                                
-                                {- cong (λ a → ⟦ a ⟧-kernel (η , param₁)) 
-                                {x = R op₁ x₁}
-                                {y = rename-coop (R op₁ x₁) idᵣ}
-                                {!   !} ⟩ -}
-                            ⟦ rename-coop (R op₁ x₁) idᵣ ⟧-kernel (η , param₁)
-                            ≡⟨ {!   !} ⟩
-                            {!   !}
-                            ≡⟨ {!   !} ⟩
-                            {!   !}
-                            ≡⟨ {!   !} ⟩
-                            ⟦ rename-coop (R op₁ x₁) (λ x₂ → there (there x₂)) ⟧-kernel
-                                (((η , res) , C₁) , param₁)
-                            ∎
-                            ))))
-
-                            --      ⟦ rename-coop (R op₁ x₁) (λ x₂ → there (there x₂)) ⟧-kernel
-                            --      (((η , res) , C₁) , param₁)
-
+              (⟦ m ⟧-user (η , res))
+              (C₁)))
+          (⟦ R op p ⟧-kernel (η , ⟦ param' ⟧-value η) (⟦ w ⟧-value η))
+        ≡⟨ cong₂ bind-tree
+        {x = (λ (res , C₁) →
+            bind-tree (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') })
+            (apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
+            (⟦ m ⟧-user (η , res))
+            (C₁)))}
+        {y = (λ { (X , C)
+                → ⟦
+                `using
+                runner (λ op₁ p₁ → rename-coop (R op₁ p₁) (λ x → there (there x)))
+                at var here `run m [ there ]ᵤᵣ finally
+                (n [ extdᵣ (extdᵣ (λ x → there (there x))) ]ᵤᵣ)
+                ⟧-user
+                ((η , X) , C)
+            })}
+        {u = (⟦ R op p ⟧-kernel (η , ⟦ param' ⟧-value η) (⟦ w ⟧-value η))}
+        {v = (⟦ R op p [ var ∷ₛ param' ]ₖ ⟧-kernel η (⟦ w ⟧-value η))}
+        (fun-ext λ (res , C') → cong₂ bind-tree
+            {x = (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') })}
+            {y = (λ { (x , c')
+                    → ⟦ n [ extdᵣ (extdᵣ (λ x₁ → there (there x₁))) ]ᵤᵣ ⟧-user
+                    ((((η , res) , C') , x) , c') })}
+            {u = (apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
+                (⟦ m ⟧-user (η , res)) C')}
+            {v = (apply-runner
+                (λ op₁ x param₁ →
+                    ⟦ rename-coop (R op₁ x) (λ x₁ → there (there x₁)) ⟧-kernel
+                    (((η , res) , C') , param₁))
+                (⟦ m [ there ]ᵤᵣ ⟧-user ((η , res) , C')) C')}
+            (fun-ext (λ (X'' , C'') → 
+                (begin
+                ⟦ n ⟧-user ((η , X'') , C'')
+                ≡⟨ cong ⟦ n ⟧-user (cong (λ a → (a , X'') , C'') 
+                    (Eq.trans 
+                        (ren-id-lemma η)
+                        (begin 
+                        ⟦ (λ x → x) ⟧-ren η
+                        ≡⟨ ren-wk idᵣ η ⟩
+                        ⟦ there ⟧-ren (η , res)
+                        ≡⟨ ren-wk there (η , res) ⟩
+                        ⟦ (λ x → there (there x)) ⟧-ren ((η , res) , C')
+                        ≡⟨ ren-wk (there ∘ᵣ there) ((η , res) , C') ⟩ 
+                        ⟦ (λ x → there (there (there x))) ⟧-ren (((η , res) , C') , X'')
+                        ≡⟨ ren-wk (there ∘ᵣ (there ∘ᵣ there)) (((η , res) , C') , X'') ⟩ 
+                        ⟦ (λ x → there (there (there (there x)))) ⟧-ren
+                            ((((η , res) , C') , X'') , C'')
+                        ∎
+                        ))) ⟩
+                ⟦ n ⟧-user
+                  (⟦ extdᵣ {X = gnd C} (extdᵣ {X = X'} (λ x₁ → there (there x₁))) ⟧-ren
+                   ((((η , res) , C') , X'') , C''))
+                ≡⟨ ren-user n (extdᵣ (extdᵣ (λ x₁ → there (there x₁)))) 
+                    ((((η , res) , C') , X'') , C'') ⟩
+                ⟦ n [ extdᵣ (extdᵣ (λ x₁ → there (there x₁))) ]ᵤᵣ ⟧-user
+                  ((((η , res) , C') , X'') , C'')
+                ∎
+                )))
+            (cong₂ (λ a b → apply-runner a b C')
+                {x = (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))}
+                {y = (λ op₁ x param₁ →
+                    ⟦ rename-coop (R op₁ x) (λ x₁ → there (there x₁)) ⟧-kernel
+                    (((η , res) , C') , param₁))}
+                {u = (⟦ m ⟧-user (η , res))}
+                {v = (⟦ m [ there ]ᵤᵣ ⟧-user ((η , res) , C'))}
+                (fun-ext (λ op' → fun-ext (λ x' → fun-ext (λ par' → 
+                    Eq.trans --{A = ⟦ C ⟧g → Tree Σ (Data.Product.Σ ⟦ result op' ⟧g (λ x → ⟦ C ⟧g))}
+                        (begin 
+                        ⟦ R op' x' ⟧-kernel (η , par')
+                        ≡⟨ cong ⟦ R op' x' ⟧-kernel 
+                            (Eq.trans
+                                (ren-id-lemma (η , par'))
+                                (ren-wk idᵣ (η , par'))) ⟩ 
+                        ⟦ R op' x' ⟧-kernel
+                          (⟦ there {_} {gnd (result op)} {Γ ∷ gnd (param op')} ⟧-ren  ((η , par') , res))
+                        ≡⟨ cong ⟦ R op' x' ⟧-kernel 
+                            (cong (_, par') 
+                                (ren-wk (there ∘ᵣ there) ((η , par') , res))) ⟩ 
+                        ⟦ R op' x' ⟧-kernel
+                          (⟦ (λ x → there {Y = gnd C} (there {Y = gnd (result op)} {Γ = Γ ∷ gnd (param op')} x)) ⟧-ren 
+                            (((η , par') , res) , C'))
+                        ≡⟨ ren-kernel (R op' x') (there ∘ᵣ there) (((η , par') , res) , C') ⟩ 
+                        ⟦ R op' x' [ (λ x₁ → there (there x₁)) ]ₖᵣ ⟧-kernel 
+                            ((((η , par') , res) , C'))
+                        ≡⟨ (begin 
+                            ⟦ R op' x' [ there ∘ᵣ there ]ₖᵣ ⟧-kernel
+                                (((η , par') , res) , C')
+                            ≡⟨ Eq.sym (ren-kernel (R op' x') (there ∘ᵣ there) 
+                                (((η , par') , res) , C')) ⟩ 
+                            ⟦ R op' x' ⟧-kernel
+                              (⟦ (λ x → there (there {Y = gnd (result op)} {Γ = Γ ∷ gnd (param op')} x)) ⟧-ren 
+                                (((η , par') , res) , C'))
+                            ≡⟨ cong ⟦ R op' x' ⟧-kernel 
+                                (cong (_, par') 
+                                (Eq.sym (
+                                    begin 
+                                    η
+                                    ≡⟨ ren-id-lemma η ⟩
+                                    ⟦ idᵣ ⟧-ren η
+                                    ≡⟨ ren-wk idᵣ η ⟩
+                                    ⟦ there ⟧-ren (η , par')
+                                    ≡⟨ ren-wk there (η , par') ⟩
+                                    ⟦ there ∘ᵣ there ⟧-ren ((η , par') , res)
+                                    ≡⟨ ren-wk (there ∘ᵣ there) ((η , par') , res) ⟩
+                                    ⟦ (λ x → there (there (there x))) ⟧-ren (((η , par') , res) , C')
+                                    ∎
+                                    ))) ⟩ 
+                            ⟦ R op' x' ⟧-kernel (η , par')
+                            ≡⟨ cong ⟦ R op' x' ⟧-kernel 
+                                (cong (_, par') 
+                                    (begin
+                                    η
+                                    ≡⟨ ren-id-lemma η ⟩
+                                    ⟦ idᵣ ⟧-ren η
+                                    ≡⟨ ren-wk idᵣ η ⟩
+                                    ⟦ there ⟧-ren (η , res)
+                                    ≡⟨ ren-wk there (η , res) ⟩
+                                    ⟦ there ∘ᵣ there ⟧-ren
+                                      ((η , res) , C')
+                                    ≡⟨ ren-wk (there ∘ᵣ there) ((η , res) , C') ⟩
+                                    ⟦ (λ x → there (there (there x))) ⟧-ren (((η , res) , C') , par')
+                                    ∎
+                                )) ⟩ 
+                            ⟦ R op' x' ⟧-kernel
+                              (⟦ extdᵣ {X = gnd (param op')} (λ x → there {Y = gnd C} {Γ = Γ ∷ gnd (result op)} 
+                                (there {Y = gnd (result op)} {Γ = Γ} x)) ⟧-ren 
+                                    (((η , res) , C') , par'))
+                            ≡⟨ ren-kernel (R op' x') (extdᵣ (there ∘ᵣ there)) (((η , res) , C') , par') ⟩ 
+                            ⟦ R op' x' [ extdᵣ (there ∘ᵣ there) ]ₖᵣ ⟧-kernel
+                              (((η , res) , C') , par')
+                            ∎ 
+                            ) ⟩
+                        ⟦ R op' x' [ extdᵣ (λ x₁ → there (there x₁)) ]ₖᵣ ⟧-kernel
+                            (((η , res) , C') , par')
+                        ∎
+                        )
+                        (cong (λ a → ⟦ a ⟧-kernel (((η , res) , C') , par'))
+                            {y = rename-coop (R op' x') (λ x₁ → there (there x₁))}
+                            (ren-coop-lemma (λ x₁ → there (there x₁)) (R op' x')))))))
+                (begin 
+                ⟦ m ⟧-user (η , res)
+                ≡⟨ cong ⟦ m ⟧-user 
+                    (cong (_, res) 
                         (Eq.trans
-                            (cong ⟦ m ⟧-user (cong (_, res) 
-                                (Eq.trans
-                                    (ren-id-lemma η)
-                                    (Eq.trans
-                                        (ren-wk idᵣ η)
-                                        (ren-wk there (η , res))))))
-                            (ren-user m there ((η , res) , C₁))))
-            ))
-            (cong (λ a → a (⟦ w ⟧-value η))
-                {x = ⟦ R op p ⟧-kernel (η , ⟦ param ⟧-value η)}
-                {y = ⟦ R op p [ var ∷ₛ param ]ₖ ⟧-kernel η}
-                (Eq.trans
-                    (cong ⟦ R op p ⟧-kernel (cong (_, ⟦ param ⟧-value η) 
-                        (sub-id-lemma η)))
-                    (sub-K (var ∷ₛ param) η (R op p)))) ⟩ 
-{-         ≡⟨ cong₂ bind-tree
-            {x = (λ x →
-             bind-tree (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') })
-             ((λ { (x , C')
-                     → apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
-                       (⟦ m ⟧-user (η , x)) C'
-                 })
-              x))}
-            {y = (λ { (X , C)
-             → ⟦
-               `using
-               runner (λ op₁ p₁ → rename-coop (R op₁ p₁) (λ x → there (there x)))
-               at var here `run m [ there ]ᵤᵣ finally
-               (n [ extdᵣ (extdᵣ (λ x → there (there x))) ]ᵤᵣ)
-               ⟧-user
-               ((η , X) , C)
-         })}
-            {u = (⟦ R op p ⟧-kernel (η , ⟦ param ⟧-value η) (⟦ w ⟧-value η))}
-            {v = (⟦ R op p [ var ∷ₛ param ]ₖ ⟧-kernel η (⟦ w ⟧-value η))}
-            (fun-ext (λ (x' , C'') → cong₂ bind-tree
-                {x = (λ { (x , c') → ⟦ n ⟧-user ((η , x) , c') })}
-             
-                {y = (λ { (x , c')
-                        → ⟦ n [ extdᵣ (extdᵣ (λ x₁ → there (there x₁))) ]ᵤᵣ ⟧-user
-                            ((((η , x') , C'') , x) , c')
-                                })}
-                {u = ((λ { (x , C')
-                     → apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
-                       (⟦ m ⟧-user (η , x)) C'
-                     })
-                      x')}
-                {v = (apply-runner
-                        (λ op₁ x param₁ →
-                            ⟦ rename-coop (R op₁ x) (λ x₁ → there (there x₁)) ⟧-kernel
-                                (((η , x') , C'') , param₁))
-                                 (⟦ m [ there ]ᵤᵣ ⟧-user ((η , x') , C'')) (C''))}
-                (fun-ext (λ (x , c') → 
-                    begin
-                    ⟦ n ⟧-user ((η , x) , c')
-                    ≡⟨ cong ⟦ n ⟧-user 
-                        (cong (λ a → (a , x) , c') 
-                        (begin
-                            η
-                            ≡⟨ ren-id-lemma η ⟩
-                            ⟦ (λ x₁ → x₁) ⟧-ren η
+                            (ren-id-lemma η)
+                            (begin 
+                            ⟦ (λ x → x) ⟧-ren η
                             ≡⟨ ren-wk idᵣ η ⟩
-                            ⟦ there ⟧-ren (η ,  x') 
-                            ≡⟨ ren-wk there (η ,  x')  ⟩
-                            ⟦ (λ x₁ → there (there x₁)) ⟧-ren ((η ,  x') , C'')
-                            ≡⟨ ren-wk ((λ x₁ → there (there x₁))) ((η ,  x') , C'') ⟩
-                            ⟦ (λ x₁ → there (there (there x₁))) ⟧-ren (((η , x' ) , C'') , x) 
-                            ≡⟨ ren-wk (λ x₁ → there (there (there x₁))) (((η ,  x') , C'') , x) ⟩
-                            ⟦ (λ x₁ → there (there (there (there x₁)))) ⟧-ren
-                                ((((η , x') , C'') , x) , c')
-                            ∎)
-                        ) ⟩
-                    ⟦ n ⟧-user
-                      (⟦ extdᵣ {X = gnd C} (extdᵣ {X = X'} (λ x₁ → there (there x₁))) ⟧-ren
-                       ((((η , x') , C'') , x) , c'))
-                    ≡⟨ ren-user n (extdᵣ (extdᵣ (λ x₁ → there (there x₁)))) 
-                        ((((η , x') , C'') , x) , c') ⟩ 
-                    ⟦ n [ extdᵣ (extdᵣ (λ x₁ → there (there x₁))) ]ᵤᵣ ⟧-user
-                        ((((η , x') , C'') , x) , c')
-                    ∎
-                ))
-                refl --(cong₂ (λ a b → apply-runner a b C'') {!   !} {!   !}) if this doesn't work out
-                {- (
-                    begin 
-                    ((λ { (x , C')
-                     → apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
-                       (⟦ m ⟧-user (η , x)) C'
-                     })
-                      x') 
-                    ≡⟨ cong (λ a → a x')
-                        {x = (λ { (x , C')
-                            → apply-runner (λ op₁ x₁ param₁ → ⟦ R op₁ x₁ ⟧-kernel (η , param₁))
-                            (⟦ m ⟧-user (η , x)) C'})}
-                        {!  !} ⟩ 
-                    apply-runner {!   !} {! λ (x , C') → (⟦ m ⟧-user (η , x))   !} {!   !}
-                    ≡⟨ {!   !} ⟩
-                    apply-runner
-                        (λ op₁ x param₁ →
-                            ⟦ rename-coop (R op₁ x) (λ x₁ → there (there x₁)) ⟧-kernel
-                            (((η , x') , C'') , param₁))
-                         (⟦ m [ there ]ᵤᵣ ⟧-user ((η , x') , C'')) C'' 
-                    ∎
-                ) -}
-                ))
-            (cong (λ a → a (⟦ w ⟧-value η))
-                {x = ⟦ R op p ⟧-kernel (η , ⟦ param ⟧-value η)}
-                {y = ⟦ R op p [ var ∷ₛ param ]ₖ ⟧-kernel η}
-                (Eq.trans
-                    (cong ⟦ R op p ⟧-kernel 
-                        (cong (_, ⟦ param ⟧-value η) 
-                            (sub-id-lemma η)))
-                    (sub-K (var ∷ₛ param) η (R op p)))) ⟩ -}
+                            ⟦ there ⟧-ren (η , res)
+                            ≡⟨ ren-wk there (η , res) ⟩
+                            ⟦ (λ x → there (there x)) ⟧-ren ((η , res) , C')
+                            ∎
+                            ))) ⟩ 
+                ⟦ m ⟧-user (⟦ there {Y = gnd C} {Γ = Γ ∷ gnd (result op)} ⟧-ren 
+                    ((η , res) , C'))
+                ≡⟨ ren-user m there ((η , res) , C') ⟩ 
+                ⟦ m [ there ]ᵤᵣ ⟧-user ((η , res) , C')
+                ∎ 
+                )))
+        (cong (λ a → a (⟦ w ⟧-value η))
+           {x = ⟦ R op p ⟧-kernel (η , ⟦ param' ⟧-value η)}
+           {y = ⟦ R op p [ var ∷ₛ param' ]ₖ ⟧-kernel η} 
+           (Eq.trans
+                (cong ⟦ R op p ⟧-kernel 
+                    (cong (_, ⟦ param' ⟧-value η) 
+                        (sub-id-lemma η)))
+                (sub-K (var ∷ₛ param') η (R op p))))
+             ⟩ 
         bind-tree
           (λ { (X , C)
                  → ⟦
@@ -358,10 +333,10 @@ mutual
                    ⟧-user
                    ((η , X) , C)
              })
-          (⟦ R op p [ var ∷ₛ param ]ₖ ⟧-kernel η (⟦ w ⟧-value η))
+          (⟦ R op p [ var ∷ₛ param' ]ₖ ⟧-kernel η (⟦ w ⟧-value η))
         ≡⟨ refl ⟩
         ⟦
-          kernel R op p [ var ∷ₛ param ]ₖ at w finally
+          kernel R op p [ var ∷ₛ param' ]ₖ at w finally
           (`using runner (rename-runner R (λ x → there (there x)))
            at var here `run m [ there ]ᵤᵣ finally
            (n [ extdᵣ (extdᵣ (λ x → there (there x))) ]ᵤᵣ))
@@ -597,4 +572,4 @@ mutual
                     (cong ⟦ param ⟧-value (Eq.trans
                         (ren-id-lemma η)
                         (ren-wk idᵣ η)))
-                    (ren-value param there (η , res))))))   
+                    (ren-value param there (η , res))))))       

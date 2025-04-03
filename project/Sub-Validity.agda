@@ -79,11 +79,6 @@ mutual
         (sub-ren ρ ((λ x₁ → σ (there x₁))) η)
         (ren-value (σ here) ρ η) 
         
-{-(λ op x₁ param₁ → ⟦ x op x₁ ⟧-kernel (⟦ ρ ⟧-ren η , param₁))
-      ≡
-      (λ op x₁ param₁ → ⟦ rename-coop (x op x₁) ρ ⟧-kernel (η , param₁))-}
-
-
     sub-wk : ∀ {Γ Γ' X} {v : ⟦ X ⟧v} (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx)
         → ⟦ σ ⟧-sub η ≡ ⟦ (λ x → σ x [ (λ y → there {Y = X} y) ]ᵥᵣ) ⟧-sub (η , v)
     sub-wk {Γ} {[]} σ η = refl

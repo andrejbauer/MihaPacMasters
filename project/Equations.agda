@@ -200,7 +200,7 @@ interleaved mutual
       → (m : Γ ∷ gnd (result op) ⊢U: X ! Σ)
       → (n : Γ ∷ X ⊢U: Y ! Σ)
       --------------------------------
-      → Γ ⊢U `let (opᵤ op p v m) `in n ≡ opᵤ op p v (`let m `in (n [ (extendₛ (wkₛ idₛ)) ]ᵤ))
+      → Γ ⊢U `let (opᵤ op p v m) `in n ≡ opᵤ op p v (`let m `in (n [ extdᵣ wkᵣ ]ᵤᵣ))
 
     match-with-beta-prod : {X Y : VType} {Xᵤ : UType} -- LOOK WITH A MORE CAREFUL LOOK AS I CHANGED THE V from being a usertype (for whatever reason) to a valuetype computation
       -- Bodi pazliv da ne zamenjas V1 in V2 na koncu
@@ -236,7 +236,8 @@ interleaved mutual
       → (n : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ')
       ------------
       → Γ ⊢U `using runner R at w `run (opᵤ op p v m) finally n
-          ≡ kernel R op p [ idₛ ∷ₛ v ]ₖ at w finally (`using (runner (rename-runner R (wkᵣ ∘ᵣ wkᵣ))) at var here `run m [ wkᵣ ]ᵤᵣ finally (n [ extdᵣ (extdᵣ (wkᵣ ∘ᵣ wkᵣ)) ]ᵤᵣ))
+          ≡ kernel R op p [ idₛ ∷ₛ v ]ₖ at w finally (`using (runner (rename-runner R (wkᵣ ∘ᵣ wkᵣ))) 
+              at var here `run m [ wkᵣ ]ᵤᵣ finally (n [ extdᵣ (extdᵣ (wkᵣ ∘ᵣ wkᵣ)) ]ᵤᵣ))
 
     kernel-at-finally-beta-return : {X Y : VType}
       {Σ : Sig} {C : KState}
@@ -273,7 +274,9 @@ interleaved mutual
       → (k : Γ ∷ gnd (result op) ⊢K: X ↯ Σ , C)
       → (m : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ)
       -------------------
-      → Γ ⊢U kernel (opₖ op p v k) at w finally m ≡ opᵤ op p v (kernel k at (w [ (wkₛ idₛ) ]ᵥ) finally (m [ extendₛ (extendₛ (wkₛ idₛ)) ]ᵤ))
+      → Γ ⊢U kernel (opₖ op p v k) at w finally m ≡ 
+          opᵤ op p v (kernel k at (w [ wkᵣ ]ᵥᵣ) finally (m [ extdᵣ (extdᵣ wkᵣ) ]ᵤᵣ))
+      --kernel (opₖ op p v k) at w finally m ≡ opᵤ op p v (kernel k at (w [ (wkₛ idₛ) ]ᵥ) finally (m [ extendₛ (extendₛ (wkₛ idₛ)) ]ᵤ))
 
 
     let-in-eta-M : {X : VType}    -- let-eta
@@ -397,7 +400,7 @@ interleaved mutual
       → (k : Γ ∷ gnd (result op) ⊢K: X ↯ Σ , C)
       → (l : Γ ∷ X ⊢K: Y ↯ Σ , C)
       -----------------
-      → Γ ⊢K `let (opₖ op p v k) `in l ≡ opₖ op p v (`let k `in (l [ (extendₛ (wkₛ idₛ)) ]ₖ))
+      → Γ ⊢K `let (opₖ op p v k) `in l ≡ opₖ op p v (`let k `in (l [ extdᵣ wkᵣ ]ₖᵣ))
 
     let-in-beta-getenv : {X Y : VType} -- nisem povsem preprican tu
       {C : KState} {Σ : Sig}
@@ -405,7 +408,7 @@ interleaved mutual
       → (l : Γ ∷ X ⊢K: Y ↯ Σ , C)
       -----------------
       → Γ ⊢K `let (getenv k) `in l
-          ≡ getenv (`let k `in (l [ (extendₛ (wkₛ idₛ)) ]ₖ))
+          ≡ getenv (`let k `in (l [ extdᵣ wkᵣ ]ₖᵣ))
 
     let-in-beta-setenv : {X Y : VType}
       {C : KState} {Σ : Sig}
@@ -445,7 +448,7 @@ interleaved mutual
       → (k : Γ ∷ X ⊢K: Y ↯ Σ , C)
       ----------------------
       → Γ ⊢K user (opᵤ op p v m) `with k
-          ≡ opₖ op p v (user m `with (k [ extendₛ (wkₛ idₛ) ]ₖ))
+          ≡ opₖ op p v (user m `with (k [ extdᵣ wkᵣ ]ₖᵣ))
 
     let-in-eta-K : {X : VType}
       {Σ : Sig} {C : KState}
@@ -455,9 +458,8 @@ interleaved mutual
 
     GetSetenv : {C : KState} {X Y : VType} {Σ : Sig} --tudi za pogledati
       → (k : Γ ⊢K: X ↯ Σ , C)
-      → (v : Γ ∷ gnd C ⊢V: gnd C)
       -------------
-      → Γ ⊢K getenv (setenv v (k [ wkₛ idₛ ]ₖ)) ≡ k
+      → Γ ⊢K getenv (setenv (var here) (k [ wkᵣ ]ₖᵣ)) ≡ k
 
     SetGetenv : {C : KState} {X : VType} {Σ : Sig}
       → (v : Γ ⊢V: gnd C)
@@ -471,23 +473,26 @@ interleaved mutual
       --------------
       → Γ ⊢K setenv v (setenv w k) ≡ setenv w k
 
-    GetOpEnv : {X Y : VType} {C  : KState} {Σ : Sig} -- tu se zdi problematicno kar vtikati gnd notri, poglej pozneje
+    GetOpEnv : {X Y : VType} {C  : KState} {Σ : Sig}
       → (op : Op)
       → (p : op ∈ₒ Σ)
       → (v : Γ ⊢V: gnd (param op))
       → (k : Γ ⊢K: X ↯ Σ , C)
       -----------------
-      → Γ ⊢K getenv (opₖ op p (v [ wkₛ idₛ ]ᵥ) (k [ wkₛ (wkₛ idₛ) ]ₖ))
-          ≡ opₖ op p v (getenv (k [ wkₛ (wkₛ idₛ) ]ₖ))
+      → Γ ⊢K getenv (opₖ op p (v [ wkᵣ ]ᵥᵣ) (k [ wkᵣ ∘ᵣ wkᵣ ]ₖᵣ)) ≡ 
+          opₖ op p v (getenv (k [ wkᵣ ∘ᵣ wkᵣ ]ₖᵣ))
 
-    SetOpEnv : {X Y : VType} {C : KState} {Σ : Sig} -- Negotovost glede param op
+    SetOpEnv : {X : VType} {C : KState} {Σ : Sig}
       → (op : Op)
-      → (p : op ∈ₒ Σ)
+      → (x : op ∈ₒ Σ)
+      → (w : Γ ⊢V: gnd C)
       → (v : Γ ⊢V: gnd (param op))
-      → (k : Γ ⊢K: X ↯ Σ , param op)
+      → (k : Γ ∷ gnd (result op) ⊢K: X ↯ Σ , C)
       ----------------
-      → Γ ⊢K setenv v (opₖ op p v (k [ wkₛ idₛ ]ₖ)) ≡ k
+      → Γ ⊢K setenv w (opₖ op x v k) ≡ opₖ op x v (setenv (w [ wkᵣ ]ᵥᵣ) k)
+      --setenv v (opₖ op x v k) ≡ opₖ op x v (setenv w k)
+      --setenv v (opₖ op x v (k [ wkₛ idₛ ]ₖ)) ≡ opₖ op x v (setenv w (k [ wkₛ idₛ ]ₖ))
 
 
 infix 1 _⊢V_≡_ _⊢U_≡_ _⊢K_≡_
- 
+  
