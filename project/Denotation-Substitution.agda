@@ -14,7 +14,7 @@ import Monads
 import Equations
 import Denotations
 
-module Sub-Validity (G : GTypes) (O : Ops G) where
+module Denotation-Substitution (G : GTypes) (O : Ops G) where
 
 open GTypes G
 open Ops O

@@ -14,7 +14,7 @@ import Monads
 import Equations
 import Denotations
 
-module Ren-Validity (G : GTypes) (O : Ops G) where
+module Denotation-Renaming (G : GTypes) (O : Ops G) where
 
 open GTypes G
 open Ops O
@@ -328,3 +328,8 @@ mutual
                 refl)
             (ren-user M ρ η))
 
+    --lookup-ren
+    lookup-ren : ∀ { Γ Γ' v} (x : v ∈ Γ') (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
+        → lookup x (⟦ ρ ⟧-ren η) ≡ lookup (ρ x) η
+    lookup-ren here ρ η = refl
+    lookup-ren (there x) ρ η = lookup-ren x (λ x → ρ (there x)) η
