@@ -16,7 +16,7 @@ import Monads
 import Equations
 import Denotations
 
-module Ren-Validity (G : GTypes) (O : Ops G) where
+module Denotation-Renaming (G : GTypes) (O : Ops G) where
 
 open GTypes G
 open Ops O
