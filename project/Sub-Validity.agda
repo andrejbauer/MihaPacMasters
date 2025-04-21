@@ -1,12 +1,8 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 open import Data.Unit
 open import Data.Product
 import Relation.Binary.PropositionalEquality as Eq
 open Eq                  using (_≡_; refl; sym; trans; cong; cong₂; subst; [_]; inspect)
-open Eq.≡-Reasoning     -- using ( _≡⟨⟩_ ; _∎ ; begin_) renaming (begin_ to start_ ; step-≡ to step-= ) 
---(begin_ to start_ ; _≡⟨⟩_ to _=<>_ ; step-≡ to step-= ; _∎ to _qed) 
--- using (begin_; _≡⟨⟩_; step-≡; _∎)
+open Eq.≡-Reasoning
 
 open import Function
 
@@ -56,28 +52,6 @@ mutual
     ⟦_⟧-sub : ∀ {Γ Γ'} → Sub Γ Γ' → ⟦ Γ ⟧-ctx → ⟦ Γ' ⟧-ctx  
     ⟦_⟧-sub {Γ' = []} σ η = tt
     ⟦_⟧-sub {Γ' = Γ' ∷ X} σ η = (⟦ σ ∘ there ⟧-sub η) , ⟦ σ here ⟧-value η
-
-    to-sub : ∀ {Γ Γ'} 
-        → Ren Γ Γ' → Sub Γ Γ'
-    to-sub ρ x = var (ρ x) 
-
-    sub-to-ren : ∀ {Γ Γ'} → (ρ : Ren Γ Γ') → (η : ⟦ Γ ⟧-ctx) 
-        → ⟦ to-sub ρ ⟧-sub η ≡ ⟦ ρ ⟧-ren η
-    sub-to-ren {Γ} {[]} ρ η = refl
-    sub-to-ren {Γ} {Γ' ∷ X} ρ η = cong₂ _,_ (sub-to-ren (ρ ∘ there) η) refl
-
-
-    sub-var : ∀ { Γ } {η : ⟦ Γ ⟧-ctx} 
-        → η ≡ ⟦ var ⟧-sub η
-    sub-var {Γ} {η} = Eq.trans (lookup-ext (λ x → Eq.sym (ren-env {ρ = idᵣ} x))) (Eq.sym (sub-to-ren idᵣ η))
-
-    sub-ren : ∀ { Γ Γ' Γ'' } (ρ : Ren Γ Γ') (σ : Sub Γ' Γ'')  (η : ⟦ Γ ⟧-ctx) --(η' : ⟦ Γ ⟧-ctx)
-        → ⟦ σ ⟧-sub (⟦ ρ ⟧-ren η) ≡ ⟦ ρ ᵣ∘ₛ σ ⟧-sub η
-        -- ⟦ σ ⟧-sub η ≡ ⟦ σ' ⟧-sub (η , x)
-    sub-ren {Γ} {Γ'} {Contexts.[]} ρ σ η = refl
-    sub-ren {Γ} {Γ'} {Γ'' Contexts.∷ x} ρ σ η = cong₂ _,_ 
-        (sub-ren ρ ((λ x₁ → σ (there x₁))) η)
-        (ren-value (σ here) ρ η) 
         
     sub-wk : ∀ {Γ Γ' X} {v : ⟦ X ⟧v} (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx)
         → ⟦ σ ⟧-sub η ≡ ⟦ (λ x → σ x [ (λ y → there {Y = X} y) ]ᵥᵣ) ⟧-sub (η , v)
@@ -103,10 +77,6 @@ mutual
         ⟦ (λ x → var (there x)) ⟧-sub (η , v) 
         ∎)
 
-    sub-wk-lemma3 : ∀ {Γ Γ' X} {v : ⟦ X ⟧v} (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx) 
-        → ⟦ ρ ⟧-ren η ≡ ⟦ ρ ∘ᵣ wkᵣ {X = X} ⟧-ren (η , v)
-    sub-wk-lemma3 ρ η = ren-wk ρ η
-
     sub-V : ∀ { Γ Γ' X  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (v : Γ' ⊢V: X)
         → ⟦ v ⟧-value (⟦ σ ⟧-sub η) ≡ ⟦ v [ σ ]ᵥ ⟧-value η
     sub-V {Γ' = Γ' ∷ X} σ η (var here) = refl
@@ -120,8 +90,6 @@ mutual
                 (sub-wk σ η) 
                 refl))
             (sub-U (extendₛ σ) (η , X') m))
-
-    
     sub-V σ η (funK k) = fun-ext (λ X → 
         Eq.trans
             (cong ⟦ k ⟧-kernel (cong₂ _,_ 
@@ -143,23 +111,23 @@ mutual
         ≡⟨ refl ⟩
         refl
         )))
-
-
-
     --POTENTIAL TODO 11. 3.: use begin_ syntactic sugar to make the proofs prettier. 
-
 
     sub-U : ∀ { Γ Γ' Xᵤ  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (m : Γ' ⊢U: Xᵤ)
         → ⟦ m ⟧-user (⟦ σ ⟧-sub η) ≡ ⟦ m [ σ ]ᵤ ⟧-user η
     sub-U σ η (sub-user m p) = cong (coerceᵤ p) (sub-U σ η m)
     sub-U σ η (return v) = cong leaf (sub-V σ η v) 
-    sub-U σ η (v · w) = cong₂ (λ z → z) (sub-V σ η v) (sub-V σ η w) --ISSUE: How is (λ z → z) accepted?
-    sub-U σ η (opᵤ op p par m) = cong₂ (node op p) (sub-V σ η par) (fun-ext (λ res → 
-        Eq.trans 
-            (cong ⟦ m ⟧-user (cong₂ _,_ 
+    sub-U σ η (v · w) = cong₂ (λ a b → a b) (sub-V σ η v) (sub-V σ η w)
+    sub-U {Γ} {Γ'} {X ! Σ} σ η (opᵤ {X'} op p par m) = cong₂ (node op p) (sub-V σ η par) (fun-ext (λ res → 
+        (begin
+        ⟦ m ⟧-user (⟦ σ ⟧-sub η , res)
+        ≡⟨    (cong ⟦ m ⟧-user (cong₂ _,_ 
                 (sub-wk σ η) 
-                refl))
-            (sub-U (extendₛ σ) (η , res) m)))
+                refl)) ⟩
+        ⟦ m ⟧-user (⟦ extendₛ {Γ} {Γ'} {gnd (result op)} σ ⟧-sub (η , res))
+        ≡⟨    (sub-U (extendₛ σ) (η , res) m)⟩
+        ⟦ m [ extendₛ σ ]ᵤ ⟧-user (η , res)
+        ∎)))
     sub-U σ η (`let m `in n) = cong₂ bind-tree 
         (fun-ext (λ X 
             → Eq.trans 

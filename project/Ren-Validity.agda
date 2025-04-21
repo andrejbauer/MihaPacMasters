@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 open import Data.Unit
 open import Data.Product
 import Relation.Binary.PropositionalEquality as Eq
@@ -67,16 +65,11 @@ mutual
         ⟦ there {Y = X} ⟧-ren (η , v) 
         ∎)
 
-
-    ren-env : ∀ {Γ Γ' X} {ρ : Ren Γ Γ'} {η : ⟦ Γ ⟧-ctx} → (x : X ∈ Γ') 
+    --lookup-ren
+    lookup-ren : ∀ { Γ Γ' v} (x : v ∈ Γ') (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
         → lookup x (⟦ ρ ⟧-ren η) ≡ lookup (ρ x) η
-    ren-env {Γ} {Γ'} {X} {ρ} {η} here = refl
-    ren-env {Γ} {Γ'} {X} {ρ} {η} (there x) = ren-env {ρ = ρ ∘ there} x
-
-    lookup-ext : ∀ {Γ} {η η' : ⟦ Γ ⟧-ctx} → (∀ {X} (x : X ∈ Γ) 
-        → lookup x η ≡ lookup x η') → η ≡ η'
-    lookup-ext {[]} {η} {η'} eq = refl
-    lookup-ext {Γ ∷ X} {η , v} {η' , v'} eq = cong₂ _,_ (lookup-ext (eq ∘ there))  (eq here)
+    lookup-ren here ρ η = refl
+    lookup-ren (there x) ρ η = lookup-ren x (λ x → ρ (there x)) η
 
     ren-value : ∀ { Γ Γ' X} (V : Γ' ⊢V: X) (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
         → ⟦ V ⟧-value (⟦ ρ ⟧-ren η) ≡ ⟦ V [ ρ ]ᵥᵣ ⟧-value η
@@ -335,8 +328,3 @@ mutual
                 refl)
             (ren-user M ρ η))
 
-    --lookup-ren
-    lookup-ren : ∀ { Γ Γ' v} (x : v ∈ Γ') (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
-        → lookup x (⟦ ρ ⟧-ren η) ≡ lookup (ρ x) η
-    lookup-ren here ρ η = refl
-    lookup-ren (there x) ρ η = lookup-ren x (λ x → ρ (there x)) η

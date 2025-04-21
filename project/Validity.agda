@@ -1,12 +1,8 @@
---{-# OPTIONS --allow-unsolved-metas #-}
-
 open import Data.Unit
 open import Data.Product
 import Relation.Binary.PropositionalEquality as Eq
 open Eq                  using (_≡_; refl; sym; trans; cong; cong₂; subst; [_]; inspect)
-open Eq.≡-Reasoning     -- using ( _≡⟨⟩_ ; _∎ ) renaming (begin_ to start_ ; step-≡ to step-= ) 
---(begin_ to start_ ; _≡⟨⟩_ to _=<>_ ; step-≡ to step-= ; _∎ to _qed) 
--- using (begin_; _≡⟨⟩_; step-≡; _∎)
+open Eq.≡-Reasoning
 
 open import Function
 
@@ -42,7 +38,6 @@ tree-id : ∀ {X Σ} (t : Tree Σ ⟦ X ⟧v)
 tree-id {X} {Σ} (leaf x) = refl
 tree-id {X} {Σ} (node op p param t) = cong (node op p param) 
     (fun-ext (λ res → tree-id {X = X} {Σ = Σ} (t res)))
-
 
 bind-tree-assoc : {Σ : Sig} {X Y Z : Set} (c : Tree Σ X) (f : X → Tree Σ Y)
     (g : Y → Tree Σ Z) →
@@ -87,9 +82,6 @@ mutual
                 (ren-value w wkᵣ (η , X))))
             refl)
 
-
-
-
     valid-U refl η = Eq.refl
     valid-U (sym eq-m) η = Eq.sym (valid-U eq-m η) 
     valid-U (trans eq-m eq-n) η = Eq.trans (valid-U eq-m η) (valid-U eq-n η) 
@@ -103,8 +95,8 @@ mutual
             (cong₂ (λ r,m w → apply-runner (proj₁ r,m) (proj₂ r,m) w)  (cong₂ (λ r m → r , m)  (valid-V eq-r η) (valid-U eq-m η)) (valid-V eq-w η))
     valid-U (kernel-at-finally-cong eq-v eq-m eq-k) η = 
         cong₂ bind-tree (fun-ext (λ x → valid-U eq-m ((η , proj₁ x) , proj₂ x))) (cong₂ (λ k c → k c ) (valid-K eq-k η) (valid-V eq-v η))
-    valid-U (funU-beta m v) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ sub-var refl)) (sub-U (var ∷ₛ v) η m)
-    valid-U (let-in-beta-return_ v m) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ sub-var refl)) (sub-U (var ∷ₛ v) η m)
+    valid-U (funU-beta m v) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (sub-id-lemma η) refl)) (sub-U (var ∷ₛ v) η m)
+    valid-U (let-in-beta-return_ v m) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (sub-id-lemma η) refl)) (sub-U (var ∷ₛ v) η m)
     --{X Y : VType} {Σ : Sig} for let-in-beta-op
     valid-U {Γ} {X ! Σ} (let-in-beta-op {X'} {Y} op x param m n) η = cong (node op x (⟦ param ⟧-value η)) 
         (fun-ext (λ res → cong₂ bind-tree
@@ -130,7 +122,7 @@ mutual
     valid-U (match-with-beta-prod v w m) η = Eq.trans 
         (cong ⟦ m ⟧-user (cong (_, ⟦ w ⟧-value η) (cong (_, ⟦ v ⟧-value η) (sub-id-lemma η)))) 
         (sub-U ((var ∷ₛ v) ∷ₛ w) η m)
-    valid-U (using-run-finally-beta-return r w v m) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (cong₂ _,_ sub-var refl) refl))
+    valid-U (using-run-finally-beta-return r w v m) η = Eq.trans (cong ⟦ m ⟧-user (cong₂ _,_ (cong₂ _,_ (sub-id-lemma η) refl) refl))
         (sub-U ((var ∷ₛ v) ∷ₛ w) η m)
     valid-U {Γ} {X ! Σ} (using-run-finally-beta-op {Σ'} {Σ} {C} {X'} {X} R w op param' p m n) η = 
         begin 
@@ -343,8 +335,6 @@ mutual
           ⟧-user
           η
         ∎
-
-    --{! cong₂ bind-tree ? (cong₂ bind-tree ? (Eq.trans ? (sub-U )))   !} 
     valid-U (kernel-at-finally-beta-return v c n) η = Eq.trans 
         (cong ⟦ n ⟧-user (cong (λ a → (a , ⟦ v ⟧-value η) , ⟦ c ⟧-value η) (sub-id-lemma η))) 
         (sub-U ((var ∷ₛ v) ∷ₛ c) η n) 
@@ -573,3 +563,4 @@ mutual
                         (ren-id-lemma η)
                         (ren-wk idᵣ η)))
                     (ren-value param there (η , res))))))       
+

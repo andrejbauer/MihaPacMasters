@@ -11,7 +11,6 @@ open import Parameters
 import Types
 import Terms
 import Monads
-import Equations
 
 module Denotations (G : GTypes) (O : Ops G) where
 
