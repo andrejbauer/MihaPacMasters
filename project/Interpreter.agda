@@ -12,7 +12,7 @@ import Types
 import Terms
 import Monads
 
-module Denotations (G : GTypes) (O : Ops G) where
+module Interpreter (G : GTypes) (O : Ops G) where
 
 open GTypes G
 open Ops O
