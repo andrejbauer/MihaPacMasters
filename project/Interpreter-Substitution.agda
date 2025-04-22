@@ -14,7 +14,7 @@ import Monads
 import Equations
 import Denotations
 
-module Denotation-Substitution (G : GTypes) (O : Ops G) where
+module Interpreter-Substitution (G : GTypes) (O : Ops G) where
 
 open GTypes G
 open Ops O
