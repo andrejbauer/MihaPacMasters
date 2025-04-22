@@ -17,7 +17,7 @@ import Denotations
 import Sub-Validity
 import Ren-Validity
 
-module Validity (G : GTypes) (O : Ops G) where
+module Soundness (G : GTypes) (O : Ops G) where
 
 open GTypes G
 open Ops O
