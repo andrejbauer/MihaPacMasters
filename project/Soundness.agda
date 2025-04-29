@@ -11,11 +11,7 @@ import Contexts
 open import Parameters
 import Types
 import Terms
-import Monads
 import Equations
-import Denotations
-import Sub-Validity
-import Ren-Validity
 
 module Soundness (G : GTypes) (O : Ops G) where
 
@@ -25,13 +21,13 @@ open Ops O
 open Contexts G O
 open Types G O
 open Terms G O
-open Monads G O
+open import Trees G O 
 open Equations G O
-open Denotations G O 
+open import Interpreter G O 
 open import Renaming G O 
 open import Substitution G O
-open Sub-Validity G O
-open Ren-Validity G O
+open import Interpreter-Substitution G O
+open import Interpreter-Renaming G O
  
 tree-id : ∀ {X Σ} (t : Tree Σ ⟦ X ⟧v)
     → bind-tree leaf t ≡ t

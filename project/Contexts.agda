@@ -10,7 +10,7 @@ open import Types G O
 open GTypes G
 open Ops O
  
--- Contexts (using De Bruijn indices)
+-- Contexts (using de Bruijn indices)
 data Ctx : Set where
   []  : Ctx
   _∷_ : Ctx → VType → Ctx

@@ -33,6 +33,7 @@ interleaved mutual
   data KType where
     _↯_,_ : VType → Sig → KState → KType   --"\dz = ↯"
 
+
 -- Subtyping relations
 _⊆ₛ_ : Sig → Sig → Set
 Σ ⊆ₛ Σ' = (op : Op) → Σ op ≡ true → Σ' op ≡ true -- TODO; can we make op implicit?
@@ -51,14 +52,15 @@ interleaved mutual
               -------------
               → gnd A ⊑ᵥ gnd A
 
-    ⊑ᵥ-product : {X Y Z W : VType}
-               → X ⊑ᵥ Z
-               → Y ⊑ᵥ W
+    ⊑ᵥ-product : {X Y X' Y' : VType}
+               → X ⊑ᵥ X'
+               → Y ⊑ᵥ Y'
                --------------------
-                 → (X ×v Y) ⊑ᵥ (Z ×v W)
+                 → (X ×v Y) ⊑ᵥ (X' ×v Y')
 
 
     ⊑ᵥ-Ufun : {X X' : VType} {Σ Σ' : UType}
+    --TODO: Contemplate this one
                 → X' ⊑ᵥ X
                 → Σ ⊑ᵤ Σ'
                 -----------------------

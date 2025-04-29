@@ -81,8 +81,10 @@ interleaved mutual
   opᵤ op p v m [ σ ]ᵤ = opᵤ op p (v [ σ ]ᵥ) (m [ extendₛ σ ]ᵤ)
   `let m `in n [ σ ]ᵤ = `let m [ σ ]ᵤ `in (n [ (extendₛ σ) ]ᵤ)
   (match v `with m) [ σ ]ᵤ = match (v [ σ ]ᵥ) `with (m [ (extendₛ (extendₛ σ)) ]ᵤ)
-  `using v at w `run m finally n [ σ ]ᵤ = `using v [ σ ]ᵥ at w [ σ ]ᵥ `run m [ σ ]ᵤ finally (n [ extendₛ (extendₛ σ) ]ᵤ)
-  kernel k at v finally m [ σ ]ᵤ = kernel (k [ σ ]ₖ) at (v [ σ ]ᵥ) finally (m [ (extendₛ (extendₛ σ)) ]ᵤ)
+  `using v at w `run m finally n [ σ ]ᵤ = 
+    `using v [ σ ]ᵥ at w [ σ ]ᵥ `run m [ σ ]ᵤ finally (n [ extendₛ (extendₛ σ) ]ᵤ)
+  kernel k at v finally m [ σ ]ᵤ = 
+    kernel (k [ σ ]ₖ) at (v [ σ ]ᵥ) finally (m [ (extendₛ (extendₛ σ)) ]ᵤ)
 
   -- Kernel
   sub-kernel k p [ σ ]ₖ = sub-kernel (k [ σ ]ₖ) p

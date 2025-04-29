@@ -202,23 +202,16 @@ interleaved mutual
       --------------------------------
       → Γ ⊢U `let (opᵤ op p v m) `in n ≡ opᵤ op p v (`let m `in (n [ extdᵣ wkᵣ ]ᵤᵣ))
 
-    match-with-beta-prod : {X Y : VType} {Xᵤ : UType} -- LOOK WITH A MORE CAREFUL LOOK AS I CHANGED THE V from being a usertype (for whatever reason) to a valuetype computation
-      -- Bodi pazliv da ne zamenjas V1 in V2 na koncu
+    match-with-beta-prod : {X Y : VType} {Xᵤ : UType}
       (v₁ : Γ ⊢V: X)
       (v₂ : Γ ⊢V: Y)
       → (m : Γ ∷ X ∷ Y ⊢U: Xᵤ)
       -----------------
       → Γ ⊢U match ⟨ v₁ , v₂ ⟩ `with m ≡ (m [ ((idₛ ∷ₛ v₁) ∷ₛ v₂) ]ᵤ)
 
-{-     match-with-beta-null : {Xᵤ : UType} -- Zaenkrat naj to ostane prazno
-      → (m : Γ ⊢U: gnd
-      → (n : Γ ⊢U: U)
-      -----------------
-      → Γ ⊢U match ? `with (n [ (wkₛ (wkₛ idₛ)) ]ᵤ) ≡ n -}
-
     using-run-finally-beta-return :
       {Σ Σ' : Sig} {C : KState} {X Y : VType}
-      → (r : Γ ⊢V: Σ ⇒ Σ' , C) -- r because it's a runner
+      → (r : Γ ⊢V: Σ ⇒ Σ' , C)
       → (w : Γ ⊢V: gnd C)
       → (v : Γ ⊢V: X)
       → (n : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ')
@@ -227,7 +220,7 @@ interleaved mutual
 
     using-run-finally-beta-op :
       {Σ Σ' : Sig} {C : KState} {X Y : VType}
-      → (R : ((op : Op) → (op ∈ₒ Σ) → co-op Γ Σ' C op))
+      → (r : ((op : Op) → (op ∈ₒ Σ) → co-op Γ Σ' C op))
       → (w : Γ ⊢V: gnd C)
       → (op : Op)
       → (v : Γ ⊢V: gnd (param op))
@@ -235,8 +228,8 @@ interleaved mutual
       → (m : Γ ∷ gnd (result op) ⊢U: X ! Σ)
       → (n : Γ ∷ X ∷ gnd C ⊢U: Y ! Σ')
       ------------
-      → Γ ⊢U `using runner R at w `run (opᵤ op p v m) finally n
-          ≡ kernel R op p [ idₛ ∷ₛ v ]ₖ at w finally (`using (runner (rename-runner R (wkᵣ ∘ᵣ wkᵣ))) 
+      → Γ ⊢U `using runner r at w `run (opᵤ op p v m) finally n
+          ≡ kernel r op p [ idₛ ∷ₛ v ]ₖ at w finally (`using (runner (rename-runner r (wkᵣ ∘ᵣ wkᵣ))) 
               at var here `run m [ wkᵣ ]ᵤᵣ finally (n [ extdᵣ (extdᵣ (wkᵣ ∘ᵣ wkᵣ)) ]ᵤᵣ))
 
     kernel-at-finally-beta-return : {X Y : VType}

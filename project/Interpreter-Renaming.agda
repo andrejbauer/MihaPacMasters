@@ -10,9 +10,7 @@ import Contexts
 open import Parameters
 import Types
 import Terms
-import Monads
 import Equations
-import Denotations
 
 module Interpreter-Renaming (G : GTypes) (O : Ops G) where
 
@@ -22,11 +20,11 @@ open Ops O
 open Contexts G O
 open Types G O
 open Terms G O
-open Monads G O
 open Equations G O
-open Denotations G O 
+open import Interpreter G O 
 open import Renaming G O 
 open import Substitution G O
+open import Trees G O
 
 ren-coop-lemma : ∀ { Γ Γ' Σ C op} (ρ : Ren Γ Γ') (coop : co-op Γ' Σ C op)
     → coop [ extdᵣ ρ ]ₖᵣ ≡ rename-coop coop ρ
@@ -46,8 +44,8 @@ mutual
     ⟦_⟧-ren {Γ' = []} ρ η = tt
     ⟦_⟧-ren {Γ' = Γ' ∷ X} ρ η = ⟦ ρ ∘ there ⟧-ren η , lookup (ρ here) η
 
-    ren-wk : ∀ {Γ Γ' X} {v : ⟦ X ⟧v} (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx) 
-        → ⟦ ρ ⟧-ren η ≡ ⟦ ρ ∘ᵣ there {Y = X} ⟧-ren (η , v)
+    ren-wk : ∀ {Γ Γ' X} {V : ⟦ X ⟧v} (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx) 
+        → ⟦ ρ ⟧-ren η ≡ ⟦ ρ ∘ᵣ there {Y = X} ⟧-ren (η , V)
     ren-wk {Γ} {Contexts.[]} ρ η = refl
     ren-wk {Γ} {Γ' Contexts.∷ x} ρ η = cong₂ _,_ 
         (ren-wk (there ∘ᵣ ρ) η) 
@@ -82,14 +80,14 @@ mutual
             (fun-ext (λ Y → 
                 Eq.trans 
                     (cong ⟦ x ⟧-user (cong₂ _,_ 
-                        (ren-wk {v = Y} ρ η)
+                        (ren-wk {V = Y} ρ η)
                         refl))
                     (ren-user x (extdᵣ ρ) (η , Y))))  
             refl)
     ren-value {Γ} {Γ'} (funK x) ρ η = fun-ext (λ X → 
         Eq.trans 
             (cong ⟦ x ⟧-kernel (cong₂ _,_ 
-                (ren-wk {v = X} ρ η)
+                (ren-wk {V = X} ρ η)
                 refl)) 
             (ren-kernel x (extdᵣ ρ) (η , X)))
     ren-value {Γ} {Γ'} {Σ ⇒ Σ' , C} (runner {Σ} {Σ'} {C} x) ρ η = fun-ext (λ op → fun-ext (λ x' → fun-ext (λ par → 
@@ -122,13 +120,13 @@ mutual
         (ren-value par ρ η) 
         (fun-ext (λ res → Eq.trans 
                 (cong ⟦ M ⟧-user (cong₂ _,_
-                    (ren-wk {v = res} ρ η)
+                    (ren-wk {V = res} ρ η)
                     refl))
                 (ren-user M (extdᵣ ρ) (η , res)))) 
     ren-user {Γ} {Γ'} {Xᵤ} (`let M `in N) ρ η = cong₂ bind-tree 
         (fun-ext (λ X → Eq.trans
             (cong ⟦ N ⟧-user (cong₂ _,_
-                (ren-wk {v = X} ρ η)
+                (ren-wk {V = X} ρ η)
                 refl))
             (ren-user N (extdᵣ ρ) (η , X)))) 
         (ren-user M ρ η)
@@ -327,9 +325,3 @@ mutual
                     (ren-kernel K (extdᵣ ρ) (η , X')))
                 refl)
             (ren-user M ρ η))
-
-    --lookup-ren
-    lookup-ren : ∀ { Γ Γ' v} (x : v ∈ Γ') (ρ : Ren Γ Γ') (η : ⟦ Γ ⟧-ctx)
-        → lookup x (⟦ ρ ⟧-ren η) ≡ lookup (ρ x) η
-    lookup-ren here ρ η = refl
-    lookup-ren (there x) ρ η = lookup-ren x (λ x → ρ (there x)) η

@@ -10,9 +10,7 @@ import Contexts
 open import Parameters
 import Types
 import Terms
-import Monads
 import Equations
-import Denotations
 
 module Interpreter-Substitution (G : GTypes) (O : Ops G) where
 
@@ -22,12 +20,12 @@ open Ops O
 open Contexts G O
 open Types G O
 open Terms G O
-open Monads G O
 open Equations G O
-open Denotations G O 
+open import Interpreter G O 
 open import Renaming G O 
 open import Substitution G O
-open import Ren-Validity G O
+open import Interpreter-Renaming G O
+open import Trees G O 
 
 sub-coop-lemma : ∀ { Γ Γ' Σ C op } (σ : Sub Γ Γ') (coop : co-op Γ' Σ C op)
     → coop [ extendₛ σ ]ₖ  ≡ sub-coop coop σ
@@ -113,7 +111,7 @@ mutual
         )))
     --POTENTIAL TODO 11. 3.: use begin_ syntactic sugar to make the proofs prettier. 
 
-    sub-U : ∀ { Γ Γ' Xᵤ  } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (m : Γ' ⊢U: Xᵤ)
+    sub-U : ∀ { Γ Γ' Xᵤ } (σ : Sub Γ Γ') (η : ⟦ Γ ⟧-ctx) (m : Γ' ⊢U: Xᵤ)
         → ⟦ m ⟧-user (⟦ σ ⟧-sub η) ≡ ⟦ m [ σ ]ᵤ ⟧-user η
     sub-U σ η (sub-user m p) = cong (coerceᵤ p) (sub-U σ η m)
     sub-U σ η (return v) = cong leaf (sub-V σ η v) 
@@ -283,3 +281,4 @@ mutual
             (sub-U σ η m)) 
                       
                                  
+ 

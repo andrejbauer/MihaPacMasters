@@ -10,7 +10,6 @@ import Contexts
 open import Parameters
 import Types
 import Terms
-import Monads
 
 module Interpreter (G : GTypes) (O : Ops G) where
 
@@ -20,7 +19,7 @@ open Ops O
 open Contexts G O
 open Types G O
 open Terms G O
-open Monads G O
+open import Trees G O 
 
 -- GENERAL TODO: naming conventions (think for yourself what to do, try to stay close to the paper/thesis)
 -- - upper-case letters for types, lower-case letters for terms
@@ -40,6 +39,7 @@ open Monads G O
 
 mutual --TODO: This should go into a different module/file. Essentially putting the monads in one and the ⟦ ⟧ stuff into another file.
   -- Denotation of value types
+
   ⟦_⟧v : VType → Set
 
   ⟦ gnd A ⟧v = ⟦ A ⟧g
