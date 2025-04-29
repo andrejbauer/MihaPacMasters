@@ -8,9 +8,6 @@ open import Function
 
 import Contexts
 open import Parameters
-import Types
-import Terms
-import Equations
 
 module Interpreter-Substitution (G : GTypes) (O : Ops G) where
 
@@ -18,9 +15,8 @@ open GTypes G
 open Ops O
 
 open Contexts G O
-open Types G O
-open Terms G O
-open Equations G O
+open import Types G O
+open import Terms G O
 open import Interpreter G O 
 open import Renaming G O 
 open import Substitution G O

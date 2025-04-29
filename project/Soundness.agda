@@ -9,9 +9,6 @@ open import Function
 open import Level        renaming (zero to lzero; suc to lsuc)
 import Contexts
 open import Parameters
-import Types
-import Terms
-import Equations
 
 module Soundness (G : GTypes) (O : Ops G) where
 
@@ -19,10 +16,10 @@ open GTypes G
 open Ops O
 
 open Contexts G O
-open Types G O
-open Terms G O
+open import Types G O
+open import Terms G O
 open import Trees G O 
-open Equations G O
+open import Equations G O
 open import Interpreter G O 
 open import Renaming G O 
 open import Substitution G O

@@ -8,9 +8,6 @@ open import Function
 
 import Contexts
 open import Parameters
-import Types
-import Terms
-import Equations
 
 module Interpreter-Renaming (G : GTypes) (O : Ops G) where
 
@@ -18,13 +15,13 @@ open GTypes G
 open Ops O
 
 open Contexts G O
-open Types G O
-open Terms G O
-open Equations G O
+open import Types G O
+open import Terms G O
 open import Interpreter G O 
 open import Renaming G O 
 open import Substitution G O
 open import Trees G O
+
 
 ren-coop-lemma : ∀ { Γ Γ' Σ C op} (ρ : Ren Γ Γ') (coop : co-op Γ' Σ C op)
     → coop [ extdᵣ ρ ]ₖᵣ ≡ rename-coop coop ρ
